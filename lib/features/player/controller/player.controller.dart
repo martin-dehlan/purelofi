@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../common/errors/app_error.dart';
+import '../../../common/errors/error_mapper.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/player.state.dart';
 import '../domain/track.entity.dart';
@@ -47,10 +48,20 @@ class PlayerController extends _$PlayerController {
   /// Starts a random track. Called when the app opens and whenever a track
   /// ends — the stream never stops on its own.
   Future<void> playNext() async {
-    final List<TrackEntity>? tracks = ref
-        .read(trackListControllerProvider)
-        .value;
-    if (tracks == null || tracks.isEmpty) return;
+    final List<TrackEntity> tracks;
+    try {
+      // Awaiting the future means the first play works even if nothing has
+      // loaded the track list yet.
+      tracks = await ref.read(trackListControllerProvider.future);
+    } on Object catch (error, stackTrace) {
+      state = state.copyWith(
+        error: ErrorMapper.fromException(error, stackTrace),
+        isPlaying: false,
+      );
+      return;
+    }
+
+    if (tracks.isEmpty) return;
 
     await playTrack(_pickNext(tracks));
   }
