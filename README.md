@@ -31,7 +31,7 @@ Flutter · Riverpod (code-gen) · Freezed + json_serializable · Supabase
 flutter pub get
 cp .env.example .env    # fill in SUPABASE_URL, SUPABASE_ANON_KEY,
                         # POSTHOG_API_KEY, POSTHOG_HOST
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 
