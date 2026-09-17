@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/config/supabase.provider.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
+import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
 import '../domain/scene.entity.dart';
 
@@ -28,3 +29,13 @@ typedef SceneVideoBuilder = Widget Function(SceneEntity scene);
 /// `null` means "use the real player".
 @riverpod
 SceneVideoBuilder? sceneVideoBuilder(Ref ref) => null;
+
+/// The audio player.
+///
+/// `audio_service` has to be initialised before the app starts, so `main.dart`
+/// creates the handler and overrides this provider with it. Tests override it
+/// with a fake.
+@Riverpod(keepAlive: true)
+AudioPlayerService audioPlayerService(Ref ref) => throw UnimplementedError(
+  'audioPlayerServiceProvider must be overridden in main.dart',
+);

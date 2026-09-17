@@ -6,7 +6,10 @@ import 'player.provider.dart';
 part 'scene.controller.g.dart';
 
 /// Loads the active scenes from Supabase, ordered by `sort_order`.
-@riverpod
+///
+/// Kept alive for the same reason as the track list: fetched once, read again
+/// whenever the listener switches scenes.
+@Riverpod(keepAlive: true)
 class SceneListController extends _$SceneListController {
   @override
   Future<List<SceneEntity>> build() {

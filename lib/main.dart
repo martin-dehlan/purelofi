@@ -1,9 +1,12 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'common/config/env.dart';
+import 'features/player/controller/player.provider.dart';
+import 'features/player/data/audio_player.service.impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,5 +19,22 @@ Future<void> main() async {
     publishableKey: Env.supabaseAnonKey,
   );
 
-  runApp(const ProviderScope(child: PureLofiApp()));
+  // Starts the background playback service, which owns the notification and
+  // the lock-screen controls for the whole app lifetime.
+  final AudioPlayerServiceImpl audioHandler = await AudioService.init(
+    builder: AudioPlayerServiceImpl.new,
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'app.purelofi.audio',
+      androidNotificationChannelName: 'PureLofi',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
+    ),
+  );
+
+  runApp(
+    ProviderScope(
+      overrides: [audioPlayerServiceProvider.overrideWithValue(audioHandler)],
+      child: const PureLofiApp(),
+    ),
+  );
 }
