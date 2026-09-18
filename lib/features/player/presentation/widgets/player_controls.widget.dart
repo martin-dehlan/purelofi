@@ -7,6 +7,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/pixel_icon.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/player.state.dart';
+import 'scene_switcher.widget.dart';
 
 /// The player chrome that floats over the scene: what is playing, and one
 /// pixel button to start or stop it.
@@ -29,6 +30,8 @@ class PlayerControls extends ConsumerWidget {
           ),
         SizedBox(height: context.spaceL),
         _PlayPauseButton(isPlaying: state.isPlaying),
+        SizedBox(height: context.spaceL),
+        const SceneSwitcher(),
         if (state.error != null) ...<Widget>[
           SizedBox(height: context.spaceL),
           Text(
