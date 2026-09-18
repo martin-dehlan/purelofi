@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/player.controller.dart';
+import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
+import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
@@ -15,7 +17,11 @@ import '../widgets/scene_background.widget.dart';
 /// The scene fills the screen and the controls float over it, kept legible by
 /// a flat scrim — never a gradient (see `docs/09`).
 class PlayerScreen extends ConsumerStatefulWidget {
-  const PlayerScreen({super.key});
+  const PlayerScreen({super.key, this.deepLinkTrackId});
+
+  /// Set when the app was opened through `purelofi://app/track/<id>`: that
+  /// track's behind-the-scenes clip opens as soon as the track is known.
+  final String? deepLinkTrackId;
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
@@ -23,6 +29,24 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _started = false;
+  bool _deepLinkHandled = false;
+
+  /// Opens the BTS modal once, for the track the deep link named.
+  void _handleDeepLink() {
+    final String? trackId = widget.deepLinkTrackId;
+    if (_deepLinkHandled || trackId == null) return;
+
+    final TrackEntity? track = ref.watch(trackDetailProvider(trackId)).value;
+    if (track == null) return;
+
+    _deepLinkHandled = true;
+    unawaited(
+      Future<void>.microtask(() {
+        if (mounted) return showBtsModal(context, ref, track);
+        return null;
+      }),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +63,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         ),
       );
     }
+
+    _handleDeepLink();
 
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool controlsVisible = ref.watch(controlsVisibilityControllerProvider);
