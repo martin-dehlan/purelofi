@@ -8,6 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 abstract final class Env {
   static const String supabaseUrlEnv = 'SUPABASE_URL';
   static const String supabaseAnonKeyEnv = 'SUPABASE_ANON_KEY';
+  static const String posthogApiKeyEnv = 'POSTHOG_API_KEY';
+  static const String posthogHostEnv = 'POSTHOG_HOST';
 
   /// Loads `.env` into memory. Call once, before [runApp].
   static Future<void> load() => dotenv.load();
@@ -21,8 +23,14 @@ abstract final class Env {
   /// Use this for optional configuration (analytics, for instance) that should
   /// degrade instead of crashing the app.
   static String? maybeRead(String key) {
-    final String value = dotenv.env[key]?.trim() ?? '';
-    return value.isEmpty ? null : value;
+    // dotenv throws if .env was never loaded — in tests, for instance. An
+    // unset key and an unloaded file mean the same thing here.
+    try {
+      final String value = dotenv.env[key]?.trim() ?? '';
+      return value.isEmpty ? null : value;
+    } on Object {
+      return null;
+    }
   }
 
   static String _require(String key) {
