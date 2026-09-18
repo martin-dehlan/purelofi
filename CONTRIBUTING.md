@@ -10,7 +10,7 @@ rule disagree, `SPEC.md` wins.
 ```bash
 flutter pub get
 cp .env.example .env          # fill in Supabase + PostHog keys
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 
@@ -42,7 +42,7 @@ flutter test integration_test/ # integration
 - Zero fixed spacing or font sizes — everything from `MediaQuery` (`docs/03`).
 - Colors from `Theme.of(context).colorScheme` only. No gradients, no
   glassmorphism (`docs/09`).
-- Run `dart run build_runner build --delete-conflicting-outputs` after changing
+- Run `dart run build_runner build` after changing
   any `@freezed` / `@riverpod` annotation (`docs/06`).
 - Do not add `drift`, `drift_flutter` or `purchases_flutter` — Phase 2 only.
 
