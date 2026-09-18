@@ -67,7 +67,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _handleDeepLink();
 
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool controlsVisible = ref.watch(controlsVisibilityControllerProvider);
+    final bool controlsVisible = ref.watch(
+      controlsVisibilityControllerProvider,
+    );
 
     return Scaffold(
       backgroundColor: cs.surface,
