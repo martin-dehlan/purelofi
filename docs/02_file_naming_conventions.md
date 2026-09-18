@@ -21,6 +21,7 @@ name.type.dart
 | `.api.dart` | `content.api.dart` | Supabase/REST API calls |
 | `.provider.dart` | `player.provider.dart` | All Riverpod providers for a feature |
 | `.controller.dart` | `player.controller.dart` | AsyncNotifier / StateNotifier |
+| `.state.dart` | `player.state.dart` | Freezed state class for a controller |
 | `.screen.dart` | `player.screen.dart` | Full-screen routable widget |
 | `.widget.dart` | `scene_switcher.widget.dart` | Reusable sub-widget |
 | `.routes.dart` | `player.routes.dart` | Feature route definitions |
