@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../common/analytics/analytics.provider.dart';
 import '../../../common/errors/app_error.dart';
 import '../../../common/errors/error_mapper.dart';
 import '../domain/audio_player.service.dart';
@@ -68,6 +69,7 @@ class PlayerController extends _$PlayerController {
 
   Future<void> playTrack(TrackEntity track) async {
     state = state.copyWith(currentTrack: track, error: null);
+    unawaited(ref.read(analyticsServiceProvider).trackPlayed(track.id));
     await ref.read(audioPlayerServiceProvider).playTrack(track);
   }
 
