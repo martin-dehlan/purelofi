@@ -9,8 +9,5 @@ part 'app_router.g.dart';
 /// No redirect: the app is public, there is nothing to guard.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
-  return GoRouter(
-    initialLocation: AppRoutes.player,
-    routes: playerRoutes,
-  );
+  return GoRouter(initialLocation: AppRoutes.player, routes: playerRoutes);
 }

@@ -40,16 +40,13 @@ void main() {
         () => mockApi.fetchTracks(),
       ).thenThrow(Exception('SocketException: failed host lookup'));
 
-      await expectLater(
-        repository.getTracks(),
-        throwsA(isA<NetworkError>()),
-      );
+      await expectLater(repository.getTracks(), throwsA(isA<NetworkError>()));
     });
 
     test('throws AppError.serverError on a Postgrest failure', () async {
-      when(() => mockApi.fetchTracks()).thenThrow(
-        const PostgrestException(message: 'relation does not exist'),
-      );
+      when(
+        () => mockApi.fetchTracks(),
+      ).thenThrow(const PostgrestException(message: 'relation does not exist'));
 
       await expectLater(
         repository.getTracks(),
@@ -71,21 +68,24 @@ void main() {
   });
 
   group('getScenes', () {
-    test('maps models to entities in the order the api returned them', () async {
-      when(() => mockApi.fetchScenes()).thenAnswer(
-        (_) async => <SceneModel>[
-          makeSceneModel('scene-1', sortOrder: 0),
-          makeSceneModel('scene-2', sortOrder: 1),
-        ],
-      );
+    test(
+      'maps models to entities in the order the api returned them',
+      () async {
+        when(() => mockApi.fetchScenes()).thenAnswer(
+          (_) async => <SceneModel>[
+            makeSceneModel('scene-1', sortOrder: 0),
+            makeSceneModel('scene-2', sortOrder: 1),
+          ],
+        );
 
-      final List<SceneEntity> result = await repository.getScenes();
+        final List<SceneEntity> result = await repository.getScenes();
 
-      expect(result.map((SceneEntity scene) => scene.id), <String>[
-        'scene-1',
-        'scene-2',
-      ]);
-    });
+        expect(result.map((SceneEntity scene) => scene.id), <String>[
+          'scene-1',
+          'scene-2',
+        ]);
+      },
+    );
 
     test('throws AppError on failure', () async {
       when(() => mockApi.fetchScenes()).thenThrow(Exception('boom'));
@@ -106,9 +106,7 @@ void main() {
     });
 
     test('returns null when the track is missing or inactive', () async {
-      when(
-        () => mockApi.fetchTrackById('nope'),
-      ).thenAnswer((_) async => null);
+      when(() => mockApi.fetchTrackById('nope')).thenAnswer((_) async => null);
 
       expect(await repository.getTrackById('nope'), isNull);
     });

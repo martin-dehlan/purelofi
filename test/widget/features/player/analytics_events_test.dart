@@ -58,9 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(analytics.eventNames, contains('track_played'));
-    expect(analytics.events.first.$2, <String, Object>{
-      'track_id': 'track-1',
-    });
+    expect(analytics.events.first.$2, <String, Object>{'track_id': 'track-1'});
   });
 
   testWidgets('opening the footage reports bts_opened with the track id', (
@@ -75,9 +73,7 @@ void main() {
     expect(analytics.eventNames, contains('bts_opened'));
     expect(
       analytics.events
-          .firstWhere(
-            ((String, Map<String, Object>) e) => e.$1 == 'bts_opened',
-          )
+          .firstWhere(((String, Map<String, Object>) e) => e.$1 == 'bts_opened')
           .$2,
       <String, Object>{'track_id': 'track-1'},
     );

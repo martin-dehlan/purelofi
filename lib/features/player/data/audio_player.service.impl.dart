@@ -30,7 +30,8 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   }
 
   final AudioPlayer _player;
-  final StreamController<void> _nextRequests = StreamController<void>.broadcast();
+  final StreamController<void> _nextRequests =
+      StreamController<void>.broadcast();
   final StreamController<AppError> _errors =
       StreamController<AppError>.broadcast();
   final List<StreamSubscription<Object?>> _subscriptions =
