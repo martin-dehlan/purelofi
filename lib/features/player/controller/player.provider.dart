@@ -6,6 +6,7 @@ import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
+import '../domain/track.entity.dart';
 import '../domain/scene.entity.dart';
 
 part 'player.provider.g.dart';
@@ -21,6 +22,9 @@ ContentRepository contentRepository(Ref ref) =>
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);
+
+/// Builds the widget that renders a behind-the-scenes clip.
+typedef BtsVideoBuilder = Widget Function(String videoUrl);
 
 /// Test seam for the scene video surface.
 ///
@@ -39,3 +43,13 @@ SceneVideoBuilder? sceneVideoBuilder(Ref ref) => null;
 AudioPlayerService audioPlayerService(Ref ref) => throw UnimplementedError(
   'audioPlayerServiceProvider must be overridden in main.dart',
 );
+
+/// Test seam for the behind-the-scenes video surface, for the same reason as
+/// [sceneVideoBuilderProvider]. `null` means "use the real player".
+@riverpod
+BtsVideoBuilder? btsVideoBuilder(Ref ref) => null;
+
+/// One track by id, for the `/track/:trackId` deep link.
+@riverpod
+Future<TrackEntity?> trackDetail(Ref ref, String trackId) =>
+    ref.watch(contentRepositoryProvider).getTrackById(trackId);

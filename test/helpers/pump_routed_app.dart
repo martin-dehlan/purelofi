@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:purelofi/features/player/presentation/player.routes.dart';
 
 extension PumpRouted on WidgetTester {
   /// Pumps [child] inside a themed `MaterialApp` and a `ProviderScope` with
@@ -13,8 +15,6 @@ extension PumpRouted on WidgetTester {
   /// it makes error tests non-deterministic, so retries are off by default
   /// here. Pass [retry] to exercise them.
   ///
-  /// go_router is wired in with the deep-link work (#10); until then the
-  /// player is a single screen with no routes to exercise.
   Future<void> pumpProviderApp({
     required Widget child,
     List<Override> overrides = const <Override>[],
@@ -27,6 +27,27 @@ extension PumpRouted on WidgetTester {
         child: MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
           home: child,
+        ),
+      ),
+    );
+  }
+
+  /// Pumps the real router, so deep links can be exercised end to end.
+  Future<void> pumpRoutedApp({
+    String initialRoute = '/',
+    List<Override> overrides = const <Override>[],
+    Duration? Function(int retryCount, Object error)? retry,
+  }) {
+    return pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        retry: retry ?? (_, _) => null,
+        child: MaterialApp.router(
+          theme: ThemeData.dark(useMaterial3: true),
+          routerConfig: GoRouter(
+            initialLocation: initialRoute,
+            routes: playerRoutes,
+          ),
         ),
       ),
     );
