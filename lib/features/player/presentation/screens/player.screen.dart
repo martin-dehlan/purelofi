@@ -6,13 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
+import '../widgets/player_controls.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
 ///
-/// The chrome (play/pause, scene switcher, BTS) lands in later issues — for
-/// now the screen is the scene, and the audio starts as soon as the tracks
-/// are known.
+/// The scene fills the screen and the controls float over it, kept legible by
+/// a flat scrim — never a gradient (see `docs/09`).
 class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key});
 
@@ -39,11 +39,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       );
     }
 
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: const Stack(
+      backgroundColor: cs.surface,
+      body: Stack(
         fit: StackFit.expand,
-        children: <Widget>[SceneBackground()],
+        children: <Widget>[
+          const SceneBackground(),
+          // Keeps text and icons readable over a bright video frame.
+          ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
+          const Center(child: PlayerControls()),
+        ],
       ),
     );
   }
