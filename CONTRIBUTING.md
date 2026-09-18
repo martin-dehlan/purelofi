@@ -45,11 +45,15 @@ flutter test integration_test/ # integration
 - Run `dart run build_runner build` after changing
   any `@freezed` / `@riverpod` annotation (`docs/06`).
 - Do not add `drift`, `drift_flutter` or `purchases_flutter` — Phase 2 only.
+- Anything that talks to a platform channel (`video_player`, `just_audio`,
+  `audio_service`) goes behind an interface or a builder provider, so tests
+  can replace it.
 
 ## Branches, commits, PRs
 
 - Conventional Commits: `type(scope): subject`, ≤60 chars, imperative, lowercase.
 - Feature work on `feat/<name>`, fixes on `fix/<name>`, docs on `docs/<name>`.
 - One self-contained concept per PR. Body = summary + test plan. Squash-merge.
-- Before pushing: `flutter analyze` clean, `build_runner` succeeds, smoke test
-  the changed flow. Full rules in [`docs/11`](docs/11_versioning_commits.md).
+- Before pushing: `dart format`, `flutter analyze` clean, `build_runner`
+  succeeds, smoke test the changed flow. CI enforces the first three on every
+  PR. Full rules in [`docs/11`](docs/11_versioning_commits.md).

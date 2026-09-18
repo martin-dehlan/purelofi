@@ -14,7 +14,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'app_error.freezed.dart';
 
 @freezed
-class AppError with _$AppError implements Exception {
+sealed class AppError with _$AppError implements Exception {
   const factory AppError.network({
     String? message,
     int?    statusCode,
@@ -40,13 +40,16 @@ class AppError with _$AppError implements Exception {
 }
 
 extension AppErrorX on AppError {
-  String get userMessage => when(
-    network:    (msg, _)     => msg ?? 'No internet connection. Check your network.',
-    notFound:   (resource)   => '$resource not found.',
-    serverError:(msg, code)  => msg ?? 'Server error (${code ?? '?'}). Try again.',
-    playback:   (msg)        => 'Playback error: $msg',
-    unknown:    (cause, _)   => 'Something went wrong. Please try again.',
-  );
+  // Freezed 3 removed `when`/`map` — match on the subclasses instead.
+  String get userMessage => switch (this) {
+    NetworkError(:final message) =>
+      message ?? 'No internet connection. Check your network.',
+    NotFoundError(:final resource) => '$resource not found.',
+    ServerError(:final message, :final statusCode) =>
+      message ?? 'Server error (${statusCode ?? '?'}). Try again.',
+    PlaybackError(:final message) => 'Playback error: $message',
+    UnknownError() => 'Something went wrong. Please try again.',
+  };
 }
 ```
 
@@ -154,9 +157,7 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final appError = error is AppError
-        ? error as AppError
-        : ErrorMapper.fromException(error);
+    final appError = ErrorMapper.fromException(error);
 
     return Center(
       child: Column(

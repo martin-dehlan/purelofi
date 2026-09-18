@@ -190,9 +190,30 @@ ProviderScope(
 ## Build Commands
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
-dart run build_runner watch --delete-conflicting-outputs
+dart run build_runner build
+dart run build_runner watch
 ```
+
+> `--delete-conflicting-outputs` was removed in `build_runner` 2.15 — it is
+> accepted but ignored, with a warning.
+
+---
+
+## Riverpod 3 notes
+
+The app runs Riverpod 3. Four differences from the Riverpod 2 snippets above:
+
+- **`AsyncValue.valueOrNull` is gone.** `value` is nullable now:
+  `ref.watch(p).value`.
+- **`Override` is not exported from `flutter_riverpod.dart`.** Import
+  `package:flutter_riverpod/misc.dart` when a test needs the type.
+- **Providers auto-dispose by default.** Content that is fetched once and read
+  for the app's lifetime — the scene and track lists — is declared
+  `@Riverpod(keepAlive: true)`. Without it a bare `ref.read` gets `null`
+  because the provider was disposed between reads.
+- **A failed provider retries on an exponential backoff** (200ms, doubling to
+  6.4s). Good for a streaming app; it makes error tests non-deterministic, so
+  the test helpers pass `retry: (_, _) => null`.
 
 ---
 
