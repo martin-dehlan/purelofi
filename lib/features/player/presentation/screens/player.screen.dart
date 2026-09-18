@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../controller/controls_visibility.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
@@ -40,17 +41,35 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
 
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool controlsVisible = ref.watch(controlsVisibilityControllerProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          const SceneBackground(),
-          // Keeps text and icons readable over a bright video frame.
-          ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
-          const Center(child: PlayerControls()),
-        ],
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: ref.read(controlsVisibilityControllerProvider.notifier).reveal,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            const SceneBackground(),
+            // Keeps text and icons readable over a bright video frame.
+            AnimatedOpacity(
+              opacity: controlsVisible ? 1 : 0,
+              duration: const Duration(milliseconds: 250),
+              child: ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
+            ),
+            AnimatedOpacity(
+              opacity: controlsVisible ? 1 : 0,
+              duration: const Duration(milliseconds: 250),
+              // Hidden controls are not tappable: the first tap brings them
+              // back, it does not pause the music by accident.
+              child: IgnorePointer(
+                ignoring: !controlsVisible,
+                child: const Center(child: PlayerControls()),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
