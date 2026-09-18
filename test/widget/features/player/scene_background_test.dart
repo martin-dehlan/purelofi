@@ -117,9 +117,7 @@ void main() {
   });
 
   testWidgets('shows the surface when no scene is active', (tester) async {
-    when(
-      () => mockRepo.getScenes(),
-    ).thenAnswer((_) async => <SceneEntity>[]);
+    when(() => mockRepo.getScenes()).thenAnswer((_) async => <SceneEntity>[]);
 
     await tester.pumpProviderApp(
       child: const SceneBackground(),

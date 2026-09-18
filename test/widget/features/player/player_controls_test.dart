@@ -21,9 +21,9 @@ void main() {
     mockRepo = MockContentRepository();
     fakeAudio = FakeAudioPlayerService();
     addTearDown(fakeAudio.dispose);
-    when(
-      () => mockRepo.getTracks(),
-    ).thenAnswer((_) async => <TrackEntity>[makeTrack('a', title: 'Dusk Tape')]);
+    when(() => mockRepo.getTracks()).thenAnswer(
+      (_) async => <TrackEntity>[makeTrack('a', title: 'Dusk Tape')],
+    );
   });
 
   List<Override> overrides() => <Override>[

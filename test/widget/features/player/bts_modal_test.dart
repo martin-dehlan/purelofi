@@ -39,9 +39,7 @@ void main() {
     sceneVideoBuilderProvider.overrideWithValue(
       (SceneEntity scene) => const SizedBox.shrink(),
     ),
-    btsVideoBuilderProvider.overrideWithValue(
-      (String url) => Text('bts $url'),
-    ),
+    btsVideoBuilderProvider.overrideWithValue((String url) => Text('bts $url')),
   ];
 
   group('from the player chrome', () {
