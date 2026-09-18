@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'features/player/presentation/screens/player.screen.dart';
+import 'common/routes/app_router.dart';
 
 /// The app shell. A lo-fi player is a night-time app, so it is dark by
 /// default and the scene video stays the brightest thing on screen
@@ -11,11 +11,11 @@ class PureLofiApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'PureLofi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true),
-      home: const PlayerScreen(),
+      routerConfig: ref.watch(appRouterProvider),
     );
   }
 }
