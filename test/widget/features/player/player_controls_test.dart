@@ -31,12 +31,17 @@ void main() {
     audioPlayerServiceProvider.overrideWithValue(fakeAudio),
   ];
 
+  /// The play/pause button — the chrome holds other pixel icons too.
+  final Finder playPause = find.byWidgetPredicate(
+    (Widget widget) =>
+        widget is PixelIcon &&
+        (widget.asset == AppAssets.playIcon ||
+            widget.asset == AppAssets.pauseIcon),
+  );
+
   String assetOf(WidgetTester tester) {
     final Image image = tester.widget<Image>(
-      find.descendant(
-        of: find.byType(PixelIcon),
-        matching: find.byType(Image),
-      ),
+      find.descendant(of: playPause, matching: find.byType(Image)),
     );
     return (image.image as AssetImage).assetName;
   }
@@ -59,10 +64,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final Image image = tester.widget<Image>(
-      find.descendant(
-        of: find.byType(PixelIcon),
-        matching: find.byType(Image),
-      ),
+      find.descendant(of: playPause, matching: find.byType(Image)),
     );
     expect(image.filterQuality, FilterQuality.none);
     expect(image.isAntiAlias, isFalse);
@@ -77,7 +79,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PixelIcon));
+    await tester.tap(playPause);
     await tester.pumpAndSettle();
 
     expect(fakeAudio.playedTracks.single.id, 'a');
@@ -91,9 +93,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PixelIcon));
+    await tester.tap(playPause);
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(PixelIcon));
+    await tester.tap(playPause);
     await tester.pumpAndSettle();
 
     expect(fakeAudio.pauseCalls, 1);
@@ -110,7 +112,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Dusk Tape'), findsNothing);
 
-    await tester.tap(find.byType(PixelIcon));
+    await tester.tap(playPause);
     await tester.pumpAndSettle();
 
     expect(find.text('Dusk Tape'), findsOneWidget);
@@ -126,7 +128,7 @@ void main() {
       overrides: overrides(),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(PixelIcon));
+    await tester.tap(playPause);
     await tester.pumpAndSettle();
 
     expect(find.text('Playback error: the stream failed'), findsOneWidget);
