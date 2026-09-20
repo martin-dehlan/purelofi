@@ -1,0 +1,91 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../common/errors/app_error.dart';
+import '../domain/audio_player.service.dart';
+import '../domain/player.state.dart';
+import '../domain/track.entity.dart';
+import 'player.provider.dart';
+import 'track.controller.dart';
+
+part 'player.controller.g.dart';
+
+/// Playback: what is playing, whether it is playing, and what plays next.
+///
+/// The audio itself lives in [AudioPlayerService]; this controller only
+/// decides which track to hand it.
+@riverpod
+class PlayerController extends _$PlayerController {
+  @override
+  PlayerState build() {
+    final AudioPlayerService audio = ref.watch(audioPlayerServiceProvider);
+
+    final List<StreamSubscription<Object?>> subscriptions =
+        <StreamSubscription<Object?>>[
+          audio.playingStream.listen((bool playing) {
+            state = state.copyWith(isPlaying: playing);
+          }),
+          // Fired when a track ends and when skip is pressed on the lock
+          // screen — both mean "play something else".
+          audio.nextRequests.listen((_) => unawaited(playNext())),
+          audio.errors.listen((AppError error) {
+            state = state.copyWith(error: error, isPlaying: false);
+          }),
+        ];
+
+    ref.onDispose(() {
+      for (final StreamSubscription<Object?> subscription in subscriptions) {
+        unawaited(subscription.cancel());
+      }
+    });
+
+    return const PlayerState();
+  }
+
+  /// Starts a random track. Called when the app opens and whenever a track
+  /// ends — the stream never stops on its own.
+  Future<void> playNext() async {
+    final List<TrackEntity>? tracks = ref
+        .read(trackListControllerProvider)
+        .value;
+    if (tracks == null || tracks.isEmpty) return;
+
+    await playTrack(_pickNext(tracks));
+  }
+
+  Future<void> playTrack(TrackEntity track) async {
+    state = state.copyWith(currentTrack: track, error: null);
+    await ref.read(audioPlayerServiceProvider).playTrack(track);
+  }
+
+  Future<void> togglePlayPause() async {
+    final AudioPlayerService audio = ref.read(audioPlayerServiceProvider);
+
+    if (state.currentTrack == null) {
+      await playNext();
+      return;
+    }
+
+    if (state.isPlaying) {
+      await audio.pause();
+    } else {
+      await audio.play();
+    }
+  }
+
+  /// A random track that is not the one already playing, so the stream never
+  /// repeats itself back to back.
+  TrackEntity _pickNext(List<TrackEntity> tracks) {
+    final String? currentId = state.currentTrack?.id;
+    final List<TrackEntity> candidates = tracks
+        .where((TrackEntity track) => track.id != currentId)
+        .toList();
+    final List<TrackEntity> pool = candidates.isEmpty ? tracks : candidates;
+
+    return pool[_random.nextInt(pool.length)];
+  }
+
+  final Random _random = Random();
+}
