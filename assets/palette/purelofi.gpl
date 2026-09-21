@@ -1,0 +1,38 @@
+GIMP Palette
+Name: PureLofi
+Columns: 8
+#
+# Derived from the reference image: indigo night, teal, coral,
+# warm lamp light. 32 colours, shared by every scene.
+  8   6  22	Night #080616
+ 19  12  31	Night #130C1F
+ 29  18  40	Night #1D1228
+ 40  25  50	Night #281932
+ 50  31  59	Night #321F3B
+ 61  37  68	Night #3D2544
+ 13  26  46	Deep #0D1A2E
+ 22  41  60	Deep #16293C
+ 32  56  74	Deep #20384A
+ 42  71  89	Deep #2A4759
+ 51  86 103	Deep #335667
+ 78 100 113	Teal #4E6471
+100 127 138	Teal #647F8A
+123 154 162	Teal #7B9AA2
+146 181 187	Teal #92B5BB
+168 208 212	Teal #A8D0D4
+147  54  71	Coral #933647
+166  73  84	Coral #A64954
+185  93  96	Coral #B95D60
+204 112 109	Coral #CC706D
+223 132 121	Coral #DF8479
+242 151 134	Coral #F29786
+107  58  76	Rose #6B3A4C
+138  86 101	Rose #8A5665
+169 114 125	Rose #A9727D
+200 142 150	Rose #C88E96
+138  74  42	Amber #8A4A2A
+177 122  84	Amber #B17A54
+216 169 126	Amber #D8A97E
+255 217 168	Amber #FFD9A8
+  3   3   8	Ink #030308
+255 242 232	White #FFF2E8

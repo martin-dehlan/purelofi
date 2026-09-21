@@ -34,9 +34,17 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   get better with more pixels.
 - **Safe zone 240 × 480, centred.** Everything that matters goes inside it;
   the edges are cropped on tall screens.
-- **One palette of about 32 colours for every layer in a scene.** This is the
+- **One palette of 32 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
+
+  The palette lives at **`assets/palette/purelofi.gpl`** — load it in Aseprite
+  via `Palette → Load Palette`. Six ramps derived from the reference art:
+  indigo night (6), deep blue to teal (5), teal to ice (5), wine to coral (6),
+  dusty rose (4), lamp amber (4), plus near-black and one warm white.
+
+  Amber is the only warm light source in a scene. If a colour is not in the
+  palette, the answer is a different colour, not a new one.
 - **Gradients belong in the art, dithered** — never as a Flutter widget
   (`docs/09`).
 
