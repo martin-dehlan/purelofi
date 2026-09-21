@@ -352,6 +352,7 @@ Future<void> _replaceLayers(
         'parallax': settings.parallax,
         'tiles': settings.tiles,
         'only_while_playing': settings.onlyWhilePlaying,
+        'hide_when_paused': settings.hideWhenPaused,
         'event_interval_min_seconds': settings.eventIntervalMinSeconds,
         'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
       },
