@@ -6,6 +6,7 @@ import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
+import 'scene_layers.widget.dart';
 import 'scene_video.widget.dart';
 
 /// The fullscreen looping scene behind everything else.
@@ -43,6 +44,11 @@ class _ActiveScene extends ConsumerWidget {
       // The content loaded but no scene is active — nothing to show but the
       // surface behind the player chrome.
       return ColoredBox(color: Theme.of(context).colorScheme.surface);
+    }
+
+    // A scene with sprite layers is drawn; one without still plays video.
+    if (scene.isLayered) {
+      return SceneLayersView(key: ValueKey<String>(scene.id), scene: scene);
     }
 
     final SceneVideoBuilder? builder = ref.watch(sceneVideoBuilderProvider);
