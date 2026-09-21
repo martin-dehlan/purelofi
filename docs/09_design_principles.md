@@ -15,8 +15,11 @@ MANDATORY:
 ```
 
 > **Pixel-art clarification for PureLofi:** the retro/pixel *vibe* comes from the
-> **assets** — the looping scene MP4s and the pixel PNG icons (play/pause,
-> camera, scene-switch) from PixelLab. It does **not** come from Flutter styling.
+> **assets** — the sprite layers of a scene (see [`docs/12`](12_scene_assets.md))
+> and the pixel PNG icons (play/pause, camera, scene-switch) from PixelLab.
+> What keeps them crisp is integer scaling: the renderer picks a whole-number
+> scale factor and draws with `FilterQuality.none`, so one authored pixel is
+> always an exact block of screen pixels. It does **not** come from Flutter styling.
 > The Flutter chrome (overlays, the BTS modal, text) stays clean and flat per
 > the rules below. Do not fake "pixel art" with gradients, glows, or drop
 > shadows in Dart — put that character in the PNG/MP4 assets instead.

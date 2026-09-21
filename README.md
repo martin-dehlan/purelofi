@@ -31,7 +31,14 @@ MVP (`v0.1.0`). The player works end to end:
 Offline caching, favorites and a paid tier are Phase 2.
 
 The pixel icons in `assets/icons/` are placeholders — plain white glyphs, to
-be replaced with the real PixelLab art.
+be replaced with the real PixelLab art. Scenes are authored as sprite layers;
+[`docs/12`](docs/12_scene_assets.md) is the authoring contract, and
+
+```bash
+dart run tool/upload_scene.dart --scene rainy_room --dir ~/Desktop/rainy_room
+```
+
+turns a folder into a playable scene.
 
 ## Stack
 
@@ -99,6 +106,7 @@ Supabase client or a repository directly — it goes through the controllers.
 | [`09`](docs/09_design_principles.md) | Anti-AI-slop: theme colors, no gradients |
 | [`10`](docs/10_testing_rules.md) | The test pyramid and the mocking approach |
 | [`11`](docs/11_versioning_commits.md) | Semver, Conventional Commits, branch and PR flow |
+| [`12`](docs/12_scene_assets.md) | Scene sprite layers: canvas, naming, `scene.json`, upload |
 
 [`docs/SPEC.md`](docs/SPEC.md) defines the app scope and the intentional MVP
 deviations — **no auth, no Drift, no paywall**. Where `SPEC.md` and a numbered
