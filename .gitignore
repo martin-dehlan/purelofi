@@ -56,3 +56,6 @@ app.*.map.json
 # Tooling
 .fvm/
 coverage/
+
+# Editors
+.vscode/
