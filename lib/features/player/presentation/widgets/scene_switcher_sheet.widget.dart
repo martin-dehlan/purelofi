@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/empty_state.widget.dart';
 import '../../../../common/widgets/error_state.widget.dart';
 import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/scene.controller.dart';
@@ -44,6 +45,13 @@ class _SceneList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final SceneEntity? active = ref.watch(activeSceneControllerProvider);
+
+    if (scenes.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: context.spaceXl),
+        child: const EmptyState(message: 'No scenes to switch to yet.'),
+      );
+    }
 
     return ListView.builder(
       shrinkWrap: true,
