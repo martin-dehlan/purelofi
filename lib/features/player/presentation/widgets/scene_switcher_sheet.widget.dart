@@ -109,7 +109,8 @@ class _SceneThumbnail extends StatelessWidget {
         url,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.none,
-        errorBuilder: (_, _, _) => ColoredBox(color: cs.surfaceContainerHighest),
+        errorBuilder: (_, _, _) =>
+            ColoredBox(color: cs.surfaceContainerHighest),
       ),
     );
   }

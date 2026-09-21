@@ -65,9 +65,7 @@ void main() {
     });
 
     test('surfaces a repository failure as an error state', () async {
-      when(
-        () => mockRepo.getScenes(),
-      ).thenThrow(const AppError.network());
+      when(() => mockRepo.getScenes()).thenThrow(const AppError.network());
       container = makeContainer();
 
       final AsyncValue<List<SceneEntity>> state = container.read(

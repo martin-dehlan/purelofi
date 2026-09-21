@@ -51,14 +51,17 @@ void main() {
   });
 
   group('playNext', () {
-    test('hands a track to the audio player and records it as current', () async {
-      container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+    test(
+      'hands a track to the audio player and records it as current',
+      () async {
+        container = await makeContainer(<TrackEntity>[makeTrack('a')]);
 
-      await container.read(playerControllerProvider.notifier).playNext();
+        await container.read(playerControllerProvider.notifier).playNext();
 
-      expect(fakeAudio.playedTracks.single.id, 'a');
-      expect(container.read(playerControllerProvider).currentTrack?.id, 'a');
-    });
+        expect(fakeAudio.playedTracks.single.id, 'a');
+        expect(container.read(playerControllerProvider).currentTrack?.id, 'a');
+      },
+    );
 
     test('does nothing when there are no tracks', () async {
       container = await makeContainer(<TrackEntity>[]);
@@ -205,10 +208,7 @@ void main() {
     test('loads tracks from the repository', () async {
       container = await makeContainer(<TrackEntity>[makeTrack('a')]);
 
-      expect(
-        container.read(trackListControllerProvider).value?.single.id,
-        'a',
-      );
+      expect(container.read(trackListControllerProvider).value?.single.id, 'a');
     });
 
     test('terminates instead of hanging in loading', () async {

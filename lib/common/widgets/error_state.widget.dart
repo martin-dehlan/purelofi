@@ -30,10 +30,7 @@ class ErrorState extends StatelessWidget {
               Text(
                 appError.userMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: context.fontM,
-                ),
+                style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
               ),
               if (onRetry != null) ...<Widget>[
                 SizedBox(height: context.spaceM),
