@@ -26,7 +26,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'track.entity.freezed.dart';
 
 @freezed
-class TrackEntity with _$TrackEntity {
+abstract class TrackEntity with _$TrackEntity {
   const factory TrackEntity({
     required String id,
     required String title,
@@ -43,7 +43,7 @@ class TrackEntity with _$TrackEntity {
 part 'scene.entity.freezed.dart';
 
 @freezed
-class SceneEntity with _$SceneEntity {
+abstract class SceneEntity with _$SceneEntity {
   const factory SceneEntity({
     required String id,
     required String title,
@@ -72,7 +72,7 @@ part 'track.model.freezed.dart';
 part 'track.model.g.dart';
 
 @freezed
-class TrackModel with _$TrackModel {
+abstract class TrackModel with _$TrackModel {
   const factory TrackModel({
     required String id,
     required String title,
@@ -136,6 +136,17 @@ class PlayerController extends _$PlayerController {
 
 ---
 
+## Freezed 3 syntax
+
+The app runs Freezed 3, which changes two things from older snippets:
+
+- **Classes must be `abstract`** (or `sealed` for a union such as `AppError`).
+  A plain `@freezed class X with _$X` no longer compiles.
+- **`when` / `map` are gone.** Use Dart pattern matching over the union's
+  subclasses instead — see `AppError.userMessage` in `docs/07`.
+
+---
+
 ## Drift — Phase 2 only
 
 See `docs/04`. Do not add Drift parts/annotations in the MVP.
@@ -145,15 +156,18 @@ See `docs/04`. Do not add Drift parts/annotations in the MVP.
 ## Build Runner Commands
 
 ```bash
-# Full build (clean + regenerate everything)
-dart run build_runner build --delete-conflicting-outputs
+# Full build
+dart run build_runner build
 
 # Watch mode (auto-rebuild on save)
-dart run build_runner watch --delete-conflicting-outputs
+dart run build_runner watch
 
 # Clean generated files
 dart run build_runner clean
 ```
+
+> `--delete-conflicting-outputs` was removed in `build_runner` 2.15. Passing it
+> is harmless but pointless — conflicting outputs are now deleted anyway.
 
 ---
 
@@ -163,7 +177,9 @@ dart run build_runner clean
 |---|---|---|
 | `Missing 'part' directive` | Forgot `part 'file.g.dart'` | Add the correct `part` line |
 | `_$ClassName not found` | Build not run yet | Run `build_runner build` |
-| `Duplicate output` | Stale `.g.dart` files | Run with `--delete-conflicting-outputs` |
+| `Duplicate output` | Stale generated files | `dart run build_runner clean`, then build |
+| `X must be abstract` | Freezed 3 syntax | Add `abstract` (or `sealed` for a union) |
+| `when isn't defined` | Freezed 3 removed it | Use a `switch` over the subclasses |
 | `fromJson not generated` | Missing `fromJson` factory on `@freezed` class | Add the factory |
 | `@riverpod on non-class` | Using class syntax for simple provider | Use function form |
 
