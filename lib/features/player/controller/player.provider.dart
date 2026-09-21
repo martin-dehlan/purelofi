@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/config/supabase.provider.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
+import '../data/sprite_loader.service.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
 import '../domain/track.entity.dart';
@@ -53,3 +54,14 @@ BtsVideoBuilder? btsVideoBuilder(Ref ref) => null;
 @riverpod
 Future<TrackEntity?> trackDetail(Ref ref, String trackId) =>
     ref.watch(contentRepositoryProvider).getTrackById(trackId);
+
+/// Loads the sprite strips the scene renderer draws.
+///
+/// Overridden in widget tests with a loader that returns generated images,
+/// so no test touches the network.
+@Riverpod(keepAlive: true)
+SpriteLoader spriteLoader(Ref ref) {
+  final SpriteLoader loader = NetworkSpriteLoader();
+  ref.onDispose(loader.dispose);
+  return loader;
+}
