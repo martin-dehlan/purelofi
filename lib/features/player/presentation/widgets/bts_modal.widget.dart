@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/analytics/analytics.provider.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
@@ -70,6 +73,8 @@ Future<void> showBtsModal(
 ) async {
   final PlayerController player = ref.read(playerControllerProvider.notifier);
   final bool wasPlaying = ref.read(playerControllerProvider).isPlaying;
+
+  unawaited(ref.read(analyticsServiceProvider).btsOpened(track.id));
 
   if (wasPlaying) await player.togglePlayPause();
 

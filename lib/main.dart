@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
+import 'common/analytics/analytics.provider.dart';
+import 'common/analytics/analytics.service.dart';
 import 'common/config/env.dart';
 import 'features/player/controller/player.provider.dart';
 import 'features/player/data/audio_player.service.impl.dart';
@@ -31,9 +33,16 @@ Future<void> main() async {
     ),
   );
 
+  // No key in .env means analytics stays off rather than crashing the app.
+  final AnalyticsService analytics = await PostHogAnalyticsService.create();
+  await analytics.appOpened();
+
   runApp(
     ProviderScope(
-      overrides: [audioPlayerServiceProvider.overrideWithValue(audioHandler)],
+      overrides: [
+        audioPlayerServiceProvider.overrideWithValue(audioHandler),
+        analyticsServiceProvider.overrideWithValue(analytics),
+      ],
       child: const PureLofiApp(),
     ),
   );

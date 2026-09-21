@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../common/analytics/analytics.provider.dart';
 
 import '../domain/scene.entity.dart';
 import 'player.provider.dart';
@@ -37,5 +41,8 @@ class ActiveSceneController extends _$ActiveSceneController {
     );
   }
 
-  void switchTo(SceneEntity scene) => state = scene;
+  void switchTo(SceneEntity scene) {
+    state = scene;
+    unawaited(ref.read(analyticsServiceProvider).sceneSwitched(scene.id));
+  }
 }
