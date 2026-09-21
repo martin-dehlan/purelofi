@@ -10,7 +10,9 @@ import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../data/sprite_loader.service.dart';
+import '../../domain/playback_clock.dart';
 import '../../domain/scene.entity.dart';
+import '../../domain/scene_event.scheduler.dart';
 import '../../domain/scene_layer.entity.dart';
 
 /// The smallest whole-number scale that still covers [viewport].
@@ -72,19 +74,16 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   final Map<String, ui.Image> _sprites = <String, ui.Image>{};
 
-  Duration _elapsed = Duration.zero;
+  late SceneEventScheduler _events;
 
-  /// A second clock that only runs while audio plays. Layers marked
-  /// `only_while_playing` follow this one — the tape reels stop with the
-  /// music while the rain keeps falling.
-  Duration _playingElapsed = Duration.zero;
-  Duration _lastTick = Duration.zero;
+  final PlaybackClock _clock = PlaybackClock();
 
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    _events = SceneEventScheduler(layers: widget.scene.layers);
     _ticker = createTicker(_onTick)..start();
     unawaited(_loadSprites());
   }
@@ -94,6 +93,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.scene.id != widget.scene.id) {
       _sprites.clear();
+      _events = SceneEventScheduler(layers: widget.scene.layers);
       _loading = true;
       unawaited(_loadSprites());
     }
@@ -125,12 +125,8 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   }
 
   void _onTick(Duration elapsed) {
-    final Duration delta = elapsed - _lastTick;
-    _lastTick = elapsed;
-    _elapsed = elapsed;
-
-    if (_isPlaying) _playingElapsed += delta;
-
+    _clock.tick(elapsed, isPlaying: _isPlaying);
+    _events.update(elapsed);
     _frameTick.value++;
   }
 
@@ -148,8 +144,9 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
         painter: _SceneLayersPainter(
           scene: widget.scene,
           sprites: _sprites,
-          elapsed: () => _elapsed,
-          playingElapsed: () => _playingElapsed,
+          events: _events,
+          elapsed: () => _clock.sceneTime,
+          playingElapsed: () => _clock.playingTime,
           driftPeriod: _driftPeriod,
           devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
           repaint: _frameTick,
@@ -163,6 +160,7 @@ class _SceneLayersPainter extends CustomPainter {
   _SceneLayersPainter({
     required this.scene,
     required this.sprites,
+    required this.events,
     required this.elapsed,
     required this.playingElapsed,
     required this.driftPeriod,
@@ -172,6 +170,7 @@ class _SceneLayersPainter extends CustomPainter {
 
   final SceneEntity scene;
   final Map<String, ui.Image> sprites;
+  final SceneEventScheduler events;
   final Duration Function() elapsed;
   final Duration Function() playingElapsed;
   final Duration driftPeriod;
@@ -273,8 +272,8 @@ class _SceneLayersPainter extends CustomPainter {
 
   /// Which frame of the strip is showing right now.
   int _frameIndexFor(SceneLayerEntity layer) {
-    // Event layers rest on their first frame until #34 gives them triggers.
-    if (layer.isEvent) return 0;
+    // Rare events keep their own schedule: resting on frame 0 between turns.
+    if (layer.isEvent) return events.frameFor(layer, elapsed());
 
     return frameIndexAt(
       clock: layer.onlyWhilePlaying ? playingElapsed() : elapsed(),
