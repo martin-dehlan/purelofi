@@ -6,7 +6,9 @@ import '../../../../common/utils/app_assets.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/pixel_icon.widget.dart';
 import '../../controller/player.controller.dart';
+import '../../controller/track.controller.dart';
 import '../../domain/player.state.dart';
+import '../../domain/track.entity.dart';
 import 'bts_button.widget.dart';
 import 'scene_switcher.widget.dart';
 
@@ -19,6 +21,13 @@ class PlayerControls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final PlayerState state = ref.watch(playerControllerProvider);
+    final AsyncValue<List<TrackEntity>> tracks = ref.watch(
+      trackListControllerProvider,
+    );
+
+    // A play button that cannot play anything is worse than no button: it
+    // looks broken. Say what is actually going on instead.
+    final bool hasNoTracks = tracks.hasValue && tracks.value!.isEmpty;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -30,7 +39,17 @@ class PlayerControls extends ConsumerWidget {
             style: TextStyle(color: cs.onSurface, fontSize: context.fontL),
           ),
         SizedBox(height: context.spaceL),
-        _PlayPauseButton(isPlaying: state.isPlaying),
+        if (hasNoTracks)
+          Text(
+            'No tracks yet.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: cs.onSurfaceVariant,
+              fontSize: context.fontM,
+            ),
+          )
+        else
+          _PlayPauseButton(isPlaying: state.isPlaying),
         SizedBox(height: context.spaceL),
         Row(
           mainAxisSize: MainAxisSize.min,

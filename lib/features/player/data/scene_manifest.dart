@@ -148,11 +148,9 @@ class SceneManifest {
         (json['layers'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
     final List<SpriteFileName> files =
-        spriteFileNames.map(SpriteFileName.parse).toList()
-          ..sort(
-            (SpriteFileName a, SpriteFileName b) =>
-                a.zIndex.compareTo(b.zIndex),
-          );
+        spriteFileNames.map(SpriteFileName.parse).toList()..sort(
+          (SpriteFileName a, SpriteFileName b) => a.zIndex.compareTo(b.zIndex),
+        );
 
     final Set<int> seen = <int>{};
     for (final SpriteFileName file in files) {

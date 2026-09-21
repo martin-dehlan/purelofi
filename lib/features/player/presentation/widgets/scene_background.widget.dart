@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/widgets/empty_state.widget.dart';
 import '../../../../common/widgets/error_state.widget.dart';
 import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/player.provider.dart';
@@ -41,9 +42,9 @@ class _ActiveScene extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final SceneEntity? scene = ref.watch(activeSceneControllerProvider);
     if (scene == null) {
-      // The content loaded but no scene is active — nothing to show but the
-      // surface behind the player chrome.
-      return ColoredBox(color: Theme.of(context).colorScheme.surface);
+      // Loaded fine, but there is no active scene. Say so: an unexplained
+      // black screen is indistinguishable from a broken app.
+      return const EmptyState(message: 'No scenes yet.');
     }
 
     // A scene with sprite layers is drawn; one without still plays video.
