@@ -273,6 +273,9 @@ Future<void> _uploadSprite(_Env env, String path, File file) async {
       'Content-Type': 'image/png',
       // Re-uploading the same scene replaces its sprites.
       'x-upsert': 'true',
+      // A replaced sprite keeps its URL, so without this the CDN would keep
+      // serving the old one for an hour and nobody would see the change.
+      'cache-control': 'max-age=60',
     },
     body: file.readAsBytesSync(),
   );
