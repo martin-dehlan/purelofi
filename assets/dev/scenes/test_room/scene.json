@@ -1,0 +1,11 @@
+{
+  "title": "Test Room (dev)",
+  "canvas": { "width": 320, "height": 568 },
+  "layers": {
+    "L00_sky":     { "parallax": 0.2 },
+    "L01_stars":   { "fps": 1.5, "tiles": true, "parallax": 0.35 },
+    "L02_skyline": { "offset": [0, 250], "parallax": 0.6 },
+    "L03_rain":    { "fps": 12, "tiles": true, "parallax": 1.0 },
+    "L04_reels":   { "fps": 10, "offset": [144, 470], "only_while_playing": true }
+  }
+}

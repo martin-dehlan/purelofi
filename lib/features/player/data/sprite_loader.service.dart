@@ -15,6 +15,9 @@ abstract class SpriteLoader {
 
 /// Loads through Flutter's own image pipeline, which gives us its cache for
 /// free — the same sprite used by two scenes is fetched once.
+///
+/// Takes a URL for real scenes and an asset path for the bundled development
+/// scene, so both go through exactly the same renderer.
 class NetworkSpriteLoader implements SpriteLoader {
   final Map<String, Future<ui.Image>> _inFlight = <String, Future<ui.Image>>{};
 
@@ -25,9 +28,10 @@ class NetworkSpriteLoader implements SpriteLoader {
 
   Future<ui.Image> _resolve(String url) {
     final Completer<ui.Image> completer = Completer<ui.Image>();
-    final ImageStream stream = NetworkImage(
-      url,
-    ).resolve(ImageConfiguration.empty);
+    final ImageProvider<Object> provider = url.startsWith('http')
+        ? NetworkImage(url)
+        : AssetImage(url);
+    final ImageStream stream = provider.resolve(ImageConfiguration.empty);
 
     late final ImageStreamListener listener;
     listener = ImageStreamListener(

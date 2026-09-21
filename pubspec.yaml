@@ -79,6 +79,8 @@ flutter:
   assets:
     - .env
     - assets/icons/
+    # Development placeholder scene; see lib/features/player/dev/.
+    - assets/dev/scenes/test_room/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

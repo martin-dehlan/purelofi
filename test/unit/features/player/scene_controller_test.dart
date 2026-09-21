@@ -68,10 +68,16 @@ void main() {
       when(() => mockRepo.getScenes()).thenThrow(const AppError.network());
       container = makeContainer();
 
+      // build() is async now, so the failure surfaces a tick later rather
+      // than on the first read.
+      await expectLater(
+        container.read(sceneListControllerProvider.future),
+        throwsA(isA<NetworkError>()),
+      );
+
       final AsyncValue<List<SceneEntity>> state = container.read(
         sceneListControllerProvider,
       );
-
       expect(state.hasError, isTrue);
       expect(state.error, isA<NetworkError>());
     });
