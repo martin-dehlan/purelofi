@@ -186,19 +186,89 @@ void main() {
       hideWhenPaused: hideWhenPaused,
     );
 
-    test('an ordinary layer is drawn either way', () {
-      expect(layerIsVisible(layer(), isPlaying: true), isTrue);
-      expect(layerIsVisible(layer(), isPlaying: false), isTrue);
+    test('an ordinary layer is drawn fully, whatever the lamp does', () {
+      expect(layerOpacity(layer(), fade: 0), 1);
+      expect(layerOpacity(layer(), fade: 0.5), 1);
     });
 
-    test('a layer tied to the music disappears when it stops', () {
+    test('a layer tied to the music follows the fade', () {
       final SceneLayerEntity lamp = layer(hideWhenPaused: true);
 
-      expect(layerIsVisible(lamp, isPlaying: true), isTrue);
+      expect(layerOpacity(lamp, fade: 0), 0);
+      expect(layerOpacity(lamp, fade: 0.4), 0.4);
+      expect(layerOpacity(lamp, fade: 1), 1);
+    });
+  });
+
+  group('stepFade', () {
+    const Duration full = Duration(seconds: 2);
+
+    test('climbs towards lit while the music plays', () {
+      final double after = stepFade(
+        0,
+        isPlaying: true,
+        delta: const Duration(milliseconds: 500),
+        duration: full,
+      );
+
+      expect(after, closeTo(0.25, 0.001));
+    });
+
+    test('takes the full duration to come up', () {
+      double fade = 0;
+      for (int i = 0; i < 8; i++) {
+        fade = stepFade(
+          fade,
+          isPlaying: true,
+          delta: const Duration(milliseconds: 250),
+          duration: full,
+        );
+      }
+
+      expect(fade, 1);
+    });
+
+    test('falls back towards dark when the music stops', () {
+      final double after = stepFade(
+        1,
+        isPlaying: false,
+        delta: const Duration(milliseconds: 500),
+        duration: full,
+      );
+
+      expect(after, closeTo(0.75, 0.001));
+    });
+
+    test('never overshoots either end', () {
       expect(
-        layerIsVisible(lamp, isPlaying: false),
-        isFalse,
-        reason: 'the lamp goes out when the music does',
+        stepFade(
+          0.9,
+          isPlaying: true,
+          delta: const Duration(seconds: 5),
+          duration: full,
+        ),
+        1,
+      );
+      expect(
+        stepFade(
+          0.1,
+          isPlaying: false,
+          delta: const Duration(seconds: 5),
+          duration: full,
+        ),
+        0,
+      );
+    });
+
+    test('a zero duration snaps, rather than dividing by zero', () {
+      expect(
+        stepFade(
+          0,
+          isPlaying: true,
+          delta: const Duration(milliseconds: 16),
+          duration: Duration.zero,
+        ),
+        1,
       );
     });
   });

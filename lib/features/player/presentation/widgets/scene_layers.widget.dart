@@ -56,13 +56,35 @@ int frameIndexAt({
   return frame % frameCount;
 }
 
-/// Whether [layer] is drawn at all right now.
+/// How far a `hide_when_paused` layer has faded in, from 0 to 1.
 ///
-/// A layer marked `hide_when_paused` belongs to the music: the lit lamp and
-/// its pool of light are their own layer, so the room goes dark when the
-/// audio stops.
-bool layerIsVisible(SceneLayerEntity layer, {required bool isPlaying}) =>
-    isPlaying || !layer.hideWhenPaused;
+/// A lamp that snaps on reads as a bug; one that takes a moment reads as a
+/// lamp. [duration] is how long the full fade takes.
+double stepFade(
+  double current, {
+  required bool isPlaying,
+  required Duration delta,
+  required Duration duration,
+}) {
+  if (duration <= Duration.zero) return isPlaying ? 1 : 0;
+
+  final double step = delta.inMicroseconds / duration.inMicroseconds;
+  final double target = isPlaying ? 1 : 0;
+
+  if (step <= 0) return current.clamp(0, 1);
+
+  final double moved = current + (target > current ? step : -step);
+
+  return (target > current
+          ? (moved > target ? target : moved)
+          : (moved < target ? target : moved))
+      .clamp(0, 1)
+      .toDouble();
+}
+
+/// How opaque [layer] should be drawn, given how far the lamp has faded.
+double layerOpacity(SceneLayerEntity layer, {required double fade}) =>
+    layer.hideWhenPaused ? fade : 1;
 
 /// Draws a scene as a stack of pixel-art sprite layers.
 ///
@@ -96,6 +118,12 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   late SceneEventScheduler _events;
 
   final PlaybackClock _clock = PlaybackClock();
+
+  /// How long the lamp takes to come up or go down.
+  static const Duration _lampFade = Duration(milliseconds: 2200);
+
+  double _fade = 0;
+  Duration _lastFadeTick = Duration.zero;
 
   bool _loading = true;
 
@@ -144,6 +172,17 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   }
 
   void _onTick(Duration elapsed) {
+    final Duration delta = elapsed - _lastFadeTick;
+    _lastFadeTick = elapsed;
+    if (delta > Duration.zero) {
+      _fade = stepFade(
+        _fade,
+        isPlaying: _isPlaying,
+        delta: delta,
+        duration: _lampFade,
+      );
+    }
+
     _clock.tick(elapsed, isPlaying: _isPlaying);
     _events.update(elapsed);
     _frameTick.value++;
@@ -164,7 +203,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
           scene: widget.scene,
           sprites: _sprites,
           events: _events,
-          isPlaying: () => _isPlaying,
+          fade: () => _fade,
           elapsed: () => _clock.sceneTime,
           playingElapsed: () => _clock.playingTime,
           driftPeriod: _driftPeriod,
@@ -181,7 +220,7 @@ class _SceneLayersPainter extends CustomPainter {
     required this.scene,
     required this.sprites,
     required this.events,
-    required this.isPlaying,
+    required this.fade,
     required this.elapsed,
     required this.playingElapsed,
     required this.driftPeriod,
@@ -192,7 +231,7 @@ class _SceneLayersPainter extends CustomPainter {
   final SceneEntity scene;
   final Map<String, ui.Image> sprites;
   final SceneEventScheduler events;
-  final bool Function() isPlaying;
+  final double Function() fade;
   final Duration Function() elapsed;
   final Duration Function() playingElapsed;
   final Duration driftPeriod;
@@ -201,6 +240,15 @@ class _SceneLayersPainter extends CustomPainter {
   static final Paint _pixelPaint = Paint()
     ..filterQuality = FilterQuality.none
     ..isAntiAlias = false;
+
+  /// Same nearest-neighbour paint, dimmed — used while the lamp fades.
+  static Paint _fadedPaint(double opacity) => Paint()
+    ..filterQuality = FilterQuality.none
+    ..isAntiAlias = false
+    ..colorFilter = ColorFilter.mode(
+      Color.fromRGBO(255, 255, 255, opacity),
+      BlendMode.modulate,
+    );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -220,10 +268,11 @@ class _SceneLayersPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
 
-    final bool playing = isPlaying();
+    final double lampFade = fade();
 
     for (final SceneLayerEntity layer in scene.layers) {
-      if (!layerIsVisible(layer, isPlaying: playing)) continue;
+      final double opacity = layerOpacity(layer, fade: lampFade);
+      if (opacity <= 0.01) continue;
 
       final ui.Image? sprite = sprites[layer.spriteUrl];
       if (sprite == null) continue;
@@ -237,6 +286,7 @@ class _SceneLayersPainter extends CustomPainter {
         originX: originX,
         originY: originY,
         drift: drift,
+        opacity: opacity,
       );
     }
 
@@ -252,6 +302,7 @@ class _SceneLayersPainter extends CustomPainter {
     required double originX,
     required double originY,
     required double drift,
+    required double opacity,
   }) {
     final double frameWidth = sprite.width / layer.frameCount;
     final double frameHeight = sprite.height.toDouble();
@@ -272,12 +323,14 @@ class _SceneLayersPainter extends CustomPainter {
     final double width = frameWidth * scale;
     final double height = frameHeight * scale;
 
+    final Paint paint = opacity >= 1 ? _pixelPaint : _fadedPaint(opacity);
+
     if (!layer.tiles) {
       canvas.drawImageRect(
         sprite,
         src,
         Rect.fromLTWH(left, top, width, height),
-        _pixelPaint,
+        paint,
       );
       return;
     }
@@ -290,7 +343,7 @@ class _SceneLayersPainter extends CustomPainter {
           sprite,
           src,
           Rect.fromLTWH(_snap(x), _snap(y), width, height),
-          _pixelPaint,
+          paint,
         );
       }
     }
