@@ -28,6 +28,10 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// music, the rain does not.
     @Default(false) bool onlyWhilePlaying,
 
+    /// Not drawn at all while the audio is paused. This is how a scene
+    /// lights up when playback starts.
+    @Default(false) bool hideWhenPaused,
+
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
     int? eventIntervalMaxSeconds,

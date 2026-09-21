@@ -201,4 +201,28 @@ void main() {
       expect(manifest.canvasHeight, 696);
     });
   });
+
+  group('hide_when_paused', () {
+    test('is read from scene.json', () {
+      const String json = '''
+{ "layers": { "L11_lamp": { "hide_when_paused": true } } }
+''';
+
+      final SceneManifest manifest = SceneManifest.parse(
+        sceneJson: json,
+        spriteFileNames: <String>['L11_lamp_1f.png'],
+      );
+
+      expect(manifest.layers.single.$2.hideWhenPaused, isTrue);
+    });
+
+    test('defaults to false', () {
+      final SceneManifest manifest = SceneManifest.parse(
+        sceneJson: '{ "layers": { "L00_a": {} } }',
+        spriteFileNames: <String>['L00_a_1f.png'],
+      );
+
+      expect(manifest.layers.single.$2.hideWhenPaused, isFalse);
+    });
+  });
 }

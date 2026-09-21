@@ -158,7 +158,8 @@ Future<void> _run(_Args args) async {
       '${frameWidth}x$height x${file.frameCount}'
       '${settings.fps > 0 ? ' @${settings.fps}fps' : ''}'
       '${settings.tiles ? ' tiling' : ''}'
-      '${settings.onlyWhilePlaying ? ' while-playing' : ''}',
+      '${settings.onlyWhilePlaying ? ' while-playing' : ''}'
+      '${settings.hideWhenPaused ? ' hidden-when-paused' : ''}',
     );
   }
 

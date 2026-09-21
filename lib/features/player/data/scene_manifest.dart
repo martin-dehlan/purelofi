@@ -75,6 +75,7 @@ class LayerManifest {
     this.parallax = 1,
     this.tiles = false,
     this.onlyWhilePlaying = false,
+    this.hideWhenPaused = false,
     this.eventIntervalMinSeconds,
     this.eventIntervalMaxSeconds,
   });
@@ -85,6 +86,7 @@ class LayerManifest {
   final double parallax;
   final bool tiles;
   final bool onlyWhilePlaying;
+  final bool hideWhenPaused;
   final int? eventIntervalMinSeconds;
   final int? eventIntervalMaxSeconds;
 
@@ -109,6 +111,7 @@ class LayerManifest {
       parallax: (json['parallax'] as num?)?.toDouble() ?? 1,
       tiles: json['tiles'] as bool? ?? false,
       onlyWhilePlaying: json['only_while_playing'] as bool? ?? false,
+      hideWhenPaused: json['hide_when_paused'] as bool? ?? false,
       eventIntervalMinSeconds: event == null ? null : (event[0] as num).toInt(),
       eventIntervalMaxSeconds: event == null ? null : (event[1] as num).toInt(),
     );

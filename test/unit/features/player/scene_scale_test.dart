@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_layers.widget.dart';
 
 void main() {
@@ -174,6 +175,31 @@ void main() {
 
       expect(frameIndexAt(clock: paused, fps: 8, frameCount: 4), 2);
       expect(frameIndexAt(clock: paused, fps: 8, frameCount: 4), 2);
+    });
+  });
+
+  group('layerIsVisible', () {
+    SceneLayerEntity layer({bool hideWhenPaused = false}) => SceneLayerEntity(
+      id: 'l',
+      zIndex: 1,
+      spriteUrl: 'https://example.com/l.png',
+      hideWhenPaused: hideWhenPaused,
+    );
+
+    test('an ordinary layer is drawn either way', () {
+      expect(layerIsVisible(layer(), isPlaying: true), isTrue);
+      expect(layerIsVisible(layer(), isPlaying: false), isTrue);
+    });
+
+    test('a layer tied to the music disappears when it stops', () {
+      final SceneLayerEntity lamp = layer(hideWhenPaused: true);
+
+      expect(layerIsVisible(lamp, isPlaying: true), isTrue);
+      expect(
+        layerIsVisible(lamp, isPlaying: false),
+        isFalse,
+        reason: 'the lamp goes out when the music does',
+      );
     });
   });
 }

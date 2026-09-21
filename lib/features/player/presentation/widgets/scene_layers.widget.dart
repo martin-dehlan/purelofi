@@ -56,6 +56,14 @@ int frameIndexAt({
   return frame % frameCount;
 }
 
+/// Whether [layer] is drawn at all right now.
+///
+/// A layer marked `hide_when_paused` belongs to the music: the lit lamp and
+/// its pool of light are their own layer, so the room goes dark when the
+/// audio stops.
+bool layerIsVisible(SceneLayerEntity layer, {required bool isPlaying}) =>
+    isPlaying || !layer.hideWhenPaused;
+
 /// Draws a scene as a stack of pixel-art sprite layers.
 ///
 /// One ticker drives every layer; one painter draws them all. That is cheaper
@@ -156,6 +164,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
           scene: widget.scene,
           sprites: _sprites,
           events: _events,
+          isPlaying: () => _isPlaying,
           elapsed: () => _clock.sceneTime,
           playingElapsed: () => _clock.playingTime,
           driftPeriod: _driftPeriod,
@@ -172,6 +181,7 @@ class _SceneLayersPainter extends CustomPainter {
     required this.scene,
     required this.sprites,
     required this.events,
+    required this.isPlaying,
     required this.elapsed,
     required this.playingElapsed,
     required this.driftPeriod,
@@ -182,6 +192,7 @@ class _SceneLayersPainter extends CustomPainter {
   final SceneEntity scene;
   final Map<String, ui.Image> sprites;
   final SceneEventScheduler events;
+  final bool Function() isPlaying;
   final Duration Function() elapsed;
   final Duration Function() playingElapsed;
   final Duration driftPeriod;
@@ -209,7 +220,11 @@ class _SceneLayersPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
 
+    final bool playing = isPlaying();
+
     for (final SceneLayerEntity layer in scene.layers) {
+      if (!layerIsVisible(layer, isPlaying: playing)) continue;
+
       final ui.Image? sprite = sprites[layer.spriteUrl];
       if (sprite == null) continue;
 
