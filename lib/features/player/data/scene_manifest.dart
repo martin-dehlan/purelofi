@@ -202,7 +202,7 @@ class SceneManifest {
     return SceneManifest(
       title: json['title'] as String? ?? 'Untitled scene',
       canvasWidth: (canvas['width'] as num?)?.toInt() ?? 320,
-      canvasHeight: (canvas['height'] as num?)?.toInt() ?? 568,
+      canvasHeight: (canvas['height'] as num?)?.toInt() ?? 696,
       layers: layers,
     );
   }

@@ -17,7 +17,7 @@ abstract class SceneEntity with _$SceneEntity {
     /// The authoring grid the layers are drawn on. The renderer scales from
     /// it by an integer factor, which is what keeps the pixels square.
     @Default(320) int canvasWidth,
-    @Default(568) int canvasHeight,
+    @Default(696) int canvasHeight,
 
     /// Sprite layers, back to front. Empty means this is still a video
     /// scene and [videoUrl] is what plays.

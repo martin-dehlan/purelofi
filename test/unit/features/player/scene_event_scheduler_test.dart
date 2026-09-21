@@ -186,7 +186,10 @@ void main() {
       final SceneLayerEntity waiting = scheduler.runningLayerId == 'car'
           ? cat
           : car;
-      expect(scheduler.frameFor(waiting, const Duration(milliseconds: 41000)), 0);
+      expect(
+        scheduler.frameFor(waiting, const Duration(milliseconds: 41000)),
+        0,
+      );
     });
   });
 
@@ -200,7 +203,11 @@ void main() {
         );
 
         scheduler.update(const Duration(seconds: 39));
-        expect(scheduler.runningLayerId, isNull, reason: 'seed $seed too early');
+        expect(
+          scheduler.runningLayerId,
+          isNull,
+          reason: 'seed $seed too early',
+        );
 
         scheduler.update(const Duration(seconds: 90));
         expect(
