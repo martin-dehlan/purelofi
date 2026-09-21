@@ -10,13 +10,15 @@ class ContentApi {
 
   static const String scenesTable = 'scenes';
   static const String tracksTable = 'tracks';
+  static const String layersTable = 'scene_layers';
 
   final SupabaseClient _client;
 
   Future<List<SceneModel>> fetchScenes() async {
+    // Layers come back embedded, so a scene and its stack are one request.
     final List<Map<String, dynamic>> rows = await _client
         .from(scenesTable)
-        .select()
+        .select('*, $layersTable(*)')
         .eq('is_active', true)
         .order('sort_order');
 
