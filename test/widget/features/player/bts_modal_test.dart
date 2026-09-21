@@ -5,6 +5,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/common/utils/app_assets.dart';
+import 'package:purelofi/common/widgets/pixel_icon.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/bts_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/bts_modal.widget.dart';
 
@@ -91,14 +93,41 @@ void main() {
   });
 
   group('a track without footage', () {
-    testWidgets('says so instead of showing an empty player', (tester) async {
+    testWidgets('shows no camera at all', (tester) async {
       when(() => mockRepo.getTracks()).thenAnswer(
         (_) async => <TrackEntity>[makeTrack('a', title: 'No Clip Yet')],
       );
 
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(BtsButton));
+
+      expect(
+        find.byType(BtsButton),
+        findsOneWidget,
+        reason: 'the widget is in the tree',
+      );
+      expect(
+        find.byWidgetPredicate(
+          (Widget w) => w is PixelIcon && w.asset == AppAssets.cameraIcon,
+        ),
+        findsNothing,
+        reason:
+            'but no camera is drawn — one that opens no clip is a dead '
+            'button',
+      );
+    });
+
+    testWidgets('a deep link to it still explains itself', (tester) async {
+      // Nothing stops someone opening purelofi://app/track/<id> for a track
+      // that was never filmed, so the modal keeps its message.
+      when(
+        () => mockRepo.getTrackById('a'),
+      ).thenAnswer((_) async => makeTrack('a', title: 'No Clip Yet'));
+
+      await tester.pumpRoutedApp(
+        initialRoute: '/track/a',
+        overrides: overrides(),
+      );
       await tester.pumpAndSettle();
 
       expect(

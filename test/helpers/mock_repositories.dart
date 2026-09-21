@@ -14,13 +14,17 @@ class MockContentApi extends Mock implements ContentApi {}
 
 final DateTime testCreatedAt = DateTime.utc(2026);
 
-TrackEntity makeTrack(String id, {String title = 'Rainy Nights'}) =>
-    TrackEntity(
-      id: id,
-      title: title,
-      audioUrl: 'https://example.com/$id.mp3',
-      createdAt: testCreatedAt,
-    );
+TrackEntity makeTrack(
+  String id, {
+  String title = 'Rainy Nights',
+  String? btsVideoUrl,
+}) => TrackEntity(
+  id: id,
+  title: title,
+  audioUrl: 'https://example.com/$id.mp3',
+  btsVideoUrl: btsVideoUrl,
+  createdAt: testCreatedAt,
+);
 
 SceneEntity makeScene(String id, {String title = 'Rainy Room'}) => SceneEntity(
   id: id,

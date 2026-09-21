@@ -17,7 +17,12 @@ class BtsButton extends ConsumerWidget {
     final TrackEntity? track = ref.watch(
       playerControllerProvider.select((state) => state.currentTrack),
     );
-    if (track == null) return const SizedBox.shrink();
+    // No track, or a track nobody filmed: a camera that opens nothing reads
+    // as a broken button.
+    final String? clip = track?.btsVideoUrl;
+    if (track == null || clip == null || clip.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Semantics(
       button: true,
