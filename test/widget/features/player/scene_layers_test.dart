@@ -33,7 +33,13 @@ void main() {
     layers: <SceneLayerEntity>[
       makeLayer('back', zIndex: 0),
       makeLayer('rain', zIndex: 1, frameCount: 6, fps: 12, tiles: true),
-      makeLayer('reels', zIndex: 2, frameCount: 8, fps: 10, onlyWhilePlaying: true),
+      makeLayer(
+        'reels',
+        zIndex: 2,
+        frameCount: 8,
+        fps: 10,
+        onlyWhilePlaying: true,
+      ),
     ],
   );
 

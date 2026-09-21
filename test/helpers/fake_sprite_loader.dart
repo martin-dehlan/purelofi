@@ -37,8 +37,12 @@ class FakeSpriteLoader implements SpriteLoader {
 
     for (int i = 0; i < frames; i++) {
       canvas.drawRect(
-        Rect.fromLTWH(i * frameSize.toDouble(), 0, frameSize.toDouble(),
-            frameSize.toDouble()),
+        Rect.fromLTWH(
+          i * frameSize.toDouble(),
+          0,
+          frameSize.toDouble(),
+          frameSize.toDouble(),
+        ),
         Paint()..color = Color.fromARGB(255, 10 * i, 120, 200),
       );
     }

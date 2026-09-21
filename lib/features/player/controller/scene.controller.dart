@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../common/analytics/analytics.provider.dart';
 
+import '../dev/test_scene.dart';
 import '../domain/scene.entity.dart';
 import 'player.provider.dart';
 
@@ -16,7 +17,11 @@ part 'scene.controller.g.dart';
 @Riverpod(keepAlive: true)
 class SceneListController extends _$SceneListController {
   @override
-  Future<List<SceneEntity>> build() {
+  Future<List<SceneEntity>> build() async {
+    // Compile-time constant, so the development scene is tree-shaken out of
+    // any build that does not ask for it.
+    if (DevTestScene.enabled) return <SceneEntity>[await DevTestScene.load()];
+
     return ref.watch(contentRepositoryProvider).getScenes();
   }
 }
