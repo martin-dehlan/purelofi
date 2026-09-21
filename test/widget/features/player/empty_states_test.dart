@@ -41,9 +41,7 @@ void main() {
     testWidgets('says so instead of showing an unexplained black screen', (
       tester,
     ) async {
-      when(
-        () => mockRepo.getScenes(),
-      ).thenAnswer((_) async => <SceneEntity>[]);
+      when(() => mockRepo.getScenes()).thenAnswer((_) async => <SceneEntity>[]);
       when(() => mockRepo.getTracks()).thenAnswer((_) async => <TrackEntity>[]);
 
       await tester.pumpProviderApp(
@@ -57,9 +55,7 @@ void main() {
     });
 
     testWidgets('the switcher sheet says so too', (tester) async {
-      when(
-        () => mockRepo.getScenes(),
-      ).thenAnswer((_) async => <SceneEntity>[]);
+      when(() => mockRepo.getScenes()).thenAnswer((_) async => <SceneEntity>[]);
       when(() => mockRepo.getTracks()).thenAnswer((_) async => <TrackEntity>[]);
 
       await tester.pumpProviderApp(
