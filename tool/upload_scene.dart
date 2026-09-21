@@ -335,25 +335,23 @@ Future<void> _replaceLayers(
     );
   }
 
-  final List<Map<String, Object?>> rows =
-      <Map<String, Object?>>[
-        for (final (SpriteFileName file, LayerManifest settings)
-            in manifest.layers)
-          <String, Object?>{
-            'scene_id': sceneId,
-            'z_index': file.zIndex,
-            'sprite_url': spriteUrls[file.fileName],
-            'frame_count': file.frameCount,
-            'fps': settings.fps,
-            'offset_x': settings.offsetX,
-            'offset_y': settings.offsetY,
-            'parallax': settings.parallax,
-            'tiles': settings.tiles,
-            'only_while_playing': settings.onlyWhilePlaying,
-            'event_interval_min_seconds': settings.eventIntervalMinSeconds,
-            'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
-          },
-      ];
+  final List<Map<String, Object?>> rows = <Map<String, Object?>>[
+    for (final (SpriteFileName file, LayerManifest settings) in manifest.layers)
+      <String, Object?>{
+        'scene_id': sceneId,
+        'z_index': file.zIndex,
+        'sprite_url': spriteUrls[file.fileName],
+        'frame_count': file.frameCount,
+        'fps': settings.fps,
+        'offset_x': settings.offsetX,
+        'offset_y': settings.offsetY,
+        'parallax': settings.parallax,
+        'tiles': settings.tiles,
+        'only_while_playing': settings.onlyWhilePlaying,
+        'event_interval_min_seconds': settings.eventIntervalMinSeconds,
+        'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
+      },
+  ];
 
   final http.Response inserted = await http.post(
     Uri.parse('${env.url}/rest/v1/scene_layers'),
