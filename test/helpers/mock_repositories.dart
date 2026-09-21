@@ -1,9 +1,11 @@
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/data/content.api.dart';
 import 'package:purelofi/features/player/data/scene.model.dart';
+import 'package:purelofi/features/player/data/scene_layer.model.dart';
 import 'package:purelofi/features/player/data/track.model.dart';
 import 'package:purelofi/features/player/domain/content.repository.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
+import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
 class MockContentRepository extends Mock implements ContentRepository {}
@@ -55,4 +57,36 @@ SceneModel makeSceneModel(
   isActive: true,
   createdAt: testCreatedAt,
   thumbnailUrl: thumbnailUrl,
+);
+
+SceneLayerEntity makeLayer(
+  String id, {
+  int zIndex = 0,
+  int frameCount = 1,
+  double fps = 0,
+  bool tiles = false,
+  bool onlyWhilePlaying = false,
+}) => SceneLayerEntity(
+  id: id,
+  zIndex: zIndex,
+  spriteUrl: 'https://example.com/$id.png',
+  frameCount: frameCount,
+  fps: fps,
+  tiles: tiles,
+  onlyWhilePlaying: onlyWhilePlaying,
+);
+
+SceneLayerModel makeLayerModel(
+  String id, {
+  String sceneId = 'scene-1',
+  int zIndex = 0,
+  int frameCount = 1,
+  double fps = 0,
+}) => SceneLayerModel(
+  id: id,
+  sceneId: sceneId,
+  zIndex: zIndex,
+  spriteUrl: 'https://example.com/$id.png',
+  frameCount: frameCount,
+  fps: fps,
 );
