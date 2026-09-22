@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/domain/scene_event.scheduler.dart';
 import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_layers.widget.dart';
 
@@ -269,6 +270,117 @@ void main() {
           duration: Duration.zero,
         ),
         1,
+      );
+    });
+  });
+
+  group('frameForLayer', () {
+    SceneLayerEntity layer({
+      bool onTrackChange = false,
+      bool onlyWhilePlaying = false,
+      int idleFrameCount = 0,
+    }) => SceneLayerEntity(
+      id: 'led',
+      zIndex: 17,
+      spriteUrl: 'led.png',
+      frameCount: 32,
+      fps: 6,
+      onTrackChange: onTrackChange,
+      onlyWhilePlaying: onlyWhilePlaying,
+      idleFrameCount: idleFrameCount,
+    );
+
+    SceneEventScheduler schedulerFor(SceneLayerEntity one) =>
+        SceneEventScheduler(layers: <SceneLayerEntity>[one]);
+
+    test('a plain layer follows the clock straight through its strip', () {
+      final SceneLayerEntity plain = layer();
+
+      expect(
+        frameForLayer(
+          plain,
+          events: schedulerFor(plain),
+          elapsed: const Duration(milliseconds: 5000),
+          playingElapsed: Duration.zero,
+        ),
+        30,
+      );
+    });
+
+    test('a layer tied to the music follows the second clock', () {
+      final SceneLayerEntity tied = layer(onlyWhilePlaying: true);
+
+      expect(
+        frameForLayer(
+          tied,
+          events: schedulerFor(tied),
+          elapsed: const Duration(seconds: 30),
+          playingElapsed: const Duration(milliseconds: 1000),
+        ),
+        6,
+      );
+    });
+
+    test('a layer waiting for a track change never reaches its reaction', () {
+      // The regression this is here for: routed through the plain clock, the
+      // radio played its 8 reaction frames every 32 frames all by itself.
+      final SceneLayerEntity led = layer(
+        onTrackChange: true,
+        idleFrameCount: 24,
+      );
+      final SceneEventScheduler events = schedulerFor(led);
+
+      for (int second = 0; second < 120; second++) {
+        final Duration now = Duration(seconds: second);
+        events.update(now);
+
+        expect(
+          frameForLayer(led, events: events, elapsed: now, playingElapsed: now),
+          lessThan(24),
+          reason: 'frame 24 and up are the reaction, and nothing triggered it',
+        );
+      }
+    });
+
+    test('and plays it once when the track does change', () {
+      final SceneLayerEntity led = layer(
+        onTrackChange: true,
+        idleFrameCount: 24,
+      );
+      final SceneEventScheduler events = schedulerFor(led);
+
+      const Duration start = Duration(seconds: 10);
+      expect(events.trigger(led.id, start), isTrue);
+
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start,
+          playingElapsed: start,
+        ),
+        24,
+      );
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start + const Duration(milliseconds: 500),
+          playingElapsed: start,
+        ),
+        27,
+      );
+
+      // The reaction is 8 frames at 6fps, so it is over well before this.
+      events.update(start + const Duration(seconds: 3));
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start + const Duration(seconds: 3),
+          playingElapsed: start,
+        ),
+        lessThan(24),
       );
     });
   });

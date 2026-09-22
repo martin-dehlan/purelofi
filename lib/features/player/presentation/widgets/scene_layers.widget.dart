@@ -97,6 +97,28 @@ Rect layerBounds(SceneLayerEntity layer, {required Size frameSize}) =>
 double layerOpacity(SceneLayerEntity layer, {required double fade}) =>
     layer.hideWhenPaused ? fade : 1;
 
+/// Which frame of [layer]'s strip belongs on screen right now.
+///
+/// Anything that waits for a cue — a rare event, a tap, a new track — is the
+/// scheduler's business: it holds the idle loop until the cue comes and plays
+/// the reaction once. Left to the plain clock, a layer like that would run
+/// its reaction over and over on its own. Everything else simply follows its
+/// clock, which for a `only_while_playing` layer stops with the music.
+int frameForLayer(
+  SceneLayerEntity layer, {
+  required SceneEventScheduler events,
+  required Duration elapsed,
+  required Duration playingElapsed,
+}) {
+  if (layer.isTriggered) return events.frameFor(layer, elapsed);
+
+  return frameIndexAt(
+    clock: layer.onlyWhilePlaying ? playingElapsed : elapsed,
+    fps: layer.fps,
+    frameCount: layer.frameCount,
+  );
+}
+
 /// Draws a scene as a stack of pixel-art sprite layers.
 ///
 /// One ticker drives every layer; one painter draws them all. That is cheaper
@@ -448,16 +470,12 @@ class _SceneLayersPainter extends CustomPainter {
   }
 
   /// Which frame of the strip is showing right now.
-  int _frameIndexFor(SceneLayerEntity layer) {
-    // Rare events keep their own schedule: resting on frame 0 between turns.
-    if (layer.isEvent) return events.frameFor(layer, elapsed());
-
-    return frameIndexAt(
-      clock: layer.onlyWhilePlaying ? playingElapsed() : elapsed(),
-      fps: layer.fps,
-      frameCount: layer.frameCount,
-    );
-  }
+  int _frameIndexFor(SceneLayerEntity layer) => frameForLayer(
+    layer,
+    events: events,
+    elapsed: elapsed(),
+    playingElapsed: playingElapsed(),
+  );
 
   /// The device-pixel scale expressed in logical points, which is what the
   /// canvas draws in.
