@@ -10,11 +10,18 @@ rule disagree, `SPEC.md` wins.
 ```bash
 flutter pub get
 cp .env.example .env          # fill in Supabase + PostHog keys
+cp .env.tools.example .env.tools   # only if you upload scenes
 dart run build_runner build
 flutter run
 ```
 
-`.env` is git-ignored. Never commit real keys.
+Both are git-ignored. Never commit real keys.
+
+`.env` is bundled into the app — it is an asset in `pubspec.yaml`, and an app
+bundle is a zip. It may hold only keys that are safe to publish: the Supabase
+URL, the anon key (RLS protects the data), the PostHog key. The service role
+key and the database password belong in `.env.tools`, which only `tool/`
+reads. The app throws on startup if it finds one in `.env`.
 
 ## Testing policy
 

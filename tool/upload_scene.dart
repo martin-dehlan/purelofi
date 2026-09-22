@@ -280,15 +280,45 @@ class _Env {
     'Authorization': 'Bearer $serviceRoleKey',
   };
 
-  /// Reads .env directly — this runs outside Flutter, so dotenv is not
-  /// available.
+  /// Reads the env files directly — this runs outside Flutter, so dotenv is
+  /// not available.
+  ///
+  /// Two files, on purpose. `.env` is bundled into the app by
+  /// `pubspec.yaml`, so it holds only what is safe in a stranger's hands.
+  /// The service role key bypasses row-level security, so it lives in
+  /// `.env.tools`, which nothing but this folder reads.
   static _Env load() {
-    final File file = File('.env');
-    if (!file.existsSync()) {
+    final Map<String, String> app = _read(File('.env'));
+    if (app.isEmpty) {
       throw const _UploadException(
         'No .env in the current folder. Run this from the repo root.',
       );
     }
+
+    final Map<String, String> tools = _read(File('.env.tools'));
+
+    final String url = app['SUPABASE_URL'] ?? '';
+    final String key =
+        tools['SUPABASE_SERVICE_ROLE_KEY'] ??
+        Platform.environment['SUPABASE_SERVICE_ROLE_KEY'] ??
+        '';
+
+    if (url.isEmpty) throw const _UploadException('SUPABASE_URL is not set');
+    if (key.isEmpty) {
+      throw const _UploadException(
+        'SUPABASE_SERVICE_ROLE_KEY is not set. Uploading needs it and the '
+        'anon key is read-only, but it must not go in .env — that file is '
+        'bundled into the app. Copy .env.tools.example to .env.tools and put '
+        'it there.',
+      );
+    }
+
+    return _Env(url: url, serviceRoleKey: key);
+  }
+
+  /// A `KEY=value` file as a map; an absent file is an empty one.
+  static Map<String, String> _read(File file) {
+    if (!file.existsSync()) return <String, String>{};
 
     final Map<String, String> values = <String, String>{};
     for (final String line in file.readAsLinesSync()) {
@@ -303,18 +333,7 @@ class _Env {
           .trim();
     }
 
-    final String url = values['SUPABASE_URL'] ?? '';
-    final String key = values['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
-
-    if (url.isEmpty) throw const _UploadException('SUPABASE_URL is not set');
-    if (key.isEmpty) {
-      throw const _UploadException(
-        'SUPABASE_SERVICE_ROLE_KEY is not set — uploading needs it, the anon '
-        'key is read-only',
-      );
-    }
-
-    return _Env(url: url, serviceRoleKey: key);
+    return values;
   }
 }
 

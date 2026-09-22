@@ -56,6 +56,16 @@ dart run build_runner build
 flutter run
 ```
 
+Two env files, and the difference matters. `.env` is listed under `assets:`
+in `pubspec.yaml`, so it ships **inside the app bundle** — which is a zip
+anyone who installs the app can open. Only keys that are safe in a stranger's
+hands go there; the anon key is one of them, because row-level security is
+what protects the data.
+
+Anything that grants write access goes in `.env.tools` (`cp
+.env.tools.example .env.tools`), which only `tool/` reads and no build ever
+touches. The app refuses to start if it finds one of those keys in `.env`.
+
 Generated files (`*.g.dart`, `*.freezed.dart`) are not committed — run
 `build_runner` after cloning and after any annotation change.
 
