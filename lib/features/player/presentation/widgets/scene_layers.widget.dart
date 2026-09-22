@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/widgets/error_state.widget.dart';
 import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene_touch.controller.dart';
@@ -160,6 +161,13 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   bool _loading = true;
 
+  /// What went wrong while fetching the sprites, if every one of them failed.
+  ///
+  /// A scene missing one layer is still a scene, so a single failure is
+  /// swallowed on purpose. A scene missing all of them is a black screen,
+  /// and a black screen must say something.
+  Object? _spriteError;
+
   /// The track the scene last reacted to, so a new one can be spotted.
   String? _lastTrackId;
 
@@ -192,19 +200,27 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   Future<void> _loadSprites() async {
     final SpriteLoader loader = ref.read(spriteLoaderProvider);
+    Object? lastFailure;
 
     await Future.wait(
       widget.scene.layers.map((SceneLayerEntity layer) async {
         try {
           final ui.Image image = await loader.load(layer.spriteUrl);
           if (mounted) _sprites[layer.spriteUrl] = image;
-        } on Object {
-          // A sprite that will not load costs us that layer, not the scene.
+        } on Object catch (error) {
+          // A sprite that will not load costs us that layer, not the scene —
+          // unless it costs us every layer, which is the case below.
+          lastFailure = error;
         }
       }),
     );
 
-    if (mounted) setState(() => _loading = false);
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      _spriteError = _sprites.isEmpty ? lastFailure : null;
+    });
   }
 
   void _onTick(Duration elapsed) {
@@ -252,6 +268,20 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
     _reactToTrackChange();
 
     if (_loading) return const LoadingState();
+
+    final Object? error = _spriteError;
+    if (error != null) {
+      return ErrorState(
+        error: error,
+        onRetry: () {
+          setState(() {
+            _loading = true;
+            _spriteError = null;
+          });
+          unawaited(_loadSprites());
+        },
+      );
+    }
 
     return Listener(
       // A Listener rather than a GestureDetector: the chrome's own tap
