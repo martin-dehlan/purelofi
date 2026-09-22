@@ -115,6 +115,27 @@ first, or the furniture drifts during the fade. Two numbers say whether it is:
 `edit_image` scored 2.3 on alignment; `create_image_pixflux` with a strong
 init image scored 10.1 and kept the lamp on anyway.
 
+## A light that never fully goes out
+
+Removing a light entirely is harder than it looks, and a room lit only by a
+window can read as flat. The Rainy Room solves it as a **night light**: the
+lamp keeps a small warm glow at all times and comes up to full when the music
+plays.
+
+Three layers do it:
+
+| Layer | Behaviour |
+|---|---|
+| `L08_room` | the unlit room, always drawn |
+| `L09_nightlight` | the lampshade plus a small halo, always drawn, ~35% opacity |
+| `L11_lamp` | the fully lit room, `hide_when_paused`, fades in over 2.2s |
+
+The night light is baked at low opacity rather than given a new flag, and the
+lit layer is opaque, so at full fade it covers the night light exactly.
+
+It is also the honest fix when a scene refuses to give up its light pool: a
+faint pool under a night light is expected, so it stops reading as a mistake.
+
 ## Leave the effects out of the art
 
 Anything that should move must **not** be painted into the scene:
