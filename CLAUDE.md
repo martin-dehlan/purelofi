@@ -22,25 +22,28 @@ in Supabase; the same tracks feed a companion YouTube channel.
 
 | In MVP | Deferred to Phase 2 |
 |---|---|
-| Fullscreen looping scene video | Offline caching (Drift — `docs/04`) |
-| Continuous audio stream (`just_audio` + `audio_service`) | Favorites |
-| Random track selection, background/lock-screen controls | RevenueCat paywall |
-| Scene switcher | More scenes / user accounts |
+| Fullscreen looping scene video | Favorites |
+| Continuous audio stream (`just_audio` + `audio_service`) | RevenueCat paywall |
+| Random track selection, background/lock-screen controls | More scenes / user accounts |
+| Scene switcher | |
 | BTS ("this is real, not AI") modal | |
 | PostHog analytics (4 events) | |
 
-**Not in MVP dependencies:** `drift`, `drift_flutter`, `purchases_flutter`.
+Offline caching (Drift — `docs/04`) landed in **0.2.0**; the content cache
+is live, the file cache is next.
+
+**Still not a dependency:** `purchases_flutter`.
 
 ## The rules (docs/)
 
 | Doc | Applies to MVP? |
 |---|---|
-| `01_core_architecture.md` | Yes — but source of truth is Supabase, not Drift |
+| `01_core_architecture.md` | Yes — Supabase is the source of truth, Drift the mirror |
 | `02_file_naming_conventions.md` | Yes, verbatim |
 | `03_responsive_ui_rules.md` | Yes, verbatim |
-| `04_drift_database_rules.md` | **Phase 2 only** — do not add Drift in MVP |
+| `04_drift_database_rules.md` | Yes — active since 0.2.0 |
 | `05_riverpod_patterns.md` | Yes |
-| `06_code_generation.md` | Yes (Freezed + Riverpod; Drift codegen is Phase 2) |
+| `06_code_generation.md` | Yes (Freezed + Riverpod + Drift) |
 | `07_error_handling.md` | Yes (network is the main error path; no auth) |
 | `08_navigation_structure.md` | Yes — single screen + modal, **no auth guard, no bottom nav** |
 | `09_design_principles.md` | Yes — anti-AI-slop; pixel vibe comes from assets, not styling |

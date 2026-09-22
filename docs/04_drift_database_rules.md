@@ -1,20 +1,20 @@
-# Drift Database Rules (Local-First) — ⚠️ PHASE 2 ONLY
+# Drift Database Rules (Local-First)
 
-> **NOT PART OF THE MVP.** PureLofi's MVP streams content from Supabase with
-> Supabase as the source of truth (see `docs/01` and `SPEC.md`). Do **not** add
-> `drift` / `drift_flutter` to `pubspec.yaml` for the MVP, and do not introduce
-> DAOs, tables, or an `AppDatabase`.
+> **Active since 0.2.0.** The MVP streamed everything from Supabase with no
+> local store. Offline caching turned this file on: Supabase is still the
+> source of truth, and Drift is the mirror the app falls back to and reads
+> from.
 >
-> This file is kept as the **blueprint for Phase 2**, when we add:
-> - **Offline playback** (cache streamed tracks/scenes locally for travel), and
-> - **Favorites** (the first genuinely user-owned data).
+> The flow is now: **Supabase → cache in Drift → serve from Drift**, with the
+> network failure swallowed whenever there is something cached to show, and
+> raised when there is not.
 >
-> When that work starts, this local-first pattern becomes active and `docs/01`'s
-> data flow switches to: Supabase → cache in Drift → serve from Drift.
+> Favorites (`#15`) are the first data that will be written locally *first*,
+> which is what `isSynced` exists for. Nothing writes it yet.
 
 ---
 
-## Architecture: Local-First Flow (Phase 2)
+## Architecture: Local-First Flow
 
 ```
 UI
@@ -31,7 +31,7 @@ Never expose raw Supabase responses to the controller or UI layer.
 
 ---
 
-## Folder Structure (Phase 2)
+## Folder Structure
 
 ```
 lib/
@@ -49,7 +49,7 @@ lib/
 
 ---
 
-## Table Definition Pattern (Phase 2)
+## Table Definition Pattern
 
 File: `lib/common/database/tables/track.table.dart`
 
@@ -83,7 +83,7 @@ Rules:
 
 ---
 
-## AppDatabase (Phase 2)
+## AppDatabase
 
 File: `lib/common/database/app_database.dart`
 
@@ -115,7 +115,7 @@ class AppDatabase extends _$AppDatabase {
 
 ---
 
-## DAO Pattern (Phase 2)
+## DAO Pattern
 
 File: `lib/common/database/daos/track.dao.dart`
 
@@ -153,7 +153,7 @@ class TrackDao extends DatabaseAccessor<AppDatabase> with _$TrackDaoMixin {
 
 ---
 
-## Repository Pattern (Phase 2)
+## Repository Pattern
 
 Local-first: trigger background sync, serve local stream immediately, optimistic
 writes for favorites. (Same shape as the wine-app lineage — see git history of
@@ -161,7 +161,7 @@ this file for the full example.)
 
 ---
 
-## Build Commands (Phase 2)
+## Build Commands
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -170,7 +170,7 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ---
 
-## Rules Checklist (Phase 2)
+## Rules Checklist
 
 - [ ] UI never reads from Supabase directly
 - [ ] Every table has `isSynced`, `createdAt`, `updatedAt`

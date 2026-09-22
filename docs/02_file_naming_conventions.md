@@ -26,7 +26,9 @@ name.type.dart
 | `.widget.dart` | `scene_switcher.widget.dart` | Reusable sub-widget |
 | `.routes.dart` | `player.routes.dart` | Feature route definitions |
 | `.service.dart` | `analytics.service.dart` | Cross-feature service |
-| `.dao.dart` | `track.dao.dart` | Drift access object — **Phase 2 only** |
+| `.dao.dart` | `track.dao.dart` | Drift access object |
+| `.table.dart` | `track.table.dart` | Drift table definition |
+| `.mapper.dart` | `content_cache.mapper.dart` | Translation between two layers' types |
 
 ---
 

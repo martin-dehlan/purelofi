@@ -2,6 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../common/config/supabase.provider.dart';
+import '../../../common/database/app_database.dart';
+import '../../../common/database/daos/scene.dao.dart';
+import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
 import '../data/sprite_loader.service.dart';
@@ -17,9 +20,28 @@ part 'player.provider.g.dart';
 @Riverpod(keepAlive: true)
 ContentApi contentApi(Ref ref) => ContentApi(ref.watch(supabaseClientProvider));
 
+/// The local mirror of the content. Kept alive and closed with the app: a
+/// database opened twice is a database locked against itself.
 @Riverpod(keepAlive: true)
-ContentRepository contentRepository(Ref ref) =>
-    ContentRepositoryImpl(api: ref.watch(contentApiProvider));
+AppDatabase appDatabase(Ref ref) {
+  final AppDatabase database = AppDatabase();
+  ref.onDispose(database.close);
+
+  return database;
+}
+
+@Riverpod(keepAlive: true)
+TrackDao trackDao(Ref ref) => TrackDao(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true)
+SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true)
+ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
+  api: ref.watch(contentApiProvider),
+  trackDao: ref.watch(trackDaoProvider),
+  sceneDao: ref.watch(sceneDaoProvider),
+);
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);

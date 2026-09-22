@@ -53,6 +53,7 @@ SceneModel makeSceneModel(
   String title = 'Rainy Room',
   int sortOrder = 0,
   String? thumbnailUrl,
+  List<SceneLayerModel> layers = const <SceneLayerModel>[],
 }) => SceneModel(
   id: id,
   title: title,
@@ -61,6 +62,7 @@ SceneModel makeSceneModel(
   isActive: true,
   createdAt: testCreatedAt,
   thumbnailUrl: thumbnailUrl,
+  layers: layers,
 );
 
 SceneLayerEntity makeLayer(
@@ -86,6 +88,7 @@ SceneLayerModel makeLayerModel(
   int zIndex = 0,
   int frameCount = 1,
   double fps = 0,
+  bool tappable = false,
 }) => SceneLayerModel(
   id: id,
   sceneId: sceneId,
@@ -93,4 +96,5 @@ SceneLayerModel makeLayerModel(
   spriteUrl: 'https://example.com/$id.png',
   frameCount: frameCount,
   fps: fps,
+  tappable: tappable,
 );

@@ -11,13 +11,14 @@ Golden Rules:
 - Controller = ALL providers centralized in ONE file per feature
 - UI = Dumb (no business logic)
 - File naming: name.type.dart (e.g., track.model.dart)
-- Source of truth = Supabase (MVP). Drift local-first is Phase 2 only (see docs/04).
+- Source of truth = Supabase. Drift is the local mirror it is served from (docs/04).
 ```
 
-> **MVP deviation from the wine-app lineage:** this is a *streaming* app with
-> no user-owned data and no login. Supabase is the source of truth and is read
-> directly. The local-first Drift flow in `docs/04` is **Phase 2** (offline
-> playback + favorites) and must not be introduced in the MVP.
+> **Deviation from the wine-app lineage:** this is a *streaming* app with no
+> user-owned data and no login, so Supabase stays the source of truth and
+> nothing is ever written back to it. What the Drift layer added in 0.2.0 is
+> a read-through cache, not a second master: a fetch fills it, and it is what
+> the repository reads from afterwards.
 
 ## Checklist
 
@@ -87,8 +88,10 @@ Domain → Data, Controller, Presentation, Riverpod
 UI     → Supabase client directly, or Repository directly
 ```
 
-## Phase 2 note
+## The cache
 
-When offline playback lands, `ContentRepositoryImpl` gains the local-first flow
-from `docs/04` (fetch from Supabase → cache in Drift → serve from Drift). Until
-then, keep the repository a thin Supabase reader.
+`ContentRepositoryImpl` runs the local-first flow from `docs/04`: fetch from
+Supabase, write the rows to Drift, read the answer back out of Drift. A failed
+fetch is swallowed when the cache has something to serve and raised when it
+does not, so a train tunnel looks like a train tunnel and a broken install
+looks broken.
