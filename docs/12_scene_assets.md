@@ -34,9 +34,31 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   get better with more pixels.
 - **Safe zone 240 × 480, centred.** Everything that matters goes inside it;
   the edges are cropped on tall screens.
-- **One palette of about 32 colours for every layer in a scene.** This is the
+- **One palette of 35 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
+
+  The palette lives at **`assets/palette/purelofi.gpl`** — load it in Aseprite
+  via `Palette → Load Palette`. The cool ramps come from the reference art;
+  the warm and green ones were measured from the first real scene, because a
+  palette that cannot draw warm wood or a plant is a palette the art will
+  fight:
+
+  | Ramp | Steps | For |
+  |---|---|---|
+  | Night | 5 | indigo violet, the base mood |
+  | Deep | 5 | night blue into teal, depth |
+  | Teal | 4 | teal into ice, highlights on cold things |
+  | Coral | 5 | wine into coral, the warm accents |
+  | Rose | 3 | dusty transitions, curtains, fabric |
+  | Lamp | 5 | the one warm light source |
+  | Wood | 4 | desks, shelves, floors |
+  | Green | 2 | plants, deliberately saturated so they attract leaves rather than grey-blue |
+  | Ink / White | 1 + 1 | near-black, one warm white |
+
+  Lamp is the only light source in a scene, so every shadow has one direction
+  to agree with. If a colour is not in the palette, the answer is a different
+  colour, not a new one.
 - **Gradients belong in the art, dithered** — never as a Flutter widget
   (`docs/09`).
 
