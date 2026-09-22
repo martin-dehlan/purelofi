@@ -80,23 +80,35 @@ class SceneEventScheduler {
     return true;
   }
 
-  /// Which frame [layer] shows at [elapsed]: its first while it waits, and
-  /// the animation while it plays.
+  /// Which frame [layer] shows at [elapsed].
+  ///
+  /// While it waits it loops its idle frames, if it has any; while it plays
+  /// it runs through the reaction once and stops on its last frame.
   int frameFor(SceneLayerEntity layer, Duration elapsed) {
-    if (!layer.isTriggered || _runningId != layer.id) return 0;
+    if (!layer.isTriggered) return 0;
 
-    final int frame =
+    if (_runningId != layer.id) {
+      if (!layer.hasIdleLoop || layer.fps <= 0) return 0;
+
+      final int frame = (elapsed.inMilliseconds * layer.fps / 1000).floor();
+
+      return frame % layer.idleFrameCount;
+    }
+
+    final int into =
         ((elapsed - _runningSince).inMilliseconds * layer.fps / 1000).floor();
 
-    return frame.clamp(0, layer.frameCount - 1);
+    return (layer.idleFrameCount + into).clamp(0, layer.frameCount - 1);
   }
 
-  /// How long one pass of the animation takes.
+  /// How long one pass of the reaction takes.
+  ///
+  /// Only the frames after the idle loop count: those are the reaction.
   Duration _durationOf(SceneLayerEntity layer) {
     if (layer.fps <= 0) return Duration.zero;
 
     return Duration(
-      milliseconds: (layer.frameCount / layer.fps * 1000).round(),
+      milliseconds: (layer.reactionFrameCount / layer.fps * 1000).round(),
     );
   }
 

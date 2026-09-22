@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../controller/controls_visibility.controller.dart';
+import '../../controller/scene_touch.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
@@ -76,7 +77,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       backgroundColor: cs.surface,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: ref.read(controlsVisibilityControllerProvider.notifier).reveal,
+        onTap: () {
+          // A tap that woke the cat is not a request for the transport.
+          if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+
+          ref.read(controlsVisibilityControllerProvider.notifier).reveal();
+        },
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[

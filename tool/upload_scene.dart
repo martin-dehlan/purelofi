@@ -160,7 +160,8 @@ Future<void> _run(_Args args) async {
       '${settings.tiles ? ' tiling' : ''}'
       '${settings.onlyWhilePlaying ? ' while-playing' : ''}'
       '${settings.hideWhenPaused ? ' hidden-when-paused' : ''}'
-      '${settings.tappable ? ' tappable' : ''}',
+      '${settings.tappable ? ' tappable' : ''}'
+      '${settings.idleFrameCount > 0 ? ' idle:${settings.idleFrameCount}' : ''}',
     );
   }
 
@@ -355,6 +356,7 @@ Future<void> _replaceLayers(
         'only_while_playing': settings.onlyWhilePlaying,
         'hide_when_paused': settings.hideWhenPaused,
         'tappable': settings.tappable,
+        'idle_frame_count': settings.idleFrameCount,
         'event_interval_min_seconds': settings.eventIntervalMinSeconds,
         'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
       },

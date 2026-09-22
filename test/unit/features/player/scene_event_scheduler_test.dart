@@ -220,15 +220,19 @@ void main() {
   });
 
   group('tappable', () {
-    SceneLayerEntity cat({int frameCount = 12, double fps = 10}) =>
-        SceneLayerEntity(
-          id: 'cat',
-          zIndex: 16,
-          spriteUrl: 'https://example.com/cat.png',
-          frameCount: frameCount,
-          fps: fps,
-          tappable: true,
-        );
+    SceneLayerEntity cat({
+      int frameCount = 12,
+      double fps = 10,
+      int idleFrameCount = 0,
+    }) => SceneLayerEntity(
+      id: 'cat',
+      zIndex: 16,
+      spriteUrl: 'https://example.com/cat.png',
+      frameCount: frameCount,
+      fps: fps,
+      tappable: true,
+      idleFrameCount: idleFrameCount,
+    );
 
     test('waits indefinitely until it is tapped', () {
       final SceneLayerEntity layer = cat();
@@ -297,6 +301,78 @@ void main() {
 
       expect(scheduler.trigger('dog', const Duration(seconds: 5)), isFalse);
       expect(scheduler.runningLayerId, isNull);
+    });
+  });
+
+  group('idle loop and reaction', () {
+    // Four idle frames, then a six-frame reaction.
+    SceneLayerEntity sleeper() => const SceneLayerEntity(
+      id: 'cat',
+      zIndex: 16,
+      spriteUrl: 'https://example.com/cat.png',
+      frameCount: 10,
+      fps: 10,
+      tappable: true,
+      idleFrameCount: 4,
+    );
+
+    test('loops the idle frames while it waits', () {
+      final SceneLayerEntity layer = sleeper();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+
+      expect(scheduler.frameFor(layer, Duration.zero), 0);
+      expect(scheduler.frameFor(layer, const Duration(milliseconds: 200)), 2);
+      expect(
+        scheduler.frameFor(layer, const Duration(milliseconds: 400)),
+        0,
+        reason: 'the idle loop wraps at its own length, not the strip length',
+      );
+    });
+
+    test('a tap jumps past the idle frames into the reaction', () {
+      final SceneLayerEntity layer = sleeper();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+
+      scheduler.trigger('cat', const Duration(seconds: 2));
+
+      expect(scheduler.frameFor(layer, const Duration(seconds: 2)), 4);
+      expect(scheduler.frameFor(layer, const Duration(milliseconds: 2300)), 7);
+    });
+
+    test('the reaction never runs past the last frame', () {
+      final SceneLayerEntity layer = sleeper();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+      scheduler.trigger('cat', const Duration(seconds: 2));
+
+      expect(scheduler.frameFor(layer, const Duration(seconds: 5)), 9);
+    });
+
+    test('it goes back to breathing once the reaction is over', () {
+      final SceneLayerEntity layer = sleeper();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+      scheduler.trigger('cat', const Duration(seconds: 2));
+
+      // Six reaction frames at 10fps is 0.6 seconds.
+      scheduler.update(const Duration(milliseconds: 2700));
+
+      expect(scheduler.runningLayerId, isNull);
+      expect(
+        scheduler.frameFor(layer, const Duration(milliseconds: 2700)),
+        lessThan(4),
+        reason: 'back inside the idle range',
+      );
     });
   });
 }

@@ -7,6 +7,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/widgets/loading_state.widget.dart';
+import '../../controller/controls_visibility.controller.dart';
+import '../../controller/scene_touch.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../data/sprite_loader.service.dart';
@@ -230,7 +232,12 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   }
 
   /// Wakes whatever the listener touched, if anything.
+  ///
+  /// Only while the chrome is hidden: with the transport on screen a tap
+  /// belongs to the interface, and poking the scene would fight it.
   void _onPointerDown(PointerDownEvent event) {
+    if (ref.read(controlsVisibilityControllerProvider)) return;
+
     final RenderBox? box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
 
@@ -270,7 +277,11 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
         ),
       );
       if (bounds.contains(canvasPoint)) {
-        _events.trigger(layer.id, _clock.sceneTime);
+        if (_events.trigger(layer.id, _clock.sceneTime)) {
+          // The chrome must not reappear: the tap was for the cat, not for
+          // the interface.
+          ref.read(sceneTouchControllerProvider.notifier).consume();
+        }
         return;
       }
     }

@@ -77,6 +77,7 @@ class LayerManifest {
     this.onlyWhilePlaying = false,
     this.hideWhenPaused = false,
     this.tappable = false,
+    this.idleFrameCount = 0,
     this.eventIntervalMinSeconds,
     this.eventIntervalMaxSeconds,
   });
@@ -89,6 +90,7 @@ class LayerManifest {
   final bool onlyWhilePlaying;
   final bool hideWhenPaused;
   final bool tappable;
+  final int idleFrameCount;
   final int? eventIntervalMinSeconds;
   final int? eventIntervalMaxSeconds;
 
@@ -115,6 +117,7 @@ class LayerManifest {
       onlyWhilePlaying: json['only_while_playing'] as bool? ?? false,
       hideWhenPaused: json['hide_when_paused'] as bool? ?? false,
       tappable: json['tappable'] as bool? ?? false,
+      idleFrameCount: (json['idle_frames'] as num?)?.toInt() ?? 0,
       eventIntervalMinSeconds: event == null ? null : (event[0] as num).toInt(),
       eventIntervalMaxSeconds: event == null ? null : (event[1] as num).toInt(),
     );

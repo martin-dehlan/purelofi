@@ -32,9 +32,14 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// lights up when playback starts.
     @Default(false) bool hideWhenPaused,
 
-    /// Plays its animation once when the listener taps it, then rests on its
-    /// first frame again.
+    /// Plays its reaction once when the listener taps it, then returns to
+    /// its idle loop.
     @Default(false) bool tappable,
+
+    /// How many frames at the start of the strip form the idle loop. The
+    /// rest are the reaction. Zero means the layer simply rests on its first
+    /// frame until tapped.
+    @Default(0) int idleFrameCount,
 
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
@@ -52,4 +57,10 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
 
   /// Whether this layer waits for something rather than animating on its own.
   bool get isTriggered => isEvent || tappable;
+
+  /// Whether this layer keeps moving while it waits to be touched.
+  bool get hasIdleLoop => idleFrameCount > 1;
+
+  /// How many frames the reaction runs for.
+  int get reactionFrameCount => frameCount - idleFrameCount;
 }
