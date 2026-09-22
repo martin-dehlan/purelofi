@@ -55,12 +55,24 @@ const double _layerBudgetMegabytes = 4;
 ///
 /// A scene is scaled by whole device pixels to stay crisp, which means the
 /// scale is rounded up and the overflow falls off the edges. How much
-/// overflows depends on the screen: an iPhone SE needs 2.35x, gets 3x, and
-/// loses 62 of 568 rows top and bottom. Measured across phones from the SE
-/// to a 21:9 Android, the worst case is 18% of the width and 11% of the
-/// height on each side. Anything that must be seen belongs inside what is
-/// left; anything the listener can touch has to be.
-const double _safeInsetX = 0.18;
+/// overflows depends on the screen, and not in the way the aspect ratio
+/// suggests: an iPhone SE is 9:16 like the canvas, needs 2.35x, gets 3x, and
+/// loses 62 of 568 rows top and bottom — more than any taller phone. The
+/// widest side crop is a Pixel's 52 of 320 columns.
+///
+/// Measured across real phones, from the SE to a 21:9 Xperia:
+///
+///   iPhone SE 3        x  35..285   y  62..506
+///   iPhone 13 mini     x  48..272   y  40..528
+///   iPhone 17          x  39..281   y  22..546
+///   iPhone 16 Pro Max  x  50..270   y  45..523
+///   Pixel 9a           x  52..268   y  42..526
+///   Galaxy S24 Ultra   x  40..280   y  24..544
+///   Xperia 1 V         x  43..277   y  10..558
+///
+/// Anything that must be seen belongs inside what survives all of them;
+/// anything the listener can touch has to be.
+const double _safeInsetX = 0.165;
 const double _safeInsetY = 0.11;
 
 /// Refuses a scene that would not fit in the image cache.
