@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep #0D1A2E from assets/palette/purelofi.gpl — the night the scene
+         opens on. The launch window uses it so the app never flashes white
+         before a dark room. -->
+    <color name="launch_background">#FF0D1A2E</color>
+</resources>

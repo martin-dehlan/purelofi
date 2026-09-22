@@ -65,6 +65,7 @@ dev_dependencies:
   mocktail: ^1.0.5
   fake_async: ^1.3.3
   http: ^1.6.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -108,3 +109,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icons for both stores, generated from one square PNG:
+#
+#   dart run flutter_launcher_icons
+#
+# Drop the artwork in assets/branding/ first — see the README there for what
+# each file has to be. The generated icon sets are committed; the sources are
+# not regenerated on every build.
+flutter_launcher_icons:
+  image_path: assets/branding/app_icon.png
+  ios: true
+  remove_alpha_ios: true
+  android: ic_launcher
+  adaptive_icon_background: "#0D1A2E"
+  adaptive_icon_foreground: assets/branding/app_icon_foreground.png
+  min_sdk_android: 21
