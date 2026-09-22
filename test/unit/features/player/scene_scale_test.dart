@@ -384,4 +384,93 @@ void main() {
       );
     });
   });
+
+  group('visibleCanvasRect and layerFits', () {
+    SceneLayerEntity cat({bool hideWhenClipped = false}) => SceneLayerEntity(
+      id: 'cat',
+      zIndex: 16,
+      spriteUrl: 'cat.png',
+      offsetX: 62,
+      offsetY: 500,
+      hideWhenClipped: hideWhenClipped,
+    );
+
+    const Size frame = Size(48, 36);
+
+    /// What a phone really shows of a 320x568 canvas.
+    Rect shown(double width, double height, double dpr) => visibleCanvasRect(
+      viewport: Size(width, height),
+      canvasWidth: 320,
+      canvasHeight: 568,
+      devicePixelRatio: dpr,
+    );
+
+    test('a 9:16 phone loses the most, because 2.35x rounds up to 3x', () {
+      // iPhone SE 3. The canvas is the same shape as the screen, which is
+      // exactly why it goes wrong: there is nothing to round down to.
+      final Rect visible = shown(375, 667, 2);
+
+      expect(visible.top, closeTo(61.7, 0.5));
+      expect(visible.bottom, closeTo(506.3, 0.5));
+      expect(visible.left, closeTo(35, 0.5));
+    });
+
+    test('a tall phone loses width instead', () {
+      final Rect visible = shown(411, 923, 2.625);
+
+      expect(visible.left, closeTo(52, 0.5));
+      expect(visible.right, closeTo(268, 0.5));
+      expect(visible.bottom, closeTo(526, 0.5));
+    });
+
+    test('an ordinary layer is drawn even where it is cropped', () {
+      // The room and the sky are meant to run past the edges.
+      expect(
+        layerFits(
+          cat(),
+          bounds: layerBounds(cat(), frameSize: frame),
+          visible: shown(375, 667, 2),
+        ),
+        isTrue,
+      );
+    });
+
+    test('a layer that asks to be whole stays away when it is not', () {
+      // The cat sits at y 500..536. An SE shows down to 506, so the mattress
+      // under it is gone and it would read as falling off the bed.
+      final SceneLayerEntity layer = cat(hideWhenClipped: true);
+
+      expect(
+        layerFits(
+          layer,
+          bounds: layerBounds(layer, frameSize: frame),
+          visible: shown(375, 667, 2),
+        ),
+        isFalse,
+      );
+      expect(
+        layerFits(
+          layer,
+          bounds: layerBounds(layer, frameSize: frame),
+          visible: shown(411, 923, 2.625),
+        ),
+        isFalse,
+        reason: 'a Pixel cuts the bottom ten rows',
+      );
+    });
+
+    test('and is drawn where all of it fits', () {
+      // iPhone 17 shows down to y 546, past the cat's 536.
+      final SceneLayerEntity layer = cat(hideWhenClipped: true);
+
+      expect(
+        layerFits(
+          layer,
+          bounds: layerBounds(layer, frameSize: frame),
+          visible: shown(402, 874, 3),
+        ),
+        isTrue,
+      );
+    });
+  });
 }

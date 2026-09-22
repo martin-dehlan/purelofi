@@ -44,6 +44,14 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// Plays its reaction once whenever a new track starts.
     @Default(false) bool onTrackChange,
 
+    /// Drawn only when the whole layer fits on screen.
+    ///
+    /// The canvas is scaled up to whole device pixels, so its edges fall off
+    /// the screen. A background is meant to bleed that way; a single object
+    /// is not. A cat whose bed has been cropped out from under it reads as a
+    /// cat falling off the bed, and nothing at all is better than that.
+    @Default(false) bool hideWhenClipped,
+
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
     int? eventIntervalMaxSeconds,

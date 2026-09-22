@@ -182,8 +182,11 @@ void _checkSafeArea(
 
     final String where = '  ${file.name.padRight(16)} x $x0..$x1, y $y0..$y1';
     // A background is meant to bleed past the edges; that is what the
-    // overflow is for. Something the listener taps is a different matter.
-    (settings.tappable ? unreachable : clipped).add(where);
+    // overflow is for. Something the listener taps is a different matter —
+    // unless it takes itself off screen rather than be shown half cropped,
+    // which is what hide_when_clipped is for.
+    final bool isProblem = settings.tappable && !settings.hideWhenClipped;
+    (isProblem ? unreachable : clipped).add(where);
   }
 
   if (clipped.isNotEmpty) {
@@ -280,7 +283,8 @@ Future<void> _run(_Args args) async {
       '${settings.hideWhenPaused ? ' hidden-when-paused' : ''}'
       '${settings.tappable ? ' tappable' : ''}'
       '${settings.idleFrameCount > 0 ? ' idle:${settings.idleFrameCount}' : ''}'
-      '${settings.onTrackChange ? ' on-track-change' : ''}',
+      '${settings.onTrackChange ? ' on-track-change' : ''}'
+      '${settings.hideWhenClipped ? ' hide-when-clipped' : ''}',
     );
   }
 
@@ -503,6 +507,7 @@ Future<void> _replaceLayers(
         'tappable': settings.tappable,
         'idle_frame_count': settings.idleFrameCount,
         'on_track_change': settings.onTrackChange,
+        'hide_when_clipped': settings.hideWhenClipped,
         'event_interval_min_seconds': settings.eventIntervalMinSeconds,
         'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
       },
