@@ -24,9 +24,6 @@ extension TrackRowX on TrackTableData {
 }
 
 extension TrackEntityX on TrackEntity {
-  /// [localAudioPath] is deliberately absent: the server knows nothing about
-  /// this device's files, so writing it here would erase a cached download on
-  /// every refresh.
   TrackTableCompanion toCompanion({required DateTime now}) =>
       TrackTableCompanion(
         id: Value<String>(id),

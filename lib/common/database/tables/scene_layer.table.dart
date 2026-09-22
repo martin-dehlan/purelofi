@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// One sprite layer of a cached scene. Mirrors `scene_layers` on the server,
-/// column for column, plus [localSpritePath] for the cached strip.
+/// column for column. Whether the strip is on disk lives in `cached_files`.
 @DataClassName('SceneLayerTableData')
 class SceneLayerTable extends Table {
   @override
@@ -14,9 +14,6 @@ class SceneLayerTable extends Table {
   TextColumn get sceneId => text()();
   IntColumn get zIndex => integer()();
   TextColumn get spriteUrl => text()();
-
-  /// Where the strip lives on this device, once it has been downloaded.
-  TextColumn get localSpritePath => text().nullable()();
 
   IntColumn get frameCount => integer().withDefault(const Constant(1))();
   RealColumn get fps => real().withDefault(const Constant(0))();

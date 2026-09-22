@@ -29,8 +29,8 @@ in Supabase; the same tracks feed a companion YouTube channel.
 | BTS ("this is real, not AI") modal | |
 | PostHog analytics (4 events) | |
 
-Offline caching (Drift — `docs/04`) landed in **0.2.0**; the content cache
-is live, the file cache is next.
+Offline caching (Drift — `docs/04`) is built: the content cache and the file
+cache both. It ships as **0.2.0** on the next store upload (`docs/11`).
 
 **Still not a dependency:** `purchases_flutter`.
 

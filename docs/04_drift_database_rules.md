@@ -66,7 +66,6 @@ class TrackTable extends Table {
   TextColumn get audioUrl      => text()();
   TextColumn get btsVideoUrl   => text().nullable()();
   IntColumn  get durationSeconds => integer().nullable()();
-  TextColumn get localAudioPath => text().nullable()();   // cached file for offline
   BoolColumn get isFavorite    => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -75,6 +74,11 @@ class TrackTable extends Table {
 ```
 
 Rules:
+- **Whether a file is on disk is not a column here.** `cached_files` owns
+  that, keyed by URL: eviction needs a size and a last-used stamp per file,
+  and both belong to the file rather than to whatever points at it. Keyed by
+  URL it also covers anything else — a strip two scenes share, a
+  behind-the-scenes clip.
 - Class name: `EntityTable` (e.g. `TrackTable`, `SceneTable`)
 - Always add `@DataClassName('EntityTableData')`
 - Add `isSynced` for optimistic local writes (favorites)
@@ -161,6 +165,30 @@ this file for the full example.)
 
 ---
 
+## The file cache
+
+The tables above are metadata. The files themselves — audio, sprite strips —
+live under the app's support directory and are indexed by `cached_files`:
+
+```
+MediaCache
+  fileFor(url)  → the local file, and counts as a use
+  store(url)    → downloads unless it is already there; null on failure
+  evict()       → drops least-recently-used until under the cap
+```
+
+Rules:
+- **A miss is never an error.** No network, a 404, a truncated body: the
+  answer is `null` and the caller streams instead. The listener sees nothing.
+- **Write beside, then rename.** A file the app died halfway through must
+  never be served as though it were whole.
+- **Downloads are not awaited by playback.** A track starts now and lands on
+  disk for next time; a scene draws from the network on first sight.
+- **Name files by a hash of the URL**, keeping the extension. Nothing on disk
+  depends on a server's idea of a filename, and the same URL is never fetched
+  twice.
+- The cap is 256 MB, and eviction runs after every store and once at launch.
+
 ## Build Commands
 
 ```bash
@@ -174,6 +202,7 @@ dart run build_runner watch --delete-conflicting-outputs
 
 - [ ] UI never reads from Supabase directly
 - [ ] Every table has `isSynced`, `createdAt`, `updatedAt`
+- [ ] Nothing records a local file path except `cached_files`
 - [ ] DAOs have both `watch*` (Stream) and `get*` (Future) variants
 - [ ] Repositories do optimistic local write before Supabase call
 - [ ] Network failures are caught silently; local data serves as fallback

@@ -2,10 +2,12 @@ import 'package:drift/drift.dart';
 
 /// A track as it was last seen on the server.
 ///
-/// [localAudioPath] is filled once the file itself has been cached; until
-/// then playback streams from [audioUrl]. [isFavorite] has no UI yet — it is
-/// what the favorites feature will write to, and the reason this table
-/// carries [isSynced] at all.
+/// Whether its audio is on disk is not recorded here — `cached_files` owns
+/// that, keyed by URL, because eviction needs a size and a last-used stamp
+/// per file and those belong to the file, not to the track.
+///
+/// [isFavorite] has no UI yet: it is what the favorites feature will write
+/// to, and the reason this table carries [isSynced] at all.
 @DataClassName('TrackTableData')
 class TrackTable extends Table {
   @override
@@ -19,9 +21,6 @@ class TrackTable extends Table {
   TextColumn get audioUrl => text()();
   TextColumn get btsVideoUrl => text().nullable()();
   IntColumn get durationSeconds => integer().nullable()();
-
-  /// Where the audio lives on this device, once it has been downloaded.
-  TextColumn get localAudioPath => text().nullable()();
 
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
 

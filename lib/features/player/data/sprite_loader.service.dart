@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
+
+import '../../../common/cache/media_cache.service.dart';
 
 /// Loads sprite strips for the scene renderer.
 ///
@@ -18,7 +21,15 @@ abstract class SpriteLoader {
 ///
 /// Takes a URL for real scenes and an asset path for the bundled development
 /// scene, so both go through exactly the same renderer.
+///
+/// With a [MediaCache] it prefers the copy on disk, and downloads one in the
+/// background when there is none. The scene therefore draws from the network
+/// the first time and from the device every time after — including with no
+/// network at all.
 class NetworkSpriteLoader implements SpriteLoader {
+  NetworkSpriteLoader({MediaCache? cache}) : _cache = cache;
+
+  final MediaCache? _cache;
   final Map<String, Future<ui.Image>> _inFlight = <String, Future<ui.Image>>{};
 
   @override
@@ -38,11 +49,32 @@ class NetworkSpriteLoader implements SpriteLoader {
     });
   }
 
-  Future<ui.Image> _resolve(String url) {
+  Future<ui.Image> _resolve(String url) async {
+    final ImageProvider<Object> provider = await _providerFor(url);
+
+    return _decode(provider);
+  }
+
+  /// The cached file when there is one, the network otherwise — and a
+  /// download started for next time.
+  Future<ImageProvider<Object>> _providerFor(String url) async {
+    if (!url.startsWith('http')) return AssetImage(url);
+
+    final MediaCache? cache = _cache;
+    if (cache == null) return NetworkImage(url);
+
+    final File? cached = await cache.fileFor(url);
+    if (cached != null) return FileImage(cached);
+
+    // Not awaited: the first view of a scene should not wait for the whole
+    // strip to land on disk before it draws.
+    unawaited(cache.store(url));
+
+    return NetworkImage(url);
+  }
+
+  Future<ui.Image> _decode(ImageProvider<Object> provider) {
     final Completer<ui.Image> completer = Completer<ui.Image>();
-    final ImageProvider<Object> provider = url.startsWith('http')
-        ? NetworkImage(url)
-        : AssetImage(url);
     final ImageStream stream = provider.resolve(ImageConfiguration.empty);
 
     late final ImageStreamListener listener;
