@@ -36,8 +36,23 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   The height is not arbitrary: it matches the ~19.5:9 shape of current
   phones. A 16:9 canvas such as 320×568 forces the renderer to overshoot to
   cover the height, and a third of the width falls off the sides.
-- **Safe zone 240 × 560, centred.** Everything that matters goes inside it;
-  the edges are cropped on screens of a different shape.
+- **Keep what matters inside the safe zone.** The renderer scales a scene by
+  whole device pixels so it stays crisp, which means the scale is rounded up
+  and the overflow falls off the edges. How much overflows is not what the
+  aspect ratio suggests: an iPhone SE is 9:16 like a 320×568 canvas, needs
+  2.35×, gets 3×, and loses 62 of 568 rows top and bottom — more than any
+  taller phone. Measured across real phones from the SE to a 21:9 Xperia:
+
+  | Canvas | Survives everywhere | Lost per side |
+  |---|---|---|
+  | 320 × 568 | x 52..268, y 62..506 | 16% wide, 11% tall |
+  | 320 × 696 | x 35..285, y 126..570 | 11% wide, 18% tall |
+
+  The upload tool prints what reaches past it. For a background that is the
+  point of the overflow, so it only reports. For a **tappable** layer it
+  refuses: the listener would be asked to touch something not on screen.
+  Rainy Room's cat was caught this way — it sat at y 500..536 and was cut on
+  every phone, gone entirely on an SE.
 - **One palette of 35 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
