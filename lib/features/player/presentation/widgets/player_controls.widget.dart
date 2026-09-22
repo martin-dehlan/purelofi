@@ -11,6 +11,7 @@ import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
+import 'favorite_button.widget.dart';
 import 'waveform.widget.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport.
@@ -156,6 +157,8 @@ class _Progress extends ConsumerWidget {
                 style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
               ),
             ),
+            if (seed.isNotEmpty)
+              FavoriteButton(trackId: seed, size: context.screenWidth * 0.05),
           ],
         ),
         SizedBox(height: context.spaceS),

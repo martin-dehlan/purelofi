@@ -22,15 +22,16 @@ in Supabase; the same tracks feed a companion YouTube channel.
 
 | In MVP | Deferred to Phase 2 |
 |---|---|
-| Fullscreen looping scene video | Favorites |
-| Continuous audio stream (`just_audio` + `audio_service`) | RevenueCat paywall |
-| Random track selection, background/lock-screen controls | More scenes / user accounts |
+| Fullscreen looping scene video | RevenueCat paywall |
+| Continuous audio stream (`just_audio` + `audio_service`) | More scenes / user accounts |
+| Random track selection, background/lock-screen controls | |
 | Scene switcher | |
 | BTS ("this is real, not AI") modal | |
 | PostHog analytics (4 events) | |
 
-Offline caching (Drift — `docs/04`) is built: the content cache and the file
-cache both. It ships as **0.2.0** on the next store upload (`docs/11`).
+Offline caching (Drift — `docs/04`) is built, content cache and file cache
+both, and favourite tracks with it. They ship as **0.2.0** and **0.3.0** on
+the next store uploads (`docs/11`).
 
 **Still not a dependency:** `purchases_flutter`.
 

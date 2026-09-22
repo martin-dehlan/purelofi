@@ -11,4 +11,8 @@ abstract final class AppAssets {
   static const String nextIcon = 'assets/icons/next_icon.png';
   static const String settingsIcon = 'assets/icons/settings_icon.png';
   static const String sceneSwitchIcon = 'assets/icons/scene_switch_icon.png';
+
+  /// Outline when the track is not marked, filled when it is.
+  static const String favoriteIcon = 'assets/icons/favorite_icon.png';
+  static const String favoriteOnIcon = 'assets/icons/favorite_on_icon.png';
 }

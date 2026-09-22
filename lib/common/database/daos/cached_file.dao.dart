@@ -10,18 +10,17 @@ class CachedFileDao extends DatabaseAccessor<AppDatabase>
     with _$CachedFileDaoMixin {
   CachedFileDao(super.db);
 
-  Future<CachedFileTableData?> find(String url) =>
-      (select(cachedFileTable)
-            ..where(($CachedFileTableTable f) => f.url.equals(url)))
-          .getSingleOrNull();
+  Future<CachedFileTableData?> find(String url) => (select(
+    cachedFileTable,
+  )..where(($CachedFileTableTable f) => f.url.equals(url))).getSingleOrNull();
 
   Future<List<CachedFileTableData>> all() => select(cachedFileTable).get();
 
   Future<int> totalBytes() async {
     final Expression<int> sum = cachedFileTable.sizeBytes.sum();
-    final TypedResult row = await (selectOnly(cachedFileTable)
-          ..addColumns(<Expression<Object>>[sum]))
-        .getSingle();
+    final TypedResult row = await (selectOnly(
+      cachedFileTable,
+    )..addColumns(<Expression<Object>>[sum])).getSingle();
 
     return row.read(sum) ?? 0;
   }
@@ -47,17 +46,15 @@ class CachedFileDao extends DatabaseAccessor<AppDatabase>
             ..where(($CachedFileTableTable f) => f.url.equals(url)))
           .write(CachedFileTableCompanion(lastUsedAt: Value<DateTime>(now)));
 
-  Future<void> forget(String url) =>
-      (delete(cachedFileTable)
-            ..where(($CachedFileTableTable f) => f.url.equals(url)))
-          .go();
+  Future<void> forget(String url) => (delete(
+    cachedFileTable,
+  )..where(($CachedFileTableTable f) => f.url.equals(url))).go();
 
   /// Least recently used first — the order things are thrown away in.
   Future<List<CachedFileTableData>> oldestFirst() =>
-      (select(cachedFileTable)..orderBy(
-            <OrderClauseGenerator<$CachedFileTableTable>>[
+      (select(cachedFileTable)
+            ..orderBy(<OrderClauseGenerator<$CachedFileTableTable>>[
               ($CachedFileTableTable f) => OrderingTerm.asc(f.lastUsedAt),
-            ],
-          ))
+            ]))
           .get();
 }
