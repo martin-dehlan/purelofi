@@ -86,6 +86,7 @@ flutter:
   assets:
     - .env
     - assets/icons/
+    - assets/fonts/OFL.txt
     # Development placeholder scene; see lib/features/player/dev/.
     - assets/dev/scenes/test_room/
 
@@ -94,6 +95,15 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
+
+  fonts:
+    # Pixelify Sans, SIL Open Font License 1.1 (assets/fonts/OFL.txt).
+    # A variable font: one file, weight set per style. Chosen over Silkscreen
+    # (capitals only, which mangles track titles) and VT323 (a terminal face
+    # that fights the room).
+    - family: PixelifySans
+      fonts:
+        - asset: assets/fonts/PixelifySans.ttf
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

@@ -39,12 +39,16 @@ class FavoriteButton extends ConsumerWidget {
           ref.read(favoritesControllerProvider.notifier).toggle(trackId),
         ),
         child: Padding(
-          padding: EdgeInsets.all(size * 0.3),
+          padding: EdgeInsets.all(size * 0.4),
           child: PixelIcon(
             asset: isFavorite
                 ? AppAssets.favoriteOnIcon
                 : AppAssets.favoriteIcon,
-            size: size,
+            // [size] is a font size. A glyph leaves room above and below its
+            // cap height; the icon fills its box edge to edge, so matching
+            // the numbers would make the heart look bigger than the text it
+            // sits beside.
+            size: size * 0.85,
           ),
         ),
       ),
