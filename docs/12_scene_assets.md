@@ -1,6 +1,6 @@
 # Scene Assets
 
-**TL;DR:** A scene is a stack of pixel-art sprite layers on a 320×568 canvas,
+**TL;DR:** A scene is a stack of pixel-art sprite layers on a 320×696 canvas,
 not a video. Export one folder per scene, named by convention, and upload it
 with one command. Video still works as a per-scene fallback.
 
@@ -30,10 +30,14 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
 
 ## Canvas and palette
 
-- **Author at 320 × 568.** That is the scene. Not larger — pixel art does not
+- **Author at 320 × 696.** That is the scene. Not larger — pixel art does not
   get better with more pixels.
-- **Safe zone 240 × 480, centred.** Everything that matters goes inside it;
-  the edges are cropped on tall screens.
+
+  The height is not arbitrary: it matches the ~19.5:9 shape of current
+  phones. A 16:9 canvas such as 320×568 forces the renderer to overshoot to
+  cover the height, and a third of the width falls off the sides.
+- **Safe zone 240 × 560, centred.** Everything that matters goes inside it;
+  the edges are cropped on screens of a different shape.
 - **One palette of 35 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
@@ -62,8 +66,10 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
 - **Gradients belong in the art, dithered** — never as a Flutter widget
   (`docs/09`).
 
-The renderer scales by the smallest whole number that covers the viewport,
-centres the canvas and crops the overflow.
+The renderer scales by the smallest whole number of **device** pixels that
+covers the viewport, centres the canvas and crops the overflow. Device pixels
+rather than logical points is what makes the steps fine enough to land near
+the viewport: on a 3x screen the choice is 4x, 5x, 6x, not 1x or 2x.
 
 ---
 
@@ -99,7 +105,7 @@ An animation is a **horizontal strip**: 6 frames of a 64×64 sprite is one
 ```json
 {
   "title": "Rainy Room",
-  "canvas": { "width": 320, "height": 568 },
+  "canvas": { "width": 320, "height": 696 },
   "layers": {
     "L00_room":  { "parallax": 1.0 },
     "L03_rain":  { "fps": 12, "tiles": true, "parallax": 1.0 },

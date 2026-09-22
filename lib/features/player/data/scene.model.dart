@@ -19,7 +19,7 @@ abstract class SceneModel with _$SceneModel {
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
     @JsonKey(name: 'canvas_width') @Default(320) int canvasWidth,
-    @JsonKey(name: 'canvas_height') @Default(568) int canvasHeight,
+    @JsonKey(name: 'canvas_height') @Default(696) int canvasHeight,
 
     /// Embedded by PostgREST from the `scene_layers` relation.
     @JsonKey(name: 'scene_layers')

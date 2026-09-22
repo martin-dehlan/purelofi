@@ -5,7 +5,7 @@ void main() {
   const String validJson = '''
 {
   "title": "Rainy Room",
-  "canvas": { "width": 320, "height": 568 },
+  "canvas": { "width": 320, "height": 696 },
   "layers": {
     "L00_room": { "parallax": 0.5 },
     "L03_rain": { "fps": 12, "tiles": true, "offset": [10, 20] }
@@ -53,7 +53,7 @@ void main() {
 
       expect(manifest.title, 'Rainy Room');
       expect(manifest.canvasWidth, 320);
-      expect(manifest.canvasHeight, 568);
+      expect(manifest.canvasHeight, 696);
       expect(
         manifest.layers.map(((SpriteFileName, LayerManifest) l) => l.$1.name),
         <String>['room', 'rain'],
@@ -198,7 +198,7 @@ void main() {
       );
 
       expect(manifest.canvasWidth, 320);
-      expect(manifest.canvasHeight, 568);
+      expect(manifest.canvasHeight, 696);
     });
   });
 }

@@ -15,19 +15,30 @@ import '../../domain/scene.entity.dart';
 import '../../domain/scene_event.scheduler.dart';
 import '../../domain/scene_layer.entity.dart';
 
-/// The smallest whole-number scale that still covers [viewport].
+/// The smallest whole-number scale, in DEVICE pixels, that still covers
+/// [viewport].
 ///
-/// Whole numbers only: a fractional scale resamples the art, which is exactly
-/// what makes pixel art look soft inside a video.
+/// Device pixels, not logical points, and that distinction decides whether
+/// the scene is watchable. On a 3x screen a 320-wide canvas only has the
+/// choices 1x and 2x in logical points — 2x overshoots a 402pt viewport by
+/// more than a third, so most of the art falls off the edges. Counting in
+/// device pixels gives 4x, 5x, 6x instead: still exact whole pixels, but
+/// fine enough steps to land close to the viewport.
+///
+/// Whole numbers throughout: a fractional scale resamples the art, which is
+/// exactly what makes pixel art look soft inside a video.
 int sceneScaleFor({
   required Size viewport,
   required int canvasWidth,
   required int canvasHeight,
+  double devicePixelRatio = 1,
 }) {
   if (canvasWidth <= 0 || canvasHeight <= 0) return 1;
+  if (devicePixelRatio <= 0) return 1;
 
-  final int byWidth = (viewport.width / canvasWidth).ceil();
-  final int byHeight = (viewport.height / canvasHeight).ceil();
+  final int byWidth = (viewport.width * devicePixelRatio / canvasWidth).ceil();
+  final int byHeight = (viewport.height * devicePixelRatio / canvasHeight)
+      .ceil();
 
   return math.max(1, math.max(byWidth, byHeight));
 }
@@ -282,11 +293,16 @@ class _SceneLayersPainter extends CustomPainter {
     );
   }
 
-  double _integerScaleFor(Size size) => sceneScaleFor(
-    viewport: size,
-    canvasWidth: scene.canvasWidth,
-    canvasHeight: scene.canvasHeight,
-  ).toDouble();
+  /// The device-pixel scale expressed in logical points, which is what the
+  /// canvas draws in.
+  double _integerScaleFor(Size size) =>
+      sceneScaleFor(
+        viewport: size,
+        canvasWidth: scene.canvasWidth,
+        canvasHeight: scene.canvasHeight,
+        devicePixelRatio: devicePixelRatio,
+      ) /
+      devicePixelRatio;
 
   /// One canvas pixel out and back, on a sine.
   double _drift() {

@@ -64,6 +64,80 @@ void main() {
     });
   });
 
+  group('sceneScaleFor on a real screen', () {
+    // iPhone 17: 402x874 logical at 3x.
+    const Size viewport = Size(402, 874);
+
+    test('counts device pixels, not logical points', () {
+      final int scale = sceneScaleFor(
+        viewport: viewport,
+        canvasWidth: 320,
+        canvasHeight: 568,
+        devicePixelRatio: 3,
+      );
+
+      expect(scale, 5);
+      expect(
+        320 * scale,
+        greaterThanOrEqualTo(viewport.width * 3),
+        reason: 'must still cover the screen',
+      );
+    });
+
+    test('crops far less than the logical-point scale would', () {
+      double cropFraction(int scale, double dpr) {
+        final double drawn = 320 * scale / dpr;
+        return (drawn - viewport.width) / drawn;
+      }
+
+      final int logical = sceneScaleFor(
+        viewport: viewport,
+        canvasWidth: 320,
+        canvasHeight: 568,
+      );
+      final int device = sceneScaleFor(
+        viewport: viewport,
+        canvasWidth: 320,
+        canvasHeight: 568,
+        devicePixelRatio: 3,
+      );
+
+      expect(cropFraction(logical, 1), greaterThan(0.35));
+      expect(cropFraction(device, 3), lessThan(0.26));
+    });
+
+    test('a canvas shaped like the screen barely crops at all', () {
+      final int scale = sceneScaleFor(
+        viewport: viewport,
+        canvasWidth: 320,
+        canvasHeight: 696,
+        devicePixelRatio: 3,
+      );
+
+      expect(scale, 4);
+      expect(
+        (320 * scale / 3 - viewport.width) / (320 * scale / 3),
+        lessThan(0.08),
+      );
+      expect(
+        (696 * scale / 3 - viewport.height) / (696 * scale / 3),
+        lessThan(0.08),
+      );
+    });
+
+    test('a nonsense ratio falls back to 1 instead of dividing by zero', () {
+      expect(
+        sceneScaleFor(
+          viewport: viewport,
+          canvasWidth: 320,
+          canvasHeight: 568,
+          devicePixelRatio: 0,
+        ),
+        1,
+      );
+    });
+  });
+
   group('frameIndexAt', () {
     test('advances one frame per 1/fps and wraps at the end', () {
       int at(int ms) => frameIndexAt(

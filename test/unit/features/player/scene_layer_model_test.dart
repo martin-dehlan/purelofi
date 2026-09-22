@@ -95,7 +95,7 @@ void main() {
           'is_active': true,
           'created_at': '2026-01-01T00:00:00.000Z',
           'canvas_width': 320,
-          'canvas_height': 568,
+          'canvas_height': 696,
           'scene_layers': layers,
         };
 
@@ -121,7 +121,7 @@ void main() {
       ).toEntity();
 
       expect(scene.canvasWidth, 320);
-      expect(scene.canvasHeight, 568);
+      expect(scene.canvasHeight, 696);
     });
 
     test('a scene without layers is a video scene', () {
@@ -150,7 +150,7 @@ void main() {
       final SceneEntity scene = SceneModel.fromJson(json).toEntity();
 
       expect(scene.canvasWidth, 320);
-      expect(scene.canvasHeight, 568);
+      expect(scene.canvasHeight, 696);
     });
   });
 }
