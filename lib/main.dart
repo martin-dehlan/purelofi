@@ -14,6 +14,7 @@ import 'common/database/app_database.dart';
 import 'common/database/daos/cached_file.dao.dart';
 import 'features/player/controller/player.provider.dart';
 import 'features/player/data/audio_player.service.impl.dart';
+import 'features/player/data/audio_session.source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,10 +39,17 @@ Future<void> main() async {
   // is playing.
   unawaited(cache.evict());
 
+  // What the platform says about calls, other players and the headphones.
+  // `audio_service` configures the session; deciding what an interruption
+  // means is ours.
+  final AudioSessionInterruptions interruptions =
+      await AudioSessionInterruptions.create();
+
   // Starts the background playback service, which owns the notification and
   // the lock-screen controls for the whole app lifetime.
   final AudioPlayerServiceImpl audioHandler = await AudioService.init(
-    builder: () => AudioPlayerServiceImpl(cache: cache),
+    builder: () =>
+        AudioPlayerServiceImpl(cache: cache, interruptions: interruptions),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'app.purelofi.audio',
       androidNotificationChannelName: 'PureLofi',
@@ -49,8 +57,17 @@ Future<void> main() async {
       // and the colour is thrown away — so it is the wordmark's heart and
       // note, not the artwork, which would come out a white blob.
       androidNotificationIcon: 'drawable/ic_notification',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
+      // These two go together, and audio_service asserts it: an "ongoing"
+      // notification is one Android will not let go of, so it is only
+      // allowed if the service drops out of the foreground when paused.
+      //
+      // We want the opposite. Leaving the foreground lets Android kill the
+      // process, and coming back to a cold start instead of a paused track
+      // is the difference between a player and a toy. So the notification
+      // stays put through a pause and is dismissible — which is what every
+      // music app does anyway.
+      androidNotificationOngoing: false,
+      androidStopForegroundOnPause: false,
     ),
   );
 
