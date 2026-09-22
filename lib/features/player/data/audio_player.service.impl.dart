@@ -47,6 +47,15 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   Stream<AppError> get errors => _errors.stream;
 
   @override
+  Stream<Duration> get positionStream => _player.positionStream;
+
+  @override
+  Stream<Duration?> get durationStream => _player.durationStream;
+
+  @override
+  Future<void> seek(Duration position) => _player.seek(position);
+
+  @override
   Future<void> playTrack(TrackEntity track) async {
     mediaItem.add(
       MediaItem(

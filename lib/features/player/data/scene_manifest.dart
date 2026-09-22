@@ -76,6 +76,7 @@ class LayerManifest {
     this.tiles = false,
     this.onlyWhilePlaying = false,
     this.hideWhenPaused = false,
+    this.tappable = false,
     this.eventIntervalMinSeconds,
     this.eventIntervalMaxSeconds,
   });
@@ -87,6 +88,7 @@ class LayerManifest {
   final bool tiles;
   final bool onlyWhilePlaying;
   final bool hideWhenPaused;
+  final bool tappable;
   final int? eventIntervalMinSeconds;
   final int? eventIntervalMaxSeconds;
 
@@ -112,6 +114,7 @@ class LayerManifest {
       tiles: json['tiles'] as bool? ?? false,
       onlyWhilePlaying: json['only_while_playing'] as bool? ?? false,
       hideWhenPaused: json['hide_when_paused'] as bool? ?? false,
+      tappable: json['tappable'] as bool? ?? false,
       eventIntervalMinSeconds: event == null ? null : (event[0] as num).toInt(),
       eventIntervalMaxSeconds: event == null ? null : (event[1] as num).toInt(),
     );

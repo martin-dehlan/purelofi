@@ -32,6 +32,10 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// lights up when playback starts.
     @Default(false) bool hideWhenPaused,
 
+    /// Plays its animation once when the listener taps it, then rests on its
+    /// first frame again.
+    @Default(false) bool tappable,
+
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
     int? eventIntervalMaxSeconds,
@@ -45,4 +49,7 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
   /// Whether this layer fires on an interval rather than looping.
   bool get isEvent =>
       eventIntervalMinSeconds != null && eventIntervalMaxSeconds != null;
+
+  /// Whether this layer waits for something rather than animating on its own.
+  bool get isTriggered => isEvent || tappable;
 }

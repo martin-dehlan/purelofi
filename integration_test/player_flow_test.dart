@@ -10,9 +10,8 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/screens/player.screen.dart';
-import 'package:purelofi/features/player/presentation/widgets/bts_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/bts_modal.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
 
 import '../test/helpers/fake_audio_player.service.dart';
 import '../test/helpers/mock_repositories.dart';
@@ -99,7 +98,9 @@ void main() {
     await launchApp(tester);
     final int playedBefore = fakeAudio.playedTracks.length;
 
-    await tester.tap(find.byType(SceneSwitcher));
+    await tester.tap(find.byType(SettingsButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change scene'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Night Bus'));
     await tester.pumpAndSettle();
@@ -112,7 +113,9 @@ void main() {
   testWidgets('the footage plays, then the music resumes', (tester) async {
     await launchApp(tester);
 
-    await tester.tap(find.byType(BtsButton));
+    await tester.tap(find.byType(SettingsButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Behind the scenes'));
     await tester.pumpAndSettle();
     expect(find.byType(BtsModal), findsOneWidget);
     expect(fakeAudio.pauseCalls, 1);
@@ -131,11 +134,11 @@ void main() {
 
     await tester.pump(const Duration(seconds: 4));
     await tester.pump();
-    expect(find.byType(SceneSwitcher).hitTestable(), findsNothing);
+    expect(find.byType(SettingsButton).hitTestable(), findsNothing);
 
     await tester.tapAt(tester.getCenter(find.byType(PlayerScreen)));
     await tester.pumpAndSettle();
 
-    expect(find.byType(SceneSwitcher).hitTestable(), findsOneWidget);
+    expect(find.byType(SettingsButton).hitTestable(), findsOneWidget);
   });
 }

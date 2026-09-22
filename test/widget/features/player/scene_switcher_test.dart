@@ -8,7 +8,6 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/screens/player.screen.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
@@ -48,8 +47,8 @@ void main() {
       overrides: overrides(),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(SceneSwitcher));
-    await tester.pumpAndSettle();
+    await openMenu(tester);
+    await tapMenuEntry(tester, 'Change scene');
   }
 
   testWidgets('lists the active scenes in sort_order', (tester) async {

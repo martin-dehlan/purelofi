@@ -6,8 +6,6 @@ import 'package:purelofi/common/analytics/analytics.provider.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
-import 'package:purelofi/features/player/presentation/widgets/bts_button.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/mock_repositories.dart';
@@ -67,8 +65,8 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(BtsButton));
-    await tester.pumpAndSettle();
+    await openMenu(tester);
+    await tapMenuEntry(tester, 'Behind the scenes');
 
     expect(analytics.eventNames, contains('bts_opened'));
     expect(
@@ -85,8 +83,8 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(SceneSwitcher));
-    await tester.pumpAndSettle();
+    await openMenu(tester);
+    await tapMenuEntry(tester, 'Change scene');
     await tester.tap(find.text('Night Bus'));
     await tester.pumpAndSettle();
 
@@ -103,8 +101,8 @@ void main() {
   testWidgets('nothing personal is ever attached to an event', (tester) async {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(BtsButton));
-    await tester.pumpAndSettle();
+    await openMenu(tester);
+    await tapMenuEntry(tester, 'Behind the scenes');
 
     for (final (String, Map<String, Object>) event in analytics.events) {
       expect(event.$2.keys, everyElement(anyOf('track_id', 'scene_id')));

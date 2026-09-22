@@ -5,9 +5,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
-import 'package:purelofi/common/utils/app_assets.dart';
-import 'package:purelofi/common/widgets/pixel_icon.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/bts_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/bts_modal.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
@@ -49,8 +46,8 @@ void main() {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(BtsButton));
-      await tester.pumpAndSettle();
+      await openMenu(tester);
+      await tapMenuEntry(tester, 'Behind the scenes');
 
       expect(find.byType(BtsModal), findsOneWidget);
       expect(find.text('bts https://example.com/a-bts.mp4'), findsOneWidget);
@@ -62,8 +59,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(fakeAudio.playedTracks, hasLength(1));
 
-      await tester.tap(find.byType(BtsButton));
-      await tester.pumpAndSettle();
+      await openMenu(tester);
+      await tapMenuEntry(tester, 'Behind the scenes');
 
       expect(fakeAudio.pauseCalls, 1);
     });
@@ -72,8 +69,8 @@ void main() {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(BtsButton));
-      await tester.pumpAndSettle();
+      await openMenu(tester);
+      await tapMenuEntry(tester, 'Behind the scenes');
       Navigator.of(tester.element(find.byType(BtsModal))).pop();
       await tester.pumpAndSettle();
 
@@ -87,7 +84,8 @@ void main() {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
-      expect(find.byType(BtsButton), findsOneWidget);
+      await openMenu(tester);
+      expect(find.text('Behind the scenes'), findsNothing);
       expect(find.byType(BtsModal), findsNothing);
     });
   });
@@ -101,15 +99,10 @@ void main() {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
+      await openMenu(tester);
+
       expect(
-        find.byType(BtsButton),
-        findsOneWidget,
-        reason: 'the widget is in the tree',
-      );
-      expect(
-        find.byWidgetPredicate(
-          (Widget w) => w is PixelIcon && w.asset == AppAssets.cameraIcon,
-        ),
+        find.text('Behind the scenes'),
         findsNothing,
         reason:
             'but no camera is drawn — one that opens no clip is a dead '

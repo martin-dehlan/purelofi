@@ -82,6 +82,15 @@ double stepFade(
       .toDouble();
 }
 
+/// The canvas-space rectangle [layer] occupies, for hit testing a tap.
+Rect layerBounds(SceneLayerEntity layer, {required Size frameSize}) =>
+    Rect.fromLTWH(
+      layer.offsetX.toDouble(),
+      layer.offsetY.toDouble(),
+      frameSize.width,
+      frameSize.height,
+    );
+
 /// How opaque [layer] should be drawn, given how far the lamp has faded.
 double layerOpacity(SceneLayerEntity layer, {required double fade}) =>
     layer.hideWhenPaused ? fade : 1;
@@ -195,23 +204,76 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   Widget build(BuildContext context) {
     if (_loading) return const LoadingState();
 
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _SceneLayersPainter(
-          scene: widget.scene,
-          sprites: _sprites,
-          events: _events,
-          fade: () => _fade,
-          elapsed: () => _clock.sceneTime,
-          playingElapsed: () => _clock.playingTime,
-          driftPeriod: _driftPeriod,
-          devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
-          repaint: _frameTick,
+    return Listener(
+      // A Listener rather than a GestureDetector: the chrome's own tap
+      // handler still gets the event, so touching the cat also wakes the
+      // controls.
+      onPointerDown: _onPointerDown,
+      child: ColoredBox(
+        color: Theme.of(context).colorScheme.surface,
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _SceneLayersPainter(
+            scene: widget.scene,
+            sprites: _sprites,
+            events: _events,
+            fade: () => _fade,
+            elapsed: () => _clock.sceneTime,
+            playingElapsed: () => _clock.playingTime,
+            driftPeriod: _driftPeriod,
+            devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
+            repaint: _frameTick,
+          ),
         ),
       ),
     );
+  }
+
+  /// Wakes whatever the listener touched, if anything.
+  void _onPointerDown(PointerDownEvent event) {
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final Size size = box.size;
+    final double dpr = MediaQuery.of(context).devicePixelRatio;
+    final double scale =
+        sceneScaleFor(
+          viewport: size,
+          canvasWidth: widget.scene.canvasWidth,
+          canvasHeight: widget.scene.canvasHeight,
+          devicePixelRatio: dpr,
+        ) /
+        dpr;
+
+    // Back from the screen into the canvas the art was drawn on.
+    final Offset local = box.globalToLocal(event.position);
+    final double originX = (size.width - widget.scene.canvasWidth * scale) / 2;
+    final double originY =
+        (size.height - widget.scene.canvasHeight * scale) / 2;
+    final Offset canvasPoint = Offset(
+      (local.dx - originX) / scale,
+      (local.dy - originY) / scale,
+    );
+
+    // Front to back, so the nearest thing wins.
+    for (final SceneLayerEntity layer in widget.scene.layers.reversed) {
+      if (!layer.tappable) continue;
+
+      final ui.Image? sprite = _sprites[layer.spriteUrl];
+      if (sprite == null) continue;
+
+      final Rect bounds = layerBounds(
+        layer,
+        frameSize: Size(
+          sprite.width / layer.frameCount,
+          sprite.height.toDouble(),
+        ),
+      );
+      if (bounds.contains(canvasPoint)) {
+        _events.trigger(layer.id, _clock.sceneTime);
+        return;
+      }
+    }
   }
 }
 

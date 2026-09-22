@@ -15,6 +15,12 @@ abstract class AudioPlayerService {
   /// Playback failures, already mapped to `AppError.playback`.
   Stream<AppError> get errors;
 
+  /// How far into the current track playback is.
+  Stream<Duration> get positionStream;
+
+  /// How long the current track is, once the player knows.
+  Stream<Duration?> get durationStream;
+
   /// Loads [track] and starts playing it.
   Future<void> playTrack(TrackEntity track);
 
@@ -23,4 +29,7 @@ abstract class AudioPlayerService {
   Future<void> pause();
 
   Future<void> stop();
+
+  /// Jumps to [position] in the current track.
+  Future<void> seek(Duration position);
 }

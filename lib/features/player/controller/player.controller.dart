@@ -35,6 +35,12 @@ class PlayerController extends _$PlayerController {
           audio.errors.listen((AppError error) {
             state = state.copyWith(error: error, isPlaying: false);
           }),
+          audio.positionStream.listen((Duration position) {
+            state = state.copyWith(position: position);
+          }),
+          audio.durationStream.listen((Duration? duration) {
+            state = state.copyWith(duration: duration);
+          }),
         ];
 
     ref.onDispose(() {
@@ -67,8 +73,32 @@ class PlayerController extends _$PlayerController {
     await playTrack(_pickNext(tracks));
   }
 
+  /// Jumps to [position] in the current track.
+  Future<void> seek(Duration position) async {
+    if (state.currentTrack == null) return;
+
+    state = state.copyWith(position: position);
+    await ref.read(audioPlayerServiceProvider).seek(position);
+  }
+
+  /// Back to the start of the current track. There is no history to step
+  /// through — the stream picks tracks at random — so this is what "previous"
+  /// can honestly mean.
+  Future<void> restart() async {
+    if (state.currentTrack == null) return;
+
+    await seek(Duration.zero);
+  }
+
   Future<void> playTrack(TrackEntity track) async {
-    state = state.copyWith(currentTrack: track, error: null);
+    state = state.copyWith(
+      currentTrack: track,
+      position: Duration.zero,
+      duration: track.durationSeconds == null
+          ? null
+          : Duration(seconds: track.durationSeconds!),
+      error: null,
+    );
     unawaited(ref.read(analyticsServiceProvider).trackPlayed(track.id));
     await ref.read(audioPlayerServiceProvider).playTrack(track);
   }

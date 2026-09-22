@@ -21,6 +21,7 @@ abstract class SceneLayerModel with _$SceneLayerModel {
     @Default(false) bool tiles,
     @JsonKey(name: 'only_while_playing') @Default(false) bool onlyWhilePlaying,
     @JsonKey(name: 'hide_when_paused') @Default(false) bool hideWhenPaused,
+    @Default(false) bool tappable,
     @JsonKey(name: 'event_interval_min_seconds') int? eventIntervalMinSeconds,
     @JsonKey(name: 'event_interval_max_seconds') int? eventIntervalMaxSeconds,
   }) = _SceneLayerModel;
@@ -42,6 +43,7 @@ extension SceneLayerModelX on SceneLayerModel {
     tiles: tiles,
     onlyWhilePlaying: onlyWhilePlaying,
     hideWhenPaused: hideWhenPaused,
+    tappable: tappable,
     eventIntervalMinSeconds: eventIntervalMinSeconds,
     eventIntervalMaxSeconds: eventIntervalMaxSeconds,
   );

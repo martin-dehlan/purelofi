@@ -10,6 +10,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
+import '../widgets/settings_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
@@ -93,7 +94,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               // back, it does not pause the music by accident.
               child: IgnorePointer(
                 ignoring: !controlsVisible,
-                child: const Center(child: PlayerControls()),
+                child: const Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SafeArea(child: PlayerControls()),
+                ),
+              ),
+            ),
+            AnimatedOpacity(
+              opacity: controlsVisible ? 1 : 0,
+              duration: const Duration(milliseconds: 250),
+              child: IgnorePointer(
+                ignoring: !controlsVisible,
+                child: const Align(
+                  alignment: Alignment.topRight,
+                  child: SafeArea(child: SettingsButton()),
+                ),
               ),
             ),
           ],

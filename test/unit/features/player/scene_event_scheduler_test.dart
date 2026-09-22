@@ -218,4 +218,85 @@ void main() {
       }
     });
   });
+
+  group('tappable', () {
+    SceneLayerEntity cat({int frameCount = 12, double fps = 10}) =>
+        SceneLayerEntity(
+          id: 'cat',
+          zIndex: 16,
+          spriteUrl: 'https://example.com/cat.png',
+          frameCount: frameCount,
+          fps: fps,
+          tappable: true,
+        );
+
+    test('waits indefinitely until it is tapped', () {
+      final SceneLayerEntity layer = cat();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+
+      scheduler.update(const Duration(minutes: 30));
+
+      expect(
+        scheduler.runningLayerId,
+        isNull,
+        reason: 'no timer starts a tappable layer',
+      );
+      expect(scheduler.frameFor(layer, const Duration(minutes: 30)), 0);
+    });
+
+    test('a tap starts it and it plays through', () {
+      final SceneLayerEntity layer = cat();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+
+      expect(scheduler.trigger('cat', const Duration(seconds: 5)), isTrue);
+      expect(scheduler.runningLayerId, 'cat');
+      expect(scheduler.frameFor(layer, const Duration(milliseconds: 5500)), 5);
+    });
+
+    test('a second tap during the stretch is ignored', () {
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[cat()],
+        random: _FixedRandom(0),
+      );
+      scheduler.trigger('cat', const Duration(seconds: 5));
+
+      expect(
+        scheduler.trigger('cat', const Duration(milliseconds: 5300)),
+        isFalse,
+        reason: 'restarting mid-stretch would look like a glitch',
+      );
+    });
+
+    test('rests again afterwards and can be tapped once more', () {
+      final SceneLayerEntity layer = cat();
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[layer],
+        random: _FixedRandom(0),
+      );
+      scheduler.trigger('cat', const Duration(seconds: 5));
+
+      // 12 frames at 10fps is 1.2 seconds.
+      scheduler.update(const Duration(milliseconds: 6300));
+
+      expect(scheduler.runningLayerId, isNull);
+      expect(scheduler.frameFor(layer, const Duration(milliseconds: 6300)), 0);
+      expect(scheduler.trigger('cat', const Duration(seconds: 9)), isTrue);
+    });
+
+    test('an unknown id does nothing', () {
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[cat()],
+        random: _FixedRandom(0),
+      );
+
+      expect(scheduler.trigger('dog', const Duration(seconds: 5)), isFalse);
+      expect(scheduler.runningLayerId, isNull);
+    });
+  });
 }
