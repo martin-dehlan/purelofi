@@ -1,8 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../common/cache/media_cache.service.dart';
 import '../../../common/config/supabase.provider.dart';
 import '../../../common/database/app_database.dart';
+import '../../../common/database/daos/cached_file.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
@@ -32,6 +34,18 @@ AppDatabase appDatabase(Ref ref) {
 
 @Riverpod(keepAlive: true)
 TrackDao trackDao(Ref ref) => TrackDao(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true)
+CachedFileDao cachedFileDao(Ref ref) =>
+    CachedFileDao(ref.watch(appDatabaseProvider));
+
+/// The files on disk.
+///
+/// `null` until the cache directory has been resolved, and `null` forever in
+/// tests that do not override it — everything that uses it treats a missing
+/// cache as "stream it", which is exactly the MVP behaviour.
+@Riverpod(keepAlive: true)
+MediaCache? mediaCache(Ref ref) => null;
 
 @Riverpod(keepAlive: true)
 SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
@@ -83,7 +97,9 @@ Future<TrackEntity?> trackDetail(Ref ref, String trackId) =>
 /// so no test touches the network.
 @Riverpod(keepAlive: true)
 SpriteLoader spriteLoader(Ref ref) {
-  final SpriteLoader loader = NetworkSpriteLoader();
+  final SpriteLoader loader = NetworkSpriteLoader(
+    cache: ref.watch(mediaCacheProvider),
+  );
   ref.onDispose(loader.dispose);
   return loader;
 }

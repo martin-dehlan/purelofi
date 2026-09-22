@@ -75,11 +75,4 @@ class SceneDao extends DatabaseAccessor<AppDatabase> with _$SceneDaoMixin {
       });
     });
   }
-
-  Future<void> setLocalSpritePath(String layerId, String? path) =>
-      (update(
-        sceneLayerTable,
-      )..where(($SceneLayerTableTable l) => l.id.equals(layerId))).write(
-        SceneLayerTableCompanion(localSpritePath: Value<String?>(path)),
-      );
 }

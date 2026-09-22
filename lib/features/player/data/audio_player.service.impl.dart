@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../common/cache/media_cache.service.dart';
 import '../../../common/errors/app_error.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/track.entity.dart';
@@ -14,8 +16,9 @@ import '../domain/track.entity.dart';
 class AudioPlayerServiceImpl extends BaseAudioHandler
     with SeekHandler
     implements AudioPlayerService {
-  AudioPlayerServiceImpl({AudioPlayer? player})
-    : _player = player ?? AudioPlayer() {
+  AudioPlayerServiceImpl({AudioPlayer? player, MediaCache? cache})
+    : _player = player ?? AudioPlayer(),
+      _cache = cache {
     _subscriptions.addAll(<StreamSubscription<Object?>>[
       _player.playbackEventStream.listen(
         _broadcastState,
@@ -30,6 +33,7 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   }
 
   final AudioPlayer _player;
+  final MediaCache? _cache;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
   final StreamController<AppError> _errors =
@@ -69,9 +73,27 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     );
 
     await _guard(() async {
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(track.audioUrl)));
+      await _player.setAudioSource(await _sourceFor(track.audioUrl));
       await _player.play();
     });
+  }
+
+  /// The file on disk when there is one, the stream otherwise.
+  ///
+  /// A track is downloaded the first time it plays, in the background, so it
+  /// is there the next time — which is the whole point of the cache. The
+  /// download is deliberately not awaited: playback should start now, not
+  /// when the last byte lands.
+  Future<AudioSource> _sourceFor(String url) async {
+    final MediaCache? cache = _cache;
+    if (cache == null) return AudioSource.uri(Uri.parse(url));
+
+    final File? cached = await cache.fileFor(url);
+    if (cached != null) return AudioSource.file(cached.path);
+
+    unawaited(cache.store(url));
+
+    return AudioSource.uri(Uri.parse(url));
   }
 
   @override

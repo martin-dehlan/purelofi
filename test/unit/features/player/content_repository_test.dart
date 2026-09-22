@@ -208,23 +208,6 @@ void main() {
       ], reason: 'a track pulled from the catalogue must stop playing');
     });
 
-    test('a refresh does not wipe a downloaded file', () async {
-      when(
-        () => mockApi.fetchTracks(),
-      ).thenAnswer((_) async => <TrackModel>[makeTrackModel('track-1')]);
-      await repository.getTracks();
-
-      final TrackDao dao = TrackDao(database);
-      await dao.setLocalAudioPath('track-1', '/tmp/track-1.mp3');
-
-      await repository.getTracks();
-
-      expect(
-        (await dao.getTrackById('track-1'))?.localAudioPath,
-        '/tmp/track-1.mp3',
-      );
-    });
-
     test('a layer removed from a scene disappears from the cache', () async {
       when(() => mockApi.fetchScenes()).thenAnswer(
         (_) async => <SceneModel>[

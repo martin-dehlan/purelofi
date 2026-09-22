@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,8 +7,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'common/analytics/analytics.provider.dart';
+import 'common/cache/media_cache.service.dart';
 import 'common/analytics/analytics.service.dart';
 import 'common/config/env.dart';
+import 'common/database/app_database.dart';
+import 'common/database/daos/cached_file.dao.dart';
 import 'features/player/controller/player.provider.dart';
 import 'features/player/data/audio_player.service.impl.dart';
 
@@ -21,10 +26,22 @@ Future<void> main() async {
     publishableKey: Env.supabaseAnonKey,
   );
 
+  // The files on disk. Built here because the cache directory and the
+  // database both have to exist before anything asks for a track, and a
+  // provider cannot wait.
+  final AppDatabase database = AppDatabase();
+  final MediaCache cache = FileMediaCache(
+    dao: CachedFileDao(database),
+    directory: await FileMediaCache.defaultDirectory(),
+  );
+  // Anything left over the limit by a previous run goes now, while nothing
+  // is playing.
+  unawaited(cache.evict());
+
   // Starts the background playback service, which owns the notification and
   // the lock-screen controls for the whole app lifetime.
   final AudioPlayerServiceImpl audioHandler = await AudioService.init(
-    builder: AudioPlayerServiceImpl.new,
+    builder: () => AudioPlayerServiceImpl(cache: cache),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'app.purelofi.audio',
       androidNotificationChannelName: 'PureLofi',
@@ -46,6 +63,8 @@ Future<void> main() async {
       overrides: [
         audioPlayerServiceProvider.overrideWithValue(audioHandler),
         analyticsServiceProvider.overrideWithValue(analytics),
+        appDatabaseProvider.overrideWithValue(database),
+        mediaCacheProvider.overrideWithValue(cache),
       ],
       child: const PureLofiApp(),
     ),

@@ -37,8 +37,7 @@ class TrackDao extends DatabaseAccessor<AppDatabase> with _$TrackDaoMixin {
   /// Writes what the server just sent, and forgets tracks it no longer lists.
   ///
   /// Deleting is the point: a track pulled from the catalogue must stop
-  /// playing, and a cache that only ever grows would keep it forever. The
-  /// local file path survives, because the file itself is still on disk.
+  /// playing, and a cache that only ever grows would keep it forever.
   Future<void> replaceTracks(List<TrackTableCompanion> tracks) async {
     await transaction(() async {
       final Set<String> keep = tracks
@@ -51,10 +50,6 @@ class TrackDao extends DatabaseAccessor<AppDatabase> with _$TrackDaoMixin {
       await batch((Batch b) => b.insertAllOnConflictUpdate(trackTable, tracks));
     });
   }
-
-  Future<void> setLocalAudioPath(String id, String? path) =>
-      (update(trackTable)..where(($TrackTableTable t) => t.id.equals(id)))
-          .write(TrackTableCompanion(localAudioPath: Value<String?>(path)));
 
   Future<void> setFavorite(String id, {required bool isFavorite}) =>
       (update(
