@@ -23,7 +23,19 @@ class NetworkSpriteLoader implements SpriteLoader {
 
   @override
   Future<ui.Image> load(String url) {
-    return _inFlight.putIfAbsent(url, () => _resolve(url));
+    return _inFlight.putIfAbsent(url, () async {
+      // A failure is not worth remembering: kept in the map, it would make
+      // every retry hand back the same old error without touching the
+      // network again.
+      try {
+        return await _resolve(url);
+      } on Object {
+        // remove() hands back the very future that is failing; ignoring it
+        // marks it handled here without hiding the error from the caller.
+        _inFlight.remove(url)?.ignore();
+        rethrow;
+      }
+    });
   }
 
   Future<ui.Image> _resolve(String url) {

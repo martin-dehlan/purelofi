@@ -1,0 +1,17 @@
+# Android upload signing — copy to android/key.properties and fill in.
+#
+# This file and the keystore it points at are git-ignored. Losing the keystore
+# means losing the ability to update the app on Google Play, so keep a backup
+# somewhere other than this machine.
+#
+# Create one with:
+#
+#   keytool -genkey -v -keystore ~/purelofi-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# storeFile is resolved relative to android/, so an absolute path is fine.
+
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=

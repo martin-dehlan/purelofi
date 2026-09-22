@@ -60,3 +60,9 @@ coverage/
 
 # Editors
 .vscode/
+
+# Android release signing. The keystore itself never belongs in the repo:
+# losing it means losing the ability to update the app on Google Play.
+/android/key.properties
+*.jks
+*.keystore

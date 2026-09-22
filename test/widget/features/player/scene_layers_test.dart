@@ -7,6 +7,7 @@ import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_background.widget.dart';
+import 'package:purelofi/common/widgets/error_state.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_layers.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_video.widget.dart';
 
@@ -129,6 +130,39 @@ void main() {
 
     expect(find.byType(SceneLayersView), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a scene whose every sprite fails says so, and can retry', (
+    tester,
+  ) async {
+    // Losing one layer is survivable; losing all of them is a black screen,
+    // and a black screen has to explain itself.
+    final SceneEntity scene = layeredScene();
+    fakeSprites = FakeSpriteLoader(
+      failingUrls: scene.layers
+          .map((SceneLayerEntity layer) => layer.spriteUrl)
+          .toSet(),
+    );
+    when(
+      () => mockRepo.getScenes(),
+    ).thenAnswer((_) async => <SceneEntity>[scene]);
+
+    await tester.pumpProviderApp(
+      child: const SceneBackground(),
+      overrides: overrides(),
+    );
+    await settle(tester);
+
+    expect(find.byType(ErrorState), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // The retry asks for every sprite again rather than replaying the
+    // remembered failure.
+    final int before = fakeSprites.requestedUrls.length;
+    await tester.tap(find.text('Retry'));
+    await settle(tester);
+
+    expect(fakeSprites.requestedUrls.length, greaterThan(before));
   });
 
   testWidgets('keeps repainting while it is on screen', (tester) async {
