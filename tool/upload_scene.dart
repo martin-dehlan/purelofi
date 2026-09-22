@@ -51,6 +51,18 @@ const String _bucket = 'scenes';
 const double _sceneBudgetMegabytes = 48;
 const double _layerBudgetMegabytes = 4;
 
+/// How much of the canvas a phone can cut off, as a fraction of each side.
+///
+/// A scene is scaled by whole device pixels to stay crisp, which means the
+/// scale is rounded up and the overflow falls off the edges. How much
+/// overflows depends on the screen: an iPhone SE needs 2.35x, gets 3x, and
+/// loses 62 of 568 rows top and bottom. Measured across phones from the SE
+/// to a 21:9 Android, the worst case is 18% of the width and 11% of the
+/// height on each side. Anything that must be seen belongs inside what is
+/// left; anything the listener can touch has to be.
+const double _safeInsetX = 0.18;
+const double _safeInsetY = 0.11;
+
 /// Refuses a scene that would not fit in the image cache.
 ///
 /// Almost always the fix is the same: crop the strip to the pixels it
@@ -136,12 +148,50 @@ String _expandHome(String path) {
   return home == null ? path : path.replaceFirst('~', home);
 }
 
+/// Reports what a phone will cut off, and refuses a scene whose listener
+/// could be asked to touch something that is not on screen.
+void _checkSafeArea(
+  SceneManifest manifest,
+  Map<String, (int, int, int, int)> boxes,
+) {
+  final int left = (manifest.canvasWidth * _safeInsetX).round();
+  final int top = (manifest.canvasHeight * _safeInsetY).round();
+  final int right = manifest.canvasWidth - left;
+  final int bottom = manifest.canvasHeight - top;
+
+  stdout.writeln('\nSafe area x $left..$right, y $top..$bottom');
+
+  final List<String> clipped = <String>[];
+  final List<String> unreachable = <String>[];
+
+  for (final (SpriteFileName file, LayerManifest settings) in manifest.layers) {
+    final (int x0, int y0, int x1, int y1) = boxes[file.name]!;
+    if (x0 >= left && y0 >= top && x1 <= right && y1 <= bottom) continue;
+
+    final String where = '  ${file.name.padRight(16)} x $x0..$x1, y $y0..$y1';
+    // A background is meant to bleed past the edges; that is what the
+    // overflow is for. Something the listener taps is a different matter.
+    (settings.tappable ? unreachable : clipped).add(where);
+  }
+
+  if (clipped.isNotEmpty) {
+    stdout.writeln('Reaches past it (fine for backgrounds):');
+    clipped.forEach(stdout.writeln);
+  }
+
+  if (unreachable.isNotEmpty) {
+    throw _UploadException(
+      'A tappable layer reaches outside the safe area, so on some phones it '
+      'is half off screen or gone entirely and the tap has nothing to hit:\n'
+      '${unreachable.join('\n')}',
+    );
+  }
+}
+
 Future<void> _run(_Args args) async {
   if (!args.dir.existsSync()) {
     throw _UploadException('No such folder: ${args.dir.path}');
   }
-
-  final _Env env = _Env.load();
 
   // 1. Read the folder through the app's own parser.
   final File sceneJson = File('${args.dir.path}/scene.json');
@@ -178,6 +228,8 @@ Future<void> _run(_Args args) async {
   );
 
   final List<String> oversized = <String>[];
+  final Map<String, (int, int, int, int)> boxes =
+      <String, (int, int, int, int)>{};
   double totalMegabytes = 0;
 
   for (final (SpriteFileName file, LayerManifest settings) in manifest.layers) {
@@ -192,6 +244,12 @@ Future<void> _run(_Args args) async {
     }
 
     final int frameWidth = width ~/ file.frameCount;
+    boxes[file.name] = (
+      settings.offsetX,
+      settings.offsetY,
+      settings.offsetX + frameWidth,
+      settings.offsetY + height,
+    );
     final double megabytes = width * height * 4 / (1024 * 1024);
     totalMegabytes += megabytes;
     if (megabytes > _layerBudgetMegabytes) {
@@ -215,11 +273,16 @@ Future<void> _run(_Args args) async {
   }
 
   _checkMemoryBudget(totalMegabytes, oversized);
+  _checkSafeArea(manifest, boxes);
 
   if (args.dryRun) {
     stdout.writeln('\n--dry-run: nothing uploaded.');
     return;
   }
+
+  // Loaded here rather than at the top: a dry run validates the folder and
+  // has no business asking for credentials.
+  final _Env env = _Env.load();
 
   // 3. Upload the sprites.
   stdout.writeln('\nUploading to storage/$_bucket/${args.scene}/');
