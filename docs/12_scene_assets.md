@@ -175,6 +175,32 @@ Anything that should move must **not** be painted into the scene:
 
 Add `no rain on the glass, no steam, no reflections` to the prompt.
 
+## Crop every strip to what it uses
+
+A sprite strip costs `width x height x 4` bytes the moment Flutter decodes it,
+and every layer of a scene is decoded at the same time. Flutter's image cache
+holds 100 MB, and past that it quietly drops the biggest entries — the layer
+is in the database, its sprite downloads fine, and it is simply never drawn.
+Nothing in the log says so.
+
+Generating each layer at the full 320x568 canvas is the easy mistake. The
+Rainy Room's radio LED is four pixels across; as a full-canvas 32-frame strip
+it cost **22 MB**, cropped to 6x6 it costs **32 KB**. Cropping the whole scene
+took it from 105 MB — over the limit, LED missing — to 8.8 MB.
+
+So: crop each strip to the union of what its frames actually touch, and put it
+back in place with `offset`. The upload tool adds up the decoded size and
+refuses a scene over 48 MB, naming the layers to cut:
+
+```
+Decoded size 105.4 MB of 48 MB budget
+Layers above 4 MB — crop these to their bounding box and give them an offset:
+  L17_led_32f.png  22.2 MB (320x568 x32)
+```
+
+The exception is a layer that genuinely fills the canvas — the room itself,
+the lit version of it. Those are one frame each and cost 0.7 MB.
+
 ## The folder contract
 
 One folder per scene: sprite strips plus a `scene.json`.
@@ -305,6 +331,7 @@ In rough order of how much each one buys you:
 - [ ] Rain has at least two depths
 - [ ] Something moves very slowly (clouds, 1px per 8s)
 - [ ] Nothing blinks on a one-second beat — it reads as cheap immediately
+- [ ] Every strip cropped to its bounding box, scene under 48 MB decoded
 
 ---
 
