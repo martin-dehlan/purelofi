@@ -28,6 +28,10 @@ Future<void> main() async {
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'app.purelofi.audio',
       androidNotificationChannelName: 'PureLofi',
+      // Android draws this as a silhouette — every opaque pixel turns white
+      // and the colour is thrown away — so it is the wordmark's heart and
+      // note, not the artwork, which would come out a white blob.
+      androidNotificationIcon: 'drawable/ic_notification',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
     ),

@@ -19,17 +19,28 @@ at 256 and scale 4×, with nearest-neighbour.
 
 ## `app_icon_foreground.png` — 1024 × 1024
 
-Android's adaptive icon, which is masked into whatever shape the launcher
-uses — circle, squircle, teardrop. Transparent background, and the motif
-inside the middle **66%** (a 672 px circle); anything outside can be cropped.
-The background is the flat colour `#0D1A2E`, set in `pubspec.yaml`.
+Android's adaptive icon is two layers, masked together into whatever shape
+the launcher uses — circle, squircle, teardrop. The mask keeps the middle
+**66%**, so a third of each edge is thrown away.
 
-## `notification_icon.png` — 96 × 96 (optional)
+For this icon the artwork is the *background* layer and fills the frame, and
+this foreground is deliberately **fully transparent**. That works because the
+wordmark spans only 48% of the width, well inside the mask; only the corners
+— the plant, the curtain, the cat — are lost. If a future icon puts anything
+important near an edge, it has to be the foreground instead, drawn inside a
+672 px circle, with a flat colour behind it.
+
+## `notification_icon.png` — 96 × 96
 
 Android draws the media-notification icon as a **silhouette**: every opaque
 pixel becomes white, colour is discarded. So it must be one flat shape with
-transparency around it — a lamp, a cassette, not the whole scene. Without it
-Android silhouettes the launcher icon, which usually turns into a white blob.
+transparency around it — not the whole scene, which comes out a white blob.
+
+What is here is the wordmark's heart with the note cut out of it, drawn at
+24 × 24 and scaled by whole numbers into `res/drawable-*/ic_notification.png`.
+The mark in the artwork itself has a dotted outline, which falls apart as a
+silhouette, so it was redrawn solid. `main.dart` points `AudioServiceConfig`
+at it.
 
 ## Colours
 

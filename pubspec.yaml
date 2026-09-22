@@ -122,6 +122,8 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   android: ic_launcher
-  adaptive_icon_background: "#0D1A2E"
+  # The artwork fills Android's adaptive icon too. The mask keeps the middle
+  # 66%, which the wordmark sits well inside; only the corners are lost.
+  adaptive_icon_background: assets/branding/app_icon.png
   adaptive_icon_foreground: assets/branding/app_icon_foreground.png
   min_sdk_android: 21
