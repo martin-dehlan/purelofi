@@ -73,6 +73,61 @@ the viewport: on a 3x screen the choice is 4x, 5x, 6x, not 1x or 2x.
 
 ---
 
+## Generate each scene twice
+
+**Generate the scene once with the lamp lit and once with it dark.** Both are
+real art; neither is derived from the other.
+
+This is the lesson that cost the most. The first Rainy Room was generated
+lit, and the unlit state was then produced from it — first by darkening, then
+by warmth, then by flattening tones, then by a high-pass filter. Every one of
+them failed the same way: **darkening preserves brightness relationships.**
+The painted light pool was brighter than the desk around it, so it stayed
+brighter and kept its shape, however far the numbers were pushed.
+
+What worked was asking PixelLab to redraw it (`edit_image`), and even then it
+took two passes: "no warm light" made the model *desaturate* the pool rather
+than remove it, leaving a grey cone in exactly the same shape. The second
+pass had to say that the desk is **one uniform surface**.
+
+So: ask for both states up front.
+
+```
+1. "…desk lamp casting warm amber light…"          → the lit scene
+2. "…the desk lamp is switched off, the room is    → the unlit scene
+    lit only by cool blue light from the window,
+    the desk top is one uniform dark tone…"
+```
+
+The unlit version becomes `L08_room`; the lit one becomes `L11_lamp` with
+`hide_when_paused`, and the renderer fades between them.
+
+### The two states must line up
+
+Whatever produces the second state, it has to be pixel-aligned with the
+first, or the furniture drifts during the fade. Two numbers say whether it is:
+
+| Check | How | Good |
+|---|---|---|
+| Alignment | difference of the two edge images | under ~3 |
+| Light removed | count of pixels where R − B > 25 | near zero |
+
+`edit_image` scored 2.3 on alignment; `create_image_pixflux` with a strong
+init image scored 10.1 and kept the lamp on anyway.
+
+## Leave the effects out of the art
+
+Anything that should move must **not** be painted into the scene:
+
+- **No rain on the glass.** Painted streaks are static, and they dominate
+  whatever animated rain is layered behind them. Removing them afterwards
+  cost 4499 pixels of repair on the first scene.
+- **No steam over a mug.** Same reason; it ends up doubled.
+- **No reflections of the lamp** in the window if the lamp can be switched
+  off, or the reflection stays lit while the lamp is dark.
+
+Add `no rain on the glass, no steam, no reflections` to the prompt.
+
 ## The folder contract
 
 One folder per scene: sprite strips plus a `scene.json`.
