@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../controller/controls_visibility.controller.dart';
+import '../../controller/scene_touch.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
+import '../widgets/settings_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
@@ -75,7 +77,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       backgroundColor: cs.surface,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: ref.read(controlsVisibilityControllerProvider.notifier).reveal,
+        onTap: () {
+          // A tap that woke the cat is not a request for the transport.
+          if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+
+          ref.read(controlsVisibilityControllerProvider.notifier).reveal();
+        },
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
@@ -93,7 +100,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               // back, it does not pause the music by accident.
               child: IgnorePointer(
                 ignoring: !controlsVisible,
-                child: const Center(child: PlayerControls()),
+                child: const Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SafeArea(child: PlayerControls()),
+                ),
+              ),
+            ),
+            AnimatedOpacity(
+              opacity: controlsVisible ? 1 : 0,
+              duration: const Duration(milliseconds: 250),
+              child: IgnorePointer(
+                ignoring: !controlsVisible,
+                child: const Align(
+                  alignment: Alignment.topRight,
+                  child: SafeArea(child: SettingsButton()),
+                ),
               ),
             ),
           ],

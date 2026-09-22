@@ -20,6 +20,10 @@ abstract class SceneLayerModel with _$SceneLayerModel {
     @Default(1) double parallax,
     @Default(false) bool tiles,
     @JsonKey(name: 'only_while_playing') @Default(false) bool onlyWhilePlaying,
+    @JsonKey(name: 'hide_when_paused') @Default(false) bool hideWhenPaused,
+    @Default(false) bool tappable,
+    @JsonKey(name: 'idle_frame_count') @Default(0) int idleFrameCount,
+    @JsonKey(name: 'on_track_change') @Default(false) bool onTrackChange,
     @JsonKey(name: 'event_interval_min_seconds') int? eventIntervalMinSeconds,
     @JsonKey(name: 'event_interval_max_seconds') int? eventIntervalMaxSeconds,
   }) = _SceneLayerModel;
@@ -40,6 +44,10 @@ extension SceneLayerModelX on SceneLayerModel {
     parallax: parallax,
     tiles: tiles,
     onlyWhilePlaying: onlyWhilePlaying,
+    hideWhenPaused: hideWhenPaused,
+    tappable: tappable,
+    idleFrameCount: idleFrameCount,
+    onTrackChange: onTrackChange,
     eventIntervalMinSeconds: eventIntervalMinSeconds,
     eventIntervalMaxSeconds: eventIntervalMaxSeconds,
   );

@@ -28,6 +28,22 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// music, the rain does not.
     @Default(false) bool onlyWhilePlaying,
 
+    /// Not drawn at all while the audio is paused. This is how a scene
+    /// lights up when playback starts.
+    @Default(false) bool hideWhenPaused,
+
+    /// Plays its reaction once when the listener taps it, then returns to
+    /// its idle loop.
+    @Default(false) bool tappable,
+
+    /// How many frames at the start of the strip form the idle loop. The
+    /// rest are the reaction. Zero means the layer simply rests on its first
+    /// frame until tapped.
+    @Default(0) int idleFrameCount,
+
+    /// Plays its reaction once whenever a new track starts.
+    @Default(false) bool onTrackChange,
+
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
     int? eventIntervalMaxSeconds,
@@ -41,4 +57,13 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
   /// Whether this layer fires on an interval rather than looping.
   bool get isEvent =>
       eventIntervalMinSeconds != null && eventIntervalMaxSeconds != null;
+
+  /// Whether this layer waits for something rather than animating on its own.
+  bool get isTriggered => isEvent || tappable || onTrackChange;
+
+  /// Whether this layer keeps moving while it waits to be touched.
+  bool get hasIdleLoop => idleFrameCount > 1;
+
+  /// How many frames the reaction runs for.
+  int get reactionFrameCount => frameCount - idleFrameCount;
 }

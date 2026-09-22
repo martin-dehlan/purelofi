@@ -73,6 +73,134 @@ the viewport: on a 3x screen the choice is 4x, 5x, 6x, not 1x or 2x.
 
 ---
 
+## Generate each scene twice
+
+**Generate the scene once with the lamp lit and once with it dark.** Both are
+real art; neither is derived from the other.
+
+This is the lesson that cost the most. The first Rainy Room was generated
+lit, and the unlit state was then produced from it — first by darkening, then
+by warmth, then by flattening tones, then by a high-pass filter. Every one of
+them failed the same way: **darkening preserves brightness relationships.**
+The painted light pool was brighter than the desk around it, so it stayed
+brighter and kept its shape, however far the numbers were pushed.
+
+What worked was asking PixelLab to redraw it (`edit_image`), and even then it
+took two passes: "no warm light" made the model *desaturate* the pool rather
+than remove it, leaving a grey cone in exactly the same shape. The second
+pass had to say that the desk is **one uniform surface**.
+
+So: ask for both states up front.
+
+```
+1. "…desk lamp casting warm amber light…"          → the lit scene
+2. "…the desk lamp is switched off, the room is    → the unlit scene
+    lit only by cool blue light from the window,
+    the desk top is one uniform dark tone…"
+```
+
+The unlit version becomes `L08_room`; the lit one becomes `L11_lamp` with
+`hide_when_paused`, and the renderer fades between them.
+
+### The two states must line up
+
+Whatever produces the second state, it has to be pixel-aligned with the
+first, or the furniture drifts during the fade. Two numbers say whether it is:
+
+| Check | How | Good |
+|---|---|---|
+| Alignment | difference of the two edge images | under ~3 |
+| Light removed | count of pixels where R − B > 25 | near zero |
+
+`edit_image` scored 2.3 on alignment; `create_image_pixflux` with a strong
+init image scored 10.1 and kept the lamp on anyway.
+
+## A light that never fully goes out
+
+Removing a light entirely is harder than it looks, and a room lit only by a
+window can read as flat. The Rainy Room solves it as a **night light**: the
+lamp keeps a small warm glow at all times and comes up to full when the music
+plays.
+
+Three layers do it:
+
+| Layer | Behaviour |
+|---|---|
+| `L08_room` | the unlit room, always drawn |
+| `L09_nightlight` | the lampshade plus a small halo, always drawn, ~35% opacity |
+| `L11_lamp` | the fully lit room, `hide_when_paused`, fades in over 2.2s |
+
+The night light is baked at low opacity rather than given a new flag, and the
+lit layer is opaque, so at full fade it covers the night light exactly.
+
+It is also the honest fix when a scene refuses to give up its light pool: a
+faint pool under a night light is expected, so it stops reading as a mistake.
+
+## Generate the props separately
+
+The Rainy Room was generated as one picture, and every moving thing had to be
+cut back out of it afterwards. That cost, in order: 4499 pixels of painted
+rain, 525 of painted steam, a flood fill to separate the glass from the room,
+56000 pixels of lamplight, and two plants that could not be separated at all —
+the rain layer simply skips an ellipse around them, because green reads as
+cool and the flood fill ran straight through the leaves.
+
+For the next scene, generate in pieces:
+
+| Piece | How |
+|---|---|
+| The shell | walls, floor, ceiling, window opening, built-in furniture — the things that never move or light up |
+| Each prop | its own sprite on a transparent background: radio, lamp, mug, plant, cat |
+| Effects | never drawn in: rain, steam, reflections, glow |
+
+A prop that arrives as its own sprite can be animated, occluded and lit
+independently, and it can be moved without repainting the room. One that is
+baked into the shell can only be cut back out, and the cut is never clean.
+
+The cost is honest: separately generated props match the room's perspective
+and lighting less well than ones drawn in place, and composing them takes
+longer. Keep the large furniture in the shell; split out what should move, be
+touched, or respond to the light.
+
+## Leave the effects out of the art
+
+Anything that should move must **not** be painted into the scene:
+
+- **No rain on the glass.** Painted streaks are static, and they dominate
+  whatever animated rain is layered behind them. Removing them afterwards
+  cost 4499 pixels of repair on the first scene.
+- **No steam over a mug.** Same reason; it ends up doubled.
+- **No reflections of the lamp** in the window if the lamp can be switched
+  off, or the reflection stays lit while the lamp is dark.
+
+Add `no rain on the glass, no steam, no reflections` to the prompt.
+
+## Crop every strip to what it uses
+
+A sprite strip costs `width x height x 4` bytes the moment Flutter decodes it,
+and every layer of a scene is decoded at the same time. Flutter's image cache
+holds 100 MB, and past that it quietly drops the biggest entries — the layer
+is in the database, its sprite downloads fine, and it is simply never drawn.
+Nothing in the log says so.
+
+Generating each layer at the full 320x568 canvas is the easy mistake. The
+Rainy Room's radio LED is four pixels across; as a full-canvas 32-frame strip
+it cost **22 MB**, cropped to 6x6 it costs **32 KB**. Cropping the whole scene
+took it from 105 MB — over the limit, LED missing — to 8.8 MB.
+
+So: crop each strip to the union of what its frames actually touch, and put it
+back in place with `offset`. The upload tool adds up the decoded size and
+refuses a scene over 48 MB, naming the layers to cut:
+
+```
+Decoded size 105.4 MB of 48 MB budget
+Layers above 4 MB — crop these to their bounding box and give them an offset:
+  L17_led_32f.png  22.2 MB (320x568 x32)
+```
+
+The exception is a layer that genuinely fills the canvas — the room itself,
+the lit version of it. Those are one frame each and cost 0.7 MB.
+
 ## The folder contract
 
 One folder per scene: sprite strips plus a `scene.json`.
@@ -203,6 +331,7 @@ In rough order of how much each one buys you:
 - [ ] Rain has at least two depths
 - [ ] Something moves very slowly (clouds, 1px per 8s)
 - [ ] Nothing blinks on a one-second beat — it reads as cheap immediately
+- [ ] Every strip cropped to its bounding box, scene under 48 MB decoded
 
 ---
 

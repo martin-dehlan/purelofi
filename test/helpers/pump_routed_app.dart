@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
@@ -52,4 +53,19 @@ extension PumpRouted on WidgetTester {
       ),
     );
   }
+}
+
+/// Opens the menu behind the gear and waits for the sheet.
+///
+/// Scene switching and the footage moved in there, so tests reach them the
+/// same way a listener does.
+Future<void> openMenu(WidgetTester tester) async {
+  await tester.tap(find.byType(SettingsButton));
+  await tester.pumpAndSettle();
+}
+
+/// Taps a row inside the open menu.
+Future<void> tapMenuEntry(WidgetTester tester, String label) async {
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
 }

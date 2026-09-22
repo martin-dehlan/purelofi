@@ -17,10 +17,13 @@ class SceneEventScheduler {
     Random? random,
   }) : _random = random ?? Random() {
     for (final SceneLayerEntity layer in layers.where(
-      (SceneLayerEntity layer) => layer.isEvent,
+      (SceneLayerEntity layer) => layer.isTriggered,
     )) {
       _layers[layer.id] = layer;
-      _nextFireAt[layer.id] = _pickNextFire(layer, from: Duration.zero);
+      // Tappable layers wait for a finger; timed ones schedule themselves.
+      if (layer.isEvent) {
+        _nextFireAt[layer.id] = _pickNextFire(layer, from: Duration.zero);
+      }
     }
   }
 
@@ -43,8 +46,11 @@ class SceneEventScheduler {
       if (elapsed - _runningSince >= _durationOf(layer)) {
         _runningId = null;
         // Measured from the end, so a long event does not immediately fire
-        // again just because its slot passed while it was playing.
-        _nextFireAt[running] = _pickNextFire(layer, from: elapsed);
+        // again just because its slot passed while it was playing. A tappable
+        // layer simply waits for the next tap.
+        if (layer.isEvent) {
+          _nextFireAt[running] = _pickNextFire(layer, from: elapsed);
+        }
       } else {
         // One event at a time — two at once reads as chaos, not life.
         return;
@@ -60,23 +66,49 @@ class SceneEventScheduler {
     }
   }
 
-  /// Which frame [layer] shows at [elapsed]: its first while it waits, and
-  /// the animation while it plays.
-  int frameFor(SceneLayerEntity layer, Duration elapsed) {
-    if (!layer.isEvent || _runningId != layer.id) return 0;
+  /// Starts [layerId] now, unless something else is already playing.
+  ///
+  /// Returns whether it took: a second tap during a stretch is ignored rather
+  /// than restarting it.
+  bool trigger(String layerId, Duration elapsed) {
+    if (_runningId != null) return false;
+    if (!_layers.containsKey(layerId)) return false;
 
-    final int frame =
-        ((elapsed - _runningSince).inMilliseconds * layer.fps / 1000).floor();
+    _runningId = layerId;
+    _runningSince = elapsed;
 
-    return frame.clamp(0, layer.frameCount - 1);
+    return true;
   }
 
-  /// How long one pass of the animation takes.
+  /// Which frame [layer] shows at [elapsed].
+  ///
+  /// While it waits it loops its idle frames, if it has any; while it plays
+  /// it runs through the reaction once and stops on its last frame.
+  int frameFor(SceneLayerEntity layer, Duration elapsed) {
+    if (!layer.isTriggered) return 0;
+
+    if (_runningId != layer.id) {
+      if (!layer.hasIdleLoop || layer.fps <= 0) return 0;
+
+      final int frame = (elapsed.inMilliseconds * layer.fps / 1000).floor();
+
+      return frame % layer.idleFrameCount;
+    }
+
+    final int into =
+        ((elapsed - _runningSince).inMilliseconds * layer.fps / 1000).floor();
+
+    return (layer.idleFrameCount + into).clamp(0, layer.frameCount - 1);
+  }
+
+  /// How long one pass of the reaction takes.
+  ///
+  /// Only the frames after the idle loop count: those are the reaction.
   Duration _durationOf(SceneLayerEntity layer) {
     if (layer.fps <= 0) return Duration.zero;
 
     return Duration(
-      milliseconds: (layer.frameCount / layer.fps * 1000).round(),
+      milliseconds: (layer.reactionFrameCount / layer.fps * 1000).round(),
     );
   }
 

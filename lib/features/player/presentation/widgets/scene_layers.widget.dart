@@ -7,6 +7,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/widgets/loading_state.widget.dart';
+import '../../controller/controls_visibility.controller.dart';
+import '../../controller/scene_touch.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../data/sprite_loader.service.dart';
@@ -56,6 +58,67 @@ int frameIndexAt({
   return frame % frameCount;
 }
 
+/// How far a `hide_when_paused` layer has faded in, from 0 to 1.
+///
+/// A lamp that snaps on reads as a bug; one that takes a moment reads as a
+/// lamp. [duration] is how long the full fade takes.
+double stepFade(
+  double current, {
+  required bool isPlaying,
+  required Duration delta,
+  required Duration duration,
+}) {
+  if (duration <= Duration.zero) return isPlaying ? 1 : 0;
+
+  final double step = delta.inMicroseconds / duration.inMicroseconds;
+  final double target = isPlaying ? 1 : 0;
+
+  if (step <= 0) return current.clamp(0, 1);
+
+  final double moved = current + (target > current ? step : -step);
+
+  return (target > current
+          ? (moved > target ? target : moved)
+          : (moved < target ? target : moved))
+      .clamp(0, 1)
+      .toDouble();
+}
+
+/// The canvas-space rectangle [layer] occupies, for hit testing a tap.
+Rect layerBounds(SceneLayerEntity layer, {required Size frameSize}) =>
+    Rect.fromLTWH(
+      layer.offsetX.toDouble(),
+      layer.offsetY.toDouble(),
+      frameSize.width,
+      frameSize.height,
+    );
+
+/// How opaque [layer] should be drawn, given how far the lamp has faded.
+double layerOpacity(SceneLayerEntity layer, {required double fade}) =>
+    layer.hideWhenPaused ? fade : 1;
+
+/// Which frame of [layer]'s strip belongs on screen right now.
+///
+/// Anything that waits for a cue — a rare event, a tap, a new track — is the
+/// scheduler's business: it holds the idle loop until the cue comes and plays
+/// the reaction once. Left to the plain clock, a layer like that would run
+/// its reaction over and over on its own. Everything else simply follows its
+/// clock, which for a `only_while_playing` layer stops with the music.
+int frameForLayer(
+  SceneLayerEntity layer, {
+  required SceneEventScheduler events,
+  required Duration elapsed,
+  required Duration playingElapsed,
+}) {
+  if (layer.isTriggered) return events.frameFor(layer, elapsed);
+
+  return frameIndexAt(
+    clock: layer.onlyWhilePlaying ? playingElapsed : elapsed,
+    fps: layer.fps,
+    frameCount: layer.frameCount,
+  );
+}
+
 /// Draws a scene as a stack of pixel-art sprite layers.
 ///
 /// One ticker drives every layer; one painter draws them all. That is cheaper
@@ -89,7 +152,16 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   final PlaybackClock _clock = PlaybackClock();
 
+  /// How long the lamp takes to come up or go down.
+  static const Duration _lampFade = Duration(milliseconds: 2200);
+
+  double _fade = 0;
+  Duration _lastFadeTick = Duration.zero;
+
   bool _loading = true;
+
+  /// The track the scene last reacted to, so a new one can be spotted.
+  String? _lastTrackId;
 
   @override
   void initState() {
@@ -136,6 +208,17 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   }
 
   void _onTick(Duration elapsed) {
+    final Duration delta = elapsed - _lastFadeTick;
+    _lastFadeTick = elapsed;
+    if (delta > Duration.zero) {
+      _fade = stepFade(
+        _fade,
+        isPlaying: _isPlaying,
+        delta: delta,
+        duration: _lampFade,
+      );
+    }
+
     _clock.tick(elapsed, isPlaying: _isPlaying);
     _events.update(elapsed);
     _frameTick.value++;
@@ -144,26 +227,111 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   bool get _isPlaying =>
       ref.read(playerControllerProvider.select((state) => state.isPlaying));
 
+  /// Wakes the layers that answer to the music when a new track starts.
+  void _reactToTrackChange() {
+    final String? trackId = ref.watch(
+      playerControllerProvider.select((state) => state.currentTrack?.id),
+    );
+    if (trackId == null || trackId == _lastTrackId) return;
+
+    final bool first = _lastTrackId == null;
+    _lastTrackId = trackId;
+    // The very first track is the app starting, not a skip.
+    if (first) return;
+
+    for (final SceneLayerEntity layer in widget.scene.layers) {
+      if (layer.onTrackChange) {
+        _events.trigger(layer.id, _clock.sceneTime);
+        break;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _reactToTrackChange();
+
     if (_loading) return const LoadingState();
 
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _SceneLayersPainter(
-          scene: widget.scene,
-          sprites: _sprites,
-          events: _events,
-          elapsed: () => _clock.sceneTime,
-          playingElapsed: () => _clock.playingTime,
-          driftPeriod: _driftPeriod,
-          devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
-          repaint: _frameTick,
+    return Listener(
+      // A Listener rather than a GestureDetector: the chrome's own tap
+      // handler still gets the event, so touching the cat also wakes the
+      // controls.
+      onPointerDown: _onPointerDown,
+      child: ColoredBox(
+        color: Theme.of(context).colorScheme.surface,
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _SceneLayersPainter(
+            scene: widget.scene,
+            sprites: _sprites,
+            events: _events,
+            fade: () => _fade,
+            elapsed: () => _clock.sceneTime,
+            playingElapsed: () => _clock.playingTime,
+            driftPeriod: _driftPeriod,
+            devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
+            repaint: _frameTick,
+          ),
         ),
       ),
     );
+  }
+
+  /// Wakes whatever the listener touched, if anything.
+  ///
+  /// Only while the chrome is hidden: with the transport on screen a tap
+  /// belongs to the interface, and poking the scene would fight it.
+  void _onPointerDown(PointerDownEvent event) {
+    if (ref.read(controlsVisibilityControllerProvider)) return;
+
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final Size size = box.size;
+    final double dpr = MediaQuery.of(context).devicePixelRatio;
+    final double scale =
+        sceneScaleFor(
+          viewport: size,
+          canvasWidth: widget.scene.canvasWidth,
+          canvasHeight: widget.scene.canvasHeight,
+          devicePixelRatio: dpr,
+        ) /
+        dpr;
+
+    // Back from the screen into the canvas the art was drawn on.
+    final Offset local = box.globalToLocal(event.position);
+    final double originX = (size.width - widget.scene.canvasWidth * scale) / 2;
+    final double originY =
+        (size.height - widget.scene.canvasHeight * scale) / 2;
+    final Offset canvasPoint = Offset(
+      (local.dx - originX) / scale,
+      (local.dy - originY) / scale,
+    );
+
+    // Front to back, so the nearest thing wins.
+    for (final SceneLayerEntity layer in widget.scene.layers.reversed) {
+      if (!layer.tappable) continue;
+
+      final ui.Image? sprite = _sprites[layer.spriteUrl];
+      if (sprite == null) continue;
+
+      final Rect bounds = layerBounds(
+        layer,
+        frameSize: Size(
+          sprite.width / layer.frameCount,
+          sprite.height.toDouble(),
+        ),
+      );
+      if (bounds.contains(canvasPoint)) {
+        if (_events.trigger(layer.id, _clock.sceneTime)) {
+          // The chrome must not reappear: the tap was for the cat, not for
+          // the interface.
+          ref.read(sceneTouchControllerProvider.notifier).consume();
+        }
+        return;
+      }
+    }
   }
 }
 
@@ -172,6 +340,7 @@ class _SceneLayersPainter extends CustomPainter {
     required this.scene,
     required this.sprites,
     required this.events,
+    required this.fade,
     required this.elapsed,
     required this.playingElapsed,
     required this.driftPeriod,
@@ -182,6 +351,7 @@ class _SceneLayersPainter extends CustomPainter {
   final SceneEntity scene;
   final Map<String, ui.Image> sprites;
   final SceneEventScheduler events;
+  final double Function() fade;
   final Duration Function() elapsed;
   final Duration Function() playingElapsed;
   final Duration driftPeriod;
@@ -190,6 +360,15 @@ class _SceneLayersPainter extends CustomPainter {
   static final Paint _pixelPaint = Paint()
     ..filterQuality = FilterQuality.none
     ..isAntiAlias = false;
+
+  /// Same nearest-neighbour paint, dimmed — used while the lamp fades.
+  static Paint _fadedPaint(double opacity) => Paint()
+    ..filterQuality = FilterQuality.none
+    ..isAntiAlias = false
+    ..colorFilter = ColorFilter.mode(
+      Color.fromRGBO(255, 255, 255, opacity),
+      BlendMode.modulate,
+    );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -209,7 +388,12 @@ class _SceneLayersPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
 
+    final double lampFade = fade();
+
     for (final SceneLayerEntity layer in scene.layers) {
+      final double opacity = layerOpacity(layer, fade: lampFade);
+      if (opacity <= 0.01) continue;
+
       final ui.Image? sprite = sprites[layer.spriteUrl];
       if (sprite == null) continue;
 
@@ -222,6 +406,7 @@ class _SceneLayersPainter extends CustomPainter {
         originX: originX,
         originY: originY,
         drift: drift,
+        opacity: opacity,
       );
     }
 
@@ -237,6 +422,7 @@ class _SceneLayersPainter extends CustomPainter {
     required double originX,
     required double originY,
     required double drift,
+    required double opacity,
   }) {
     final double frameWidth = sprite.width / layer.frameCount;
     final double frameHeight = sprite.height.toDouble();
@@ -257,12 +443,14 @@ class _SceneLayersPainter extends CustomPainter {
     final double width = frameWidth * scale;
     final double height = frameHeight * scale;
 
+    final Paint paint = opacity >= 1 ? _pixelPaint : _fadedPaint(opacity);
+
     if (!layer.tiles) {
       canvas.drawImageRect(
         sprite,
         src,
         Rect.fromLTWH(left, top, width, height),
-        _pixelPaint,
+        paint,
       );
       return;
     }
@@ -275,23 +463,19 @@ class _SceneLayersPainter extends CustomPainter {
           sprite,
           src,
           Rect.fromLTWH(_snap(x), _snap(y), width, height),
-          _pixelPaint,
+          paint,
         );
       }
     }
   }
 
   /// Which frame of the strip is showing right now.
-  int _frameIndexFor(SceneLayerEntity layer) {
-    // Rare events keep their own schedule: resting on frame 0 between turns.
-    if (layer.isEvent) return events.frameFor(layer, elapsed());
-
-    return frameIndexAt(
-      clock: layer.onlyWhilePlaying ? playingElapsed() : elapsed(),
-      fps: layer.fps,
-      frameCount: layer.frameCount,
-    );
-  }
+  int _frameIndexFor(SceneLayerEntity layer) => frameForLayer(
+    layer,
+    events: events,
+    elapsed: elapsed(),
+    playingElapsed: playingElapsed(),
+  );
 
   /// The device-pixel scale expressed in logical points, which is what the
   /// canvas draws in.

@@ -123,3 +123,12 @@ class _SceneThumbnail extends StatelessWidget {
     );
   }
 }
+
+/// Opens the scene list as a bottom sheet.
+Future<void> showSceneSwitcherSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    builder: (_) => const SceneSwitcherSheet(),
+  );
+}

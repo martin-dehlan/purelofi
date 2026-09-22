@@ -12,7 +12,7 @@ import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/player_controls.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_background.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
@@ -90,19 +90,18 @@ void main() {
       );
     });
 
-    testWidgets('the scene switcher stays reachable', (tester) async {
+    testWidgets('the menu stays reachable', (tester) async {
       when(() => mockRepo.getTracks()).thenAnswer((_) async => <TrackEntity>[]);
       when(
         () => mockRepo.getScenes(),
       ).thenAnswer((_) async => <SceneEntity>[makeScene('scene-a')]);
 
-      await tester.pumpProviderApp(
-        child: const PlayerControls(),
-        overrides: overrides(),
-      );
+      // The gear lives on the screen, not inside the transport bar, so this
+      // one needs the whole chrome.
+      await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
-      expect(find.byType(SceneSwitcher), findsOneWidget);
+      expect(find.byType(SettingsButton), findsOneWidget);
     });
 
     testWidgets('a track list that loads normally still shows the button', (

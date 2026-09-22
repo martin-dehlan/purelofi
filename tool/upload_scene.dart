@@ -44,6 +44,42 @@ Usage: dart run tool/upload_scene.dart --scene <slug> --dir <folder> [--dry-run]
 
 const String _bucket = 'scenes';
 
+/// A sprite strip costs width x height x 4 bytes once Flutter decodes it, and
+/// every layer of a scene is decoded at once. Flutter's image cache holds
+/// 100 MB; past that it silently drops the biggest entries and those layers
+/// simply never appear. These limits leave room for the rest of the app.
+const double _sceneBudgetMegabytes = 48;
+const double _layerBudgetMegabytes = 4;
+
+/// Refuses a scene that would not fit in the image cache.
+///
+/// Almost always the fix is the same: crop the strip to the pixels it
+/// actually uses and put it back in place with an offset. A full-canvas strip
+/// for a four-pixel LED costs 22 MB; cropped it costs 32 KB.
+void _checkMemoryBudget(double totalMegabytes, List<String> oversized) {
+  stdout.writeln(
+    '\nDecoded size ${totalMegabytes.toStringAsFixed(1)} MB '
+    'of ${_sceneBudgetMegabytes.toStringAsFixed(0)} MB budget',
+  );
+
+  if (oversized.isNotEmpty) {
+    stdout.writeln(
+      'Layers above ${_layerBudgetMegabytes.toStringAsFixed(0)} MB — crop '
+      'these to their bounding box and give them an offset:',
+    );
+    oversized.forEach(stdout.writeln);
+  }
+
+  if (totalMegabytes > _sceneBudgetMegabytes) {
+    throw _UploadException(
+      'This scene needs ${totalMegabytes.toStringAsFixed(1)} MB of image '
+      'cache, over the ${_sceneBudgetMegabytes.toStringAsFixed(0)} MB budget. '
+      'Flutter would drop the biggest strips and those layers would not be '
+      'drawn at all. Crop the strips listed above.',
+    );
+  }
+}
+
 class _UploadException implements Exception {
   const _UploadException(this.message);
   final String message;
@@ -141,6 +177,9 @@ Future<void> _run(_Args args) async {
     '${manifest.layers.length} layers',
   );
 
+  final List<String> oversized = <String>[];
+  double totalMegabytes = 0;
+
   for (final (SpriteFileName file, LayerManifest settings) in manifest.layers) {
     final File png = filesByName[file.fileName]!;
     final (int width, int height) = _pngSize(png);
@@ -153,14 +192,29 @@ Future<void> _run(_Args args) async {
     }
 
     final int frameWidth = width ~/ file.frameCount;
+    final double megabytes = width * height * 4 / (1024 * 1024);
+    totalMegabytes += megabytes;
+    if (megabytes > _layerBudgetMegabytes) {
+      oversized.add(
+        '  ${file.fileName}  ${megabytes.toStringAsFixed(1)} MB '
+        '(${frameWidth}x$height x${file.frameCount})',
+      );
+    }
+
     stdout.writeln(
       '  ${file.zIndex.toString().padLeft(2, '0')}  ${file.name.padRight(16)} '
       '${frameWidth}x$height x${file.frameCount}'
       '${settings.fps > 0 ? ' @${settings.fps}fps' : ''}'
       '${settings.tiles ? ' tiling' : ''}'
-      '${settings.onlyWhilePlaying ? ' while-playing' : ''}',
+      '${settings.onlyWhilePlaying ? ' while-playing' : ''}'
+      '${settings.hideWhenPaused ? ' hidden-when-paused' : ''}'
+      '${settings.tappable ? ' tappable' : ''}'
+      '${settings.idleFrameCount > 0 ? ' idle:${settings.idleFrameCount}' : ''}'
+      '${settings.onTrackChange ? ' on-track-change' : ''}',
     );
   }
+
+  _checkMemoryBudget(totalMegabytes, oversized);
 
   if (args.dryRun) {
     stdout.writeln('\n--dry-run: nothing uploaded.');
@@ -273,6 +327,9 @@ Future<void> _uploadSprite(_Env env, String path, File file) async {
       'Content-Type': 'image/png',
       // Re-uploading the same scene replaces its sprites.
       'x-upsert': 'true',
+      // A replaced sprite keeps its URL, so without this the CDN would keep
+      // serving the old one for an hour and nobody would see the change.
+      'cache-control': 'max-age=60',
     },
     body: file.readAsBytesSync(),
   );
@@ -348,6 +405,10 @@ Future<void> _replaceLayers(
         'parallax': settings.parallax,
         'tiles': settings.tiles,
         'only_while_playing': settings.onlyWhilePlaying,
+        'hide_when_paused': settings.hideWhenPaused,
+        'tappable': settings.tappable,
+        'idle_frame_count': settings.idleFrameCount,
+        'on_track_change': settings.onTrackChange,
         'event_interval_min_seconds': settings.eventIntervalMinSeconds,
         'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
       },

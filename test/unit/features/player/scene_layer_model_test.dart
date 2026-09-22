@@ -153,4 +153,73 @@ void main() {
       expect(scene.canvasHeight, 696);
     });
   });
+
+  group('what makes a layer wait', () {
+    SceneLayerEntity layer({
+      bool tappable = false,
+      bool onTrackChange = false,
+      int? eventMin,
+      int? eventMax,
+    }) => SceneLayerEntity(
+      id: 'l',
+      zIndex: 1,
+      spriteUrl: 'https://example.com/l.png',
+      tappable: tappable,
+      onTrackChange: onTrackChange,
+      eventIntervalMinSeconds: eventMin,
+      eventIntervalMaxSeconds: eventMax,
+    );
+
+    test('an ordinary layer runs on its own', () {
+      expect(layer().isTriggered, isFalse);
+    });
+
+    test('a tappable layer waits', () {
+      expect(layer(tappable: true).isTriggered, isTrue);
+    });
+
+    test('a layer that answers the music waits', () {
+      expect(layer(onTrackChange: true).isTriggered, isTrue);
+    });
+
+    test('a timed event waits', () {
+      expect(layer(eventMin: 40, eventMax: 90).isTriggered, isTrue);
+    });
+
+    test('an idle loop needs more than one frame to be a loop', () {
+      expect(
+        const SceneLayerEntity(
+          id: 'l',
+          zIndex: 1,
+          spriteUrl: 'https://example.com/l.png',
+          frameCount: 10,
+          idleFrameCount: 1,
+        ).hasIdleLoop,
+        isFalse,
+      );
+      expect(
+        const SceneLayerEntity(
+          id: 'l',
+          zIndex: 1,
+          spriteUrl: 'https://example.com/l.png',
+          frameCount: 10,
+          idleFrameCount: 4,
+        ).hasIdleLoop,
+        isTrue,
+      );
+    });
+
+    test('the reaction is whatever is left after the idle frames', () {
+      expect(
+        const SceneLayerEntity(
+          id: 'l',
+          zIndex: 1,
+          spriteUrl: 'https://example.com/l.png',
+          frameCount: 32,
+          idleFrameCount: 21,
+        ).reactionFrameCount,
+        11,
+      );
+    });
+  });
 }

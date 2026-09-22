@@ -13,11 +13,16 @@ class FakeAudioPlayerService implements AudioPlayerService {
       StreamController<void>.broadcast();
   final StreamController<AppError> errorController =
       StreamController<AppError>.broadcast();
+  final StreamController<Duration> positionController =
+      StreamController<Duration>.broadcast();
+  final StreamController<Duration?> durationController =
+      StreamController<Duration?>.broadcast();
 
   final List<TrackEntity> playedTracks = <TrackEntity>[];
   int playCalls = 0;
   int pauseCalls = 0;
   int stopCalls = 0;
+  final List<Duration> seeks = <Duration>[];
 
   /// When set, [playTrack] reports this failure instead of playing.
   AppError? failureOnPlay;
@@ -30,6 +35,18 @@ class FakeAudioPlayerService implements AudioPlayerService {
 
   @override
   Stream<AppError> get errors => errorController.stream;
+
+  @override
+  Stream<Duration> get positionStream => positionController.stream;
+
+  @override
+  Stream<Duration?> get durationStream => durationController.stream;
+
+  @override
+  Future<void> seek(Duration position) async {
+    seeks.add(position);
+    positionController.add(position);
+  }
 
   @override
   Future<void> playTrack(TrackEntity track) async {

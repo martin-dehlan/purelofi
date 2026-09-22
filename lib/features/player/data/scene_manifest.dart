@@ -75,6 +75,10 @@ class LayerManifest {
     this.parallax = 1,
     this.tiles = false,
     this.onlyWhilePlaying = false,
+    this.hideWhenPaused = false,
+    this.tappable = false,
+    this.idleFrameCount = 0,
+    this.onTrackChange = false,
     this.eventIntervalMinSeconds,
     this.eventIntervalMaxSeconds,
   });
@@ -85,6 +89,10 @@ class LayerManifest {
   final double parallax;
   final bool tiles;
   final bool onlyWhilePlaying;
+  final bool hideWhenPaused;
+  final bool tappable;
+  final int idleFrameCount;
+  final bool onTrackChange;
   final int? eventIntervalMinSeconds;
   final int? eventIntervalMaxSeconds;
 
@@ -109,6 +117,10 @@ class LayerManifest {
       parallax: (json['parallax'] as num?)?.toDouble() ?? 1,
       tiles: json['tiles'] as bool? ?? false,
       onlyWhilePlaying: json['only_while_playing'] as bool? ?? false,
+      hideWhenPaused: json['hide_when_paused'] as bool? ?? false,
+      tappable: json['tappable'] as bool? ?? false,
+      idleFrameCount: (json['idle_frames'] as num?)?.toInt() ?? 0,
+      onTrackChange: json['on_track_change'] as bool? ?? false,
       eventIntervalMinSeconds: event == null ? null : (event[0] as num).toInt(),
       eventIntervalMaxSeconds: event == null ? null : (event[1] as num).toInt(),
     );

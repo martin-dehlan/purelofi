@@ -1,5 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/domain/scene_event.scheduler.dart';
+import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_layers.widget.dart';
 
 void main() {
@@ -174,6 +176,212 @@ void main() {
 
       expect(frameIndexAt(clock: paused, fps: 8, frameCount: 4), 2);
       expect(frameIndexAt(clock: paused, fps: 8, frameCount: 4), 2);
+    });
+  });
+
+  group('layerIsVisible', () {
+    SceneLayerEntity layer({bool hideWhenPaused = false}) => SceneLayerEntity(
+      id: 'l',
+      zIndex: 1,
+      spriteUrl: 'https://example.com/l.png',
+      hideWhenPaused: hideWhenPaused,
+    );
+
+    test('an ordinary layer is drawn fully, whatever the lamp does', () {
+      expect(layerOpacity(layer(), fade: 0), 1);
+      expect(layerOpacity(layer(), fade: 0.5), 1);
+    });
+
+    test('a layer tied to the music follows the fade', () {
+      final SceneLayerEntity lamp = layer(hideWhenPaused: true);
+
+      expect(layerOpacity(lamp, fade: 0), 0);
+      expect(layerOpacity(lamp, fade: 0.4), 0.4);
+      expect(layerOpacity(lamp, fade: 1), 1);
+    });
+  });
+
+  group('stepFade', () {
+    const Duration full = Duration(seconds: 2);
+
+    test('climbs towards lit while the music plays', () {
+      final double after = stepFade(
+        0,
+        isPlaying: true,
+        delta: const Duration(milliseconds: 500),
+        duration: full,
+      );
+
+      expect(after, closeTo(0.25, 0.001));
+    });
+
+    test('takes the full duration to come up', () {
+      double fade = 0;
+      for (int i = 0; i < 8; i++) {
+        fade = stepFade(
+          fade,
+          isPlaying: true,
+          delta: const Duration(milliseconds: 250),
+          duration: full,
+        );
+      }
+
+      expect(fade, 1);
+    });
+
+    test('falls back towards dark when the music stops', () {
+      final double after = stepFade(
+        1,
+        isPlaying: false,
+        delta: const Duration(milliseconds: 500),
+        duration: full,
+      );
+
+      expect(after, closeTo(0.75, 0.001));
+    });
+
+    test('never overshoots either end', () {
+      expect(
+        stepFade(
+          0.9,
+          isPlaying: true,
+          delta: const Duration(seconds: 5),
+          duration: full,
+        ),
+        1,
+      );
+      expect(
+        stepFade(
+          0.1,
+          isPlaying: false,
+          delta: const Duration(seconds: 5),
+          duration: full,
+        ),
+        0,
+      );
+    });
+
+    test('a zero duration snaps, rather than dividing by zero', () {
+      expect(
+        stepFade(
+          0,
+          isPlaying: true,
+          delta: const Duration(milliseconds: 16),
+          duration: Duration.zero,
+        ),
+        1,
+      );
+    });
+  });
+
+  group('frameForLayer', () {
+    SceneLayerEntity layer({
+      bool onTrackChange = false,
+      bool onlyWhilePlaying = false,
+      int idleFrameCount = 0,
+    }) => SceneLayerEntity(
+      id: 'led',
+      zIndex: 17,
+      spriteUrl: 'led.png',
+      frameCount: 32,
+      fps: 6,
+      onTrackChange: onTrackChange,
+      onlyWhilePlaying: onlyWhilePlaying,
+      idleFrameCount: idleFrameCount,
+    );
+
+    SceneEventScheduler schedulerFor(SceneLayerEntity one) =>
+        SceneEventScheduler(layers: <SceneLayerEntity>[one]);
+
+    test('a plain layer follows the clock straight through its strip', () {
+      final SceneLayerEntity plain = layer();
+
+      expect(
+        frameForLayer(
+          plain,
+          events: schedulerFor(plain),
+          elapsed: const Duration(milliseconds: 5000),
+          playingElapsed: Duration.zero,
+        ),
+        30,
+      );
+    });
+
+    test('a layer tied to the music follows the second clock', () {
+      final SceneLayerEntity tied = layer(onlyWhilePlaying: true);
+
+      expect(
+        frameForLayer(
+          tied,
+          events: schedulerFor(tied),
+          elapsed: const Duration(seconds: 30),
+          playingElapsed: const Duration(milliseconds: 1000),
+        ),
+        6,
+      );
+    });
+
+    test('a layer waiting for a track change never reaches its reaction', () {
+      // The regression this is here for: routed through the plain clock, the
+      // radio played its 8 reaction frames every 32 frames all by itself.
+      final SceneLayerEntity led = layer(
+        onTrackChange: true,
+        idleFrameCount: 24,
+      );
+      final SceneEventScheduler events = schedulerFor(led);
+
+      for (int second = 0; second < 120; second++) {
+        final Duration now = Duration(seconds: second);
+        events.update(now);
+
+        expect(
+          frameForLayer(led, events: events, elapsed: now, playingElapsed: now),
+          lessThan(24),
+          reason: 'frame 24 and up are the reaction, and nothing triggered it',
+        );
+      }
+    });
+
+    test('and plays it once when the track does change', () {
+      final SceneLayerEntity led = layer(
+        onTrackChange: true,
+        idleFrameCount: 24,
+      );
+      final SceneEventScheduler events = schedulerFor(led);
+
+      const Duration start = Duration(seconds: 10);
+      expect(events.trigger(led.id, start), isTrue);
+
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start,
+          playingElapsed: start,
+        ),
+        24,
+      );
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start + const Duration(milliseconds: 500),
+          playingElapsed: start,
+        ),
+        27,
+      );
+
+      // The reaction is 8 frames at 6fps, so it is over well before this.
+      events.update(start + const Duration(seconds: 3));
+      expect(
+        frameForLayer(
+          led,
+          events: events,
+          elapsed: start + const Duration(seconds: 3),
+          playingElapsed: start,
+        ),
+        lessThan(24),
+      );
     });
   });
 }
