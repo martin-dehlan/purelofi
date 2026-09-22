@@ -46,6 +46,7 @@ app.*.map.json
 
 # PureLofi
 .env
+.env.tools
 *.env.local
 .DS_Store
 

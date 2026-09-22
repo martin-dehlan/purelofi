@@ -265,6 +265,9 @@ dart run tool/upload_scene.dart --scene rainy_room --dir ~/Desktop/rainy_room --
 dart run tool/upload_scene.dart --scene rainy_room --dir ~/Desktop/rainy_room
 ```
 
+Uploading writes, so it needs `SUPABASE_SERVICE_ROLE_KEY` from `.env.tools`
+— not `.env`, which is bundled into the app. See the README.
+
 `--dry-run` validates and prints the layer table without touching anything.
 The real run uploads the sprites to `storage/scenes/<slug>/`, upserts the
 scene and **replaces** its layers, so a layer deleted from the folder

@@ -60,6 +60,13 @@ in Supabase; the same tracks feed a companion YouTube channel.
 
 ## Secrets
 
-Never hardcode keys. Use `.env` (git-ignored) with `SUPABASE_URL`,
-`SUPABASE_ANON_KEY`, `POSTHOG_API_KEY`, `POSTHOG_HOST`. `.env.example` ships
-the keys with empty values.
+Never hardcode keys. Two git-ignored files, and the split is not cosmetic:
+
+- **`.env`** — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `POSTHOG_API_KEY`,
+  `POSTHOG_HOST`. This file is an **asset in `pubspec.yaml`**, so it ships
+  inside the app bundle, which anyone can unzip. Only publishable keys.
+- **`.env.tools`** — `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_PASSWORD`.
+  Read only by `tool/`, never bundled. The service role key bypasses RLS.
+
+`Env.load()` throws if a `.env.tools` key turns up in `.env`. Each has an
+`.example` shipping the keys with empty values.
