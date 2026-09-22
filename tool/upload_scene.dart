@@ -161,7 +161,8 @@ Future<void> _run(_Args args) async {
       '${settings.onlyWhilePlaying ? ' while-playing' : ''}'
       '${settings.hideWhenPaused ? ' hidden-when-paused' : ''}'
       '${settings.tappable ? ' tappable' : ''}'
-      '${settings.idleFrameCount > 0 ? ' idle:${settings.idleFrameCount}' : ''}',
+      '${settings.idleFrameCount > 0 ? ' idle:${settings.idleFrameCount}' : ''}'
+      '${settings.onTrackChange ? ' on-track-change' : ''}',
     );
   }
 
@@ -357,6 +358,7 @@ Future<void> _replaceLayers(
         'hide_when_paused': settings.hideWhenPaused,
         'tappable': settings.tappable,
         'idle_frame_count': settings.idleFrameCount,
+        'on_track_change': settings.onTrackChange,
         'event_interval_min_seconds': settings.eventIntervalMinSeconds,
         'event_interval_max_seconds': settings.eventIntervalMaxSeconds,
       },

@@ -138,6 +138,9 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   bool _loading = true;
 
+  /// The track the scene last reacted to, so a new one can be spotted.
+  String? _lastTrackId;
+
   @override
   void initState() {
     super.initState();
@@ -202,8 +205,30 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   bool get _isPlaying =>
       ref.read(playerControllerProvider.select((state) => state.isPlaying));
 
+  /// Wakes the layers that answer to the music when a new track starts.
+  void _reactToTrackChange() {
+    final String? trackId = ref.watch(
+      playerControllerProvider.select((state) => state.currentTrack?.id),
+    );
+    if (trackId == null || trackId == _lastTrackId) return;
+
+    final bool first = _lastTrackId == null;
+    _lastTrackId = trackId;
+    // The very first track is the app starting, not a skip.
+    if (first) return;
+
+    for (final SceneLayerEntity layer in widget.scene.layers) {
+      if (layer.onTrackChange) {
+        _events.trigger(layer.id, _clock.sceneTime);
+        break;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _reactToTrackChange();
+
     if (_loading) return const LoadingState();
 
     return Listener(

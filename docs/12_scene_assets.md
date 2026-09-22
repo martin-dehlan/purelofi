@@ -136,6 +136,32 @@ lit layer is opaque, so at full fade it covers the night light exactly.
 It is also the honest fix when a scene refuses to give up its light pool: a
 faint pool under a night light is expected, so it stops reading as a mistake.
 
+## Generate the props separately
+
+The Rainy Room was generated as one picture, and every moving thing had to be
+cut back out of it afterwards. That cost, in order: 4499 pixels of painted
+rain, 525 of painted steam, a flood fill to separate the glass from the room,
+56000 pixels of lamplight, and two plants that could not be separated at all —
+the rain layer simply skips an ellipse around them, because green reads as
+cool and the flood fill ran straight through the leaves.
+
+For the next scene, generate in pieces:
+
+| Piece | How |
+|---|---|
+| The shell | walls, floor, ceiling, window opening, built-in furniture — the things that never move or light up |
+| Each prop | its own sprite on a transparent background: radio, lamp, mug, plant, cat |
+| Effects | never drawn in: rain, steam, reflections, glow |
+
+A prop that arrives as its own sprite can be animated, occluded and lit
+independently, and it can be moved without repainting the room. One that is
+baked into the shell can only be cut back out, and the cut is never clean.
+
+The cost is honest: separately generated props match the room's perspective
+and lighting less well than ones drawn in place, and composing them takes
+longer. Keep the large furniture in the shell; split out what should move, be
+touched, or respond to the light.
+
 ## Leave the effects out of the art
 
 Anything that should move must **not** be painted into the scene:

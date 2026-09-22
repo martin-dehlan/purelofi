@@ -41,6 +41,9 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// frame until tapped.
     @Default(0) int idleFrameCount,
 
+    /// Plays its reaction once whenever a new track starts.
+    @Default(false) bool onTrackChange,
+
     /// Set on both to make this a rare event instead of a loop.
     int? eventIntervalMinSeconds,
     int? eventIntervalMaxSeconds,
@@ -56,7 +59,7 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
       eventIntervalMinSeconds != null && eventIntervalMaxSeconds != null;
 
   /// Whether this layer waits for something rather than animating on its own.
-  bool get isTriggered => isEvent || tappable;
+  bool get isTriggered => isEvent || tappable || onTrackChange;
 
   /// Whether this layer keeps moving while it waits to be touched.
   bool get hasIdleLoop => idleFrameCount > 1;
