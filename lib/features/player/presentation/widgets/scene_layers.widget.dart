@@ -98,6 +98,53 @@ Rect layerBounds(SceneLayerEntity layer, {required Size frameSize}) =>
 double layerOpacity(SceneLayerEntity layer, {required double fade}) =>
     layer.hideWhenPaused ? fade : 1;
 
+/// The part of the canvas a viewport of [viewport] actually shows.
+///
+/// The canvas is scaled to whole device pixels and centred, so the scale is
+/// rounded up and the remainder falls off the edges. On an iPhone SE that is
+/// 62 of 568 rows top and bottom; on a Pixel, 52 of 320 columns each side.
+Rect visibleCanvasRect({
+  required Size viewport,
+  required int canvasWidth,
+  required int canvasHeight,
+  required double devicePixelRatio,
+}) {
+  final double scale =
+      sceneScaleFor(
+        viewport: viewport,
+        canvasWidth: canvasWidth,
+        canvasHeight: canvasHeight,
+        devicePixelRatio: devicePixelRatio,
+      ) /
+      devicePixelRatio;
+  if (scale <= 0) return Rect.fromLTWH(0, 0, canvasWidth * 1, canvasHeight * 1);
+
+  final double hidden = (canvasWidth * scale - viewport.width) / 2 / scale;
+  final double cut = (canvasHeight * scale - viewport.height) / 2 / scale;
+
+  return Rect.fromLTRB(hidden, cut, canvasWidth - hidden, canvasHeight - cut);
+}
+
+/// Whether [bounds] should be drawn at all, given what the screen shows.
+///
+/// Only layers that ask for it: a background is meant to run past the edges,
+/// that is what the overflow is for. A single object is different — a cat
+/// whose bed has been cropped out from under it reads as a cat falling off
+/// the bed, and nothing is better than that.
+bool layerFits(
+  SceneLayerEntity layer, {
+  required Rect bounds,
+  required Rect visible,
+}) {
+  if (!layer.hideWhenClipped) return true;
+
+  // A pixel of slack: the visible rect is a fraction, the art is whole pixels.
+  return bounds.left >= visible.left - 1 &&
+      bounds.top >= visible.top - 1 &&
+      bounds.right <= visible.right + 1 &&
+      bounds.bottom <= visible.bottom + 1;
+}
+
 /// Which frame of [layer]'s strip belongs on screen right now.
 ///
 /// Anything that waits for a cue — a rare event, a tap, a new track — is the
@@ -329,6 +376,13 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
         ) /
         dpr;
 
+    final Rect visible = visibleCanvasRect(
+      viewport: size,
+      canvasWidth: widget.scene.canvasWidth,
+      canvasHeight: widget.scene.canvasHeight,
+      devicePixelRatio: dpr,
+    );
+
     // Back from the screen into the canvas the art was drawn on.
     final Offset local = box.globalToLocal(event.position);
     final double originX = (size.width - widget.scene.canvasWidth * scale) / 2;
@@ -353,6 +407,9 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
           sprite.height.toDouble(),
         ),
       );
+      // Nothing that is not drawn can be touched.
+      if (!layerFits(layer, bounds: bounds, visible: visible)) continue;
+
       if (bounds.contains(canvasPoint)) {
         if (_events.trigger(layer.id, _clock.sceneTime)) {
           // The chrome must not reappear: the tap was for the cat, not for
@@ -419,6 +476,12 @@ class _SceneLayersPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size);
 
     final double lampFade = fade();
+    final Rect visible = visibleCanvasRect(
+      viewport: size,
+      canvasWidth: scene.canvasWidth,
+      canvasHeight: scene.canvasHeight,
+      devicePixelRatio: devicePixelRatio,
+    );
 
     for (final SceneLayerEntity layer in scene.layers) {
       final double opacity = layerOpacity(layer, fade: lampFade);
@@ -426,6 +489,20 @@ class _SceneLayersPainter extends CustomPainter {
 
       final ui.Image? sprite = sprites[layer.spriteUrl];
       if (sprite == null) continue;
+
+      if (!layerFits(
+        layer,
+        bounds: layerBounds(
+          layer,
+          frameSize: Size(
+            sprite.width / layer.frameCount,
+            sprite.height.toDouble(),
+          ),
+        ),
+        visible: visible,
+      )) {
+        continue;
+      }
 
       _paintLayer(
         canvas: canvas,

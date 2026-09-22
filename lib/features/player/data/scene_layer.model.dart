@@ -24,6 +24,7 @@ abstract class SceneLayerModel with _$SceneLayerModel {
     @Default(false) bool tappable,
     @JsonKey(name: 'idle_frame_count') @Default(0) int idleFrameCount,
     @JsonKey(name: 'on_track_change') @Default(false) bool onTrackChange,
+    @JsonKey(name: 'hide_when_clipped') @Default(false) bool hideWhenClipped,
     @JsonKey(name: 'event_interval_min_seconds') int? eventIntervalMinSeconds,
     @JsonKey(name: 'event_interval_max_seconds') int? eventIntervalMaxSeconds,
   }) = _SceneLayerModel;
@@ -48,6 +49,7 @@ extension SceneLayerModelX on SceneLayerModel {
     tappable: tappable,
     idleFrameCount: idleFrameCount,
     onTrackChange: onTrackChange,
+    hideWhenClipped: hideWhenClipped,
     eventIntervalMinSeconds: eventIntervalMinSeconds,
     eventIntervalMaxSeconds: eventIntervalMaxSeconds,
   );

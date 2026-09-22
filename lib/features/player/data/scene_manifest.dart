@@ -79,6 +79,7 @@ class LayerManifest {
     this.tappable = false,
     this.idleFrameCount = 0,
     this.onTrackChange = false,
+    this.hideWhenClipped = false,
     this.eventIntervalMinSeconds,
     this.eventIntervalMaxSeconds,
   });
@@ -93,6 +94,7 @@ class LayerManifest {
   final bool tappable;
   final int idleFrameCount;
   final bool onTrackChange;
+  final bool hideWhenClipped;
   final int? eventIntervalMinSeconds;
   final int? eventIntervalMaxSeconds;
 
@@ -121,6 +123,7 @@ class LayerManifest {
       tappable: json['tappable'] as bool? ?? false,
       idleFrameCount: (json['idle_frames'] as num?)?.toInt() ?? 0,
       onTrackChange: json['on_track_change'] as bool? ?? false,
+      hideWhenClipped: json['hide_when_clipped'] as bool? ?? false,
       eventIntervalMinSeconds: event == null ? null : (event[0] as num).toInt(),
       eventIntervalMaxSeconds: event == null ? null : (event[1] as num).toInt(),
     );

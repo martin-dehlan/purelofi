@@ -51,8 +51,15 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   The upload tool prints what reaches past it. For a background that is the
   point of the overflow, so it only reports. For a **tappable** layer it
   refuses: the listener would be asked to touch something not on screen.
-  Rainy Room's cat was caught this way — it sat at y 500..536 and was cut on
-  every phone, gone entirely on an SE.
+
+  Sometimes there is nowhere else to put a thing. Rainy Room's cat lies on a
+  bed whose near edge runs diagonally, so the mattress is only wide enough
+  for it near the bottom of the canvas — inside the crop on a tall phone.
+  Moving it up put it over the floor. For that case there is
+  `hide_when_clipped`: the layer is drawn only where all of it fits, and
+  simply is not there otherwise. An empty bed is better than a cat falling
+  off one. It also silences the tool's refusal, because a layer that takes
+  itself off screen cannot be tapped at a place that is not shown.
 - **One palette of 35 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
@@ -265,6 +272,11 @@ An animation is a **horizontal strip**: 6 frames of a 64×64 sprite is one
 | `parallax` | `1.0` | How far the layer moves with the camera. 0.5 moves half as far. |
 | `tiles` | `false` | Repeat across the canvas instead of placing once. |
 | `only_while_playing` | `false` | Advances only while audio plays. |
+| `hide_when_paused` | `false` | Not drawn while paused; fades in and out over 2.2s. |
+| `tappable` | `false` | Plays its reaction once when touched. |
+| `idle_frames` | `0` | How many frames at the start of the strip are the idle loop; the rest are the reaction. |
+| `on_track_change` | `false` | Plays its reaction once when a new track starts. |
+| `hide_when_clipped` | `false` | Drawn only when all of it fits on screen. |
 | `event_interval` | — | `[min, max]` seconds: fires once at random in that range instead of looping. |
 
 Every sprite needs an entry and every entry a sprite. The parser refuses
