@@ -14,6 +14,33 @@ import 'track.controller.dart';
 
 part 'player.controller.g.dart';
 
+/// How much likelier a favourite is than anything else.
+const int favoriteWeight = 3;
+
+/// One of [tracks], with the ones in [favorites] counted [favoriteWeight]
+/// times over.
+///
+/// Pure and injectable so the weighting can be tested without waiting for a
+/// few hundred tracks to play.
+TrackEntity pickWeighted(
+  List<TrackEntity> tracks, {
+  required Set<String> favorites,
+  required Random random,
+}) {
+  int total = 0;
+  for (final TrackEntity track in tracks) {
+    total += favorites.contains(track.id) ? favoriteWeight : 1;
+  }
+
+  int roll = random.nextInt(total);
+  for (final TrackEntity track in tracks) {
+    roll -= favorites.contains(track.id) ? favoriteWeight : 1;
+    if (roll < 0) return track;
+  }
+
+  return tracks.last;
+}
+
 /// Playback: what is playing, whether it is playing, and what plays next.
 ///
 /// The audio itself lives in [AudioPlayerService]; this controller only
@@ -70,7 +97,16 @@ class PlayerController extends _$PlayerController {
 
     if (tracks.isEmpty) return;
 
-    await playTrack(_pickNext(tracks));
+    // A failure here must not stop the music: an unreadable favourites table
+    // means an unweighted shuffle, not silence.
+    Set<String> favorites = const <String>{};
+    try {
+      favorites = await ref.read(favoritesRepositoryProvider).getFavoriteIds();
+    } on Object {
+      favorites = const <String>{};
+    }
+
+    await playTrack(_pickNext(tracks, favorites));
   }
 
   /// Jumps to [position] in the current track.
@@ -120,14 +156,19 @@ class PlayerController extends _$PlayerController {
 
   /// A random track that is not the one already playing, so the stream never
   /// repeats itself back to back.
-  TrackEntity _pickNext(List<TrackEntity> tracks) {
+  ///
+  /// A favourite counts [favoriteWeight] times, which makes it likelier
+  /// without making it certain: a shuffle that only ever played the marked
+  /// tracks would turn the catalogue into a playlist of three, and the point
+  /// of the stream is that it keeps going somewhere.
+  TrackEntity _pickNext(List<TrackEntity> tracks, Set<String> favorites) {
     final String? currentId = state.currentTrack?.id;
     final List<TrackEntity> candidates = tracks
         .where((TrackEntity track) => track.id != currentId)
         .toList();
     final List<TrackEntity> pool = candidates.isEmpty ? tracks : candidates;
 
-    return pool[_random.nextInt(pool.length)];
+    return pickWeighted(pool, favorites: favorites, random: _random);
   }
 
   final Random _random = Random();

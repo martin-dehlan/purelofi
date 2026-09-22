@@ -9,20 +9,28 @@ import 'package:purelofi/features/player/domain/player.state.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
+import '../../../helpers/fake_favorites.repository.dart';
 import '../../../helpers/mock_repositories.dart';
 
 void main() {
   late MockContentRepository mockRepo;
   late FakeAudioPlayerService fakeAudio;
+  late FakeFavoritesRepository fakeFavorites;
   late ProviderContainer container;
 
-  Future<ProviderContainer> makeContainer(List<TrackEntity> tracks) async {
+  Future<ProviderContainer> makeContainer(
+    List<TrackEntity> tracks, {
+    Set<String> favorites = const <String>{},
+  }) async {
     when(() => mockRepo.getTracks()).thenAnswer((_) async => tracks);
+    fakeFavorites = FakeFavoritesRepository(favorites);
+    addTearDown(fakeFavorites.dispose);
 
     final ProviderContainer container = ProviderContainer(
       overrides: [
         contentRepositoryProvider.overrideWithValue(mockRepo),
         audioPlayerServiceProvider.overrideWithValue(fakeAudio),
+        favoritesRepositoryProvider.overrideWithValue(fakeFavorites),
       ],
       retry: (_, _) => null,
     );
