@@ -23,7 +23,17 @@ class PlayerControls extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final PlayerState state = ref.watch(playerControllerProvider);
+    // Watched narrowly: the position ticks several times a second, and
+    // rebuilding the whole bar for it was showing up as stutter.
+    final bool isPlaying = ref.watch(
+      playerControllerProvider.select((PlayerState s) => s.isPlaying),
+    );
+    final TrackEntity? track = ref.watch(
+      playerControllerProvider.select((PlayerState s) => s.currentTrack),
+    );
+    final AppError? error = ref.watch(
+      playerControllerProvider.select((PlayerState s) => s.error),
+    );
     final AsyncValue<List<TrackEntity>> tracks = ref.watch(
       trackListControllerProvider,
     );
@@ -42,8 +52,6 @@ class PlayerControls extends ConsumerWidget {
       );
     }
 
-    final TrackEntity? track = state.currentTrack;
-
     return Padding(
       padding: EdgeInsets.fromLTRB(
         context.horizontalPadding,
@@ -55,48 +63,11 @@ class PlayerControls extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Text(
-                _clock(state.position),
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
-                ),
-              ),
-              SizedBox(width: context.spaceM),
-              Expanded(
-                child: Text(
-                  track?.title ?? '',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: context.fontM,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: context.spaceS),
-          Waveform(
-            seed: track?.id ?? 'purelofi',
-            progress: state.progress,
-            height: context.screenHeight * 0.06,
-            onSeek: (double fraction) {
-              final Duration? total = state.duration;
-              if (total == null) return;
-
-              unawaited(
-                ref
-                    .read(playerControllerProvider.notifier)
-                    .seek(total * fraction),
-              );
-            },
-          ),
-          if (state.error != null) ...<Widget>[
+          _Progress(title: track?.title ?? '', seed: track?.id ?? 'purelofi'),
+          if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
-              state.error!.userMessage,
+              error.userMessage,
               textAlign: TextAlign.center,
               style: TextStyle(color: cs.error, fontSize: context.fontS),
             ),
@@ -113,10 +84,8 @@ class PlayerControls extends ConsumerWidget {
               ),
               SizedBox(width: context.spaceXl),
               _TransportButton(
-                asset: state.isPlaying
-                    ? AppAssets.pauseIcon
-                    : AppAssets.playIcon,
-                label: state.isPlaying ? 'Pause' : 'Play',
+                asset: isPlaying ? AppAssets.pauseIcon : AppAssets.playIcon,
+                label: isPlaying ? 'Pause' : 'Play',
                 size: context.screenWidth * 0.13,
                 onTap: ref
                     .read(playerControllerProvider.notifier)
@@ -142,6 +111,70 @@ class PlayerControls extends ConsumerWidget {
     final int seconds = position.inSeconds % 60;
 
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+}
+
+/// The clock and the waveform: the only parts that follow the position, so
+/// the only parts that rebuild while a track runs.
+class _Progress extends ConsumerWidget {
+  const _Progress({required this.title, required this.seed});
+
+  final String title;
+  final String seed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Duration position = ref.watch(
+      playerControllerProvider.select((PlayerState s) => s.position),
+    );
+    final Duration? duration = ref.watch(
+      playerControllerProvider.select((PlayerState s) => s.duration),
+    );
+
+    final double progress = duration == null || duration <= Duration.zero
+        ? 0
+        : (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Text(
+              PlayerControls._clock(position),
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: context.fontS,
+              ),
+            ),
+            SizedBox(width: context.spaceM),
+            Expanded(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: context.spaceS),
+        Waveform(
+          seed: seed,
+          progress: progress,
+          height: context.screenHeight * 0.06,
+          onSeek: (double fraction) {
+            if (duration == null) return;
+
+            unawaited(
+              ref
+                  .read(playerControllerProvider.notifier)
+                  .seek(duration * fraction),
+            );
+          },
+        ),
+      ],
+    );
   }
 }
 

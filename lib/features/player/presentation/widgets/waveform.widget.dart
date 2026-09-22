@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 /// file before the first note plays, which is a poor trade for a bar chart.
 /// What is honest is the position — the split between played and unplayed is
 /// the real playback position.
-class Waveform extends StatelessWidget {
+class Waveform extends StatefulWidget {
   const Waveform({
     required this.seed,
     required this.progress,
@@ -25,7 +25,7 @@ class Waveform extends StatelessWidget {
   /// 0 to 1.
   final double progress;
 
-  /// Called with a fraction of the track when the listener taps or drags.
+  /// Called with a fraction of the track once the listener lets go.
   final ValueChanged<double> onSeek;
 
   final double height;
@@ -33,18 +33,42 @@ class Waveform extends StatelessWidget {
   /// Bars per waveform. Odd, so it never lines up with a four-beat feel.
   static const int barCount = 57;
 
+  static final Map<String, List<double>> _cache = <String, List<double>>{};
+
   /// The bar heights for [seed], from 0.15 to 1.
+  ///
+  /// Cached: the shape never changes for a given track, and rebuilding it on
+  /// every position tick was showing up as stutter while scrubbing.
   static List<double> barsFor(String seed) {
-    final Random random = Random(seed.hashCode);
+    return _cache.putIfAbsent(seed, () {
+      final Random random = Random(seed.hashCode);
 
-    return List<double>.generate(barCount, (int i) {
-      // A slow swell across the track plus per-bar noise: reads as music
-      // rather than as a random fence.
-      final double swell = 0.55 + 0.45 * sin(i / barCount * pi * 3);
-      final double noise = random.nextDouble();
+      return List<double>.generate(barCount, (int i) {
+        // A slow swell across the track plus per-bar noise: reads as music
+        // rather than as a random fence.
+        final double swell = 0.55 + 0.45 * sin(i / barCount * pi * 3);
+        final double noise = random.nextDouble();
 
-      return (0.15 + 0.85 * (swell * 0.6 + noise * 0.4)).clamp(0.15, 1.0);
+        return (0.15 + 0.85 * (swell * 0.6 + noise * 0.4)).clamp(0.15, 1.0);
+      });
     });
+  }
+
+  @override
+  State<Waveform> createState() => _WaveformState();
+}
+
+class _WaveformState extends State<Waveform> {
+  /// Where the finger is while dragging. The bar follows this immediately;
+  /// the player is only told once the finger lifts, because asking
+  /// `just_audio` to seek on every pointer move makes it re-buffer and
+  /// stutter.
+  final ValueNotifier<double?> _scrub = ValueNotifier<double?>(null);
+
+  @override
+  void dispose() {
+    _scrub.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,29 +77,38 @@ class Waveform extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        void seekTo(Offset local) {
-          final double fraction = (local.dx / constraints.maxWidth).clamp(
-            0.0,
-            1.0,
-          );
-          onSeek(fraction);
-        }
+        double fractionAt(Offset local) =>
+            (local.dx / constraints.maxWidth).clamp(0.0, 1.0);
 
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown: (TapDownDetails details) => seekTo(details.localPosition),
+          onTapDown: (TapDownDetails details) =>
+              widget.onSeek(fractionAt(details.localPosition)),
+          onHorizontalDragStart: (DragStartDetails details) =>
+              _scrub.value = fractionAt(details.localPosition),
           onHorizontalDragUpdate: (DragUpdateDetails details) =>
-              seekTo(details.localPosition),
+              _scrub.value = fractionAt(details.localPosition),
+          onHorizontalDragEnd: (DragEndDetails details) {
+            final double? target = _scrub.value;
+            _scrub.value = null;
+            if (target != null) widget.onSeek(target);
+          },
+          onHorizontalDragCancel: () => _scrub.value = null,
           child: SizedBox(
-            height: height,
+            height: widget.height,
             width: double.infinity,
-            child: CustomPaint(
-              painter: _WaveformPainter(
-                bars: barsFor(seed),
-                progress: progress.clamp(0, 1),
-                played: cs.onSurface,
-                upcoming: cs.onSurfaceVariant,
-              ),
+            child: ValueListenableBuilder<double?>(
+              valueListenable: _scrub,
+              builder: (BuildContext context, double? scrub, _) {
+                return CustomPaint(
+                  painter: _WaveformPainter(
+                    bars: Waveform.barsFor(widget.seed),
+                    progress: (scrub ?? widget.progress).clamp(0, 1),
+                    played: cs.onSurface,
+                    upcoming: cs.onSurfaceVariant,
+                  ),
+                );
+              },
             ),
           ),
         );
@@ -136,6 +169,6 @@ class _WaveformPainter extends CustomPainter {
   @override
   bool shouldRepaint(_WaveformPainter oldDelegate) =>
       oldDelegate.progress != progress ||
-      oldDelegate.bars != bars ||
+      !identical(oldDelegate.bars, bars) ||
       oldDelegate.played != played;
 }

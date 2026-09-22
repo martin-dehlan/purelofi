@@ -19,9 +19,9 @@ void main() {
     mockRepo = MockContentRepository();
     fakeAudio = FakeAudioPlayerService();
     addTearDown(fakeAudio.dispose);
-    when(() => mockRepo.getTracks()).thenAnswer(
-      (_) async => <TrackEntity>[makeTrack('a'), makeTrack('b')],
-    );
+    when(
+      () => mockRepo.getTracks(),
+    ).thenAnswer((_) async => <TrackEntity>[makeTrack('a'), makeTrack('b')]);
     when(
       () => mockRepo.getScenes(),
     ).thenAnswer((_) async => <SceneEntity>[makeScene('scene-a')]);
@@ -123,6 +123,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('1:15'), findsOneWidget);
+    });
+  });
+
+  group('scrubbing', () {
+    testWidgets('dragging seeks once, when the finger lifts', (tester) async {
+      await tester.pumpRoutedApp(overrides: overrides());
+      await tester.pumpAndSettle();
+      fakeAudio.durationController.add(const Duration(minutes: 2));
+      await tester.pumpAndSettle();
+
+      final Rect wave = tester.getRect(find.byType(Waveform));
+      final TestGesture gesture = await tester.startGesture(
+        Offset(wave.left + 8, wave.center.dy),
+      );
+      await tester.pump();
+
+      // Drag across the bar in several steps.
+      for (int i = 1; i <= 8; i++) {
+        await gesture.moveTo(
+          Offset(wave.left + wave.width * i / 10, wave.center.dy),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+
+      expect(
+        fakeAudio.seeks,
+        isEmpty,
+        reason: 'seeking on every move makes the player re-buffer and stutter',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(fakeAudio.seeks, hasLength(1));
+      expect(fakeAudio.seeks.single.inSeconds, closeTo(96, 6));
+    });
+
+    test('the bars for a track are built once and reused', () {
+      final List<double> first = Waveform.barsFor('same-track');
+      final List<double> second = Waveform.barsFor('same-track');
+
+      expect(
+        identical(first, second),
+        isTrue,
+        reason: 'rebuilding them on every position tick showed up as stutter',
+      );
     });
   });
 }

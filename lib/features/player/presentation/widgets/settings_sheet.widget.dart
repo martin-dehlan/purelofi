@@ -29,40 +29,40 @@ class SettingsSheet extends ConsumerWidget {
       // A sheet that outgrows its space must scroll, not overflow.
       child: SingleChildScrollView(
         child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: context.horizontalPadding,
-          vertical: context.spaceL,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            _Entry(
-              asset: AppAssets.sceneSwitchIcon,
-              label: 'Change scene',
-              onTap: () {
-                Navigator.of(context).pop();
-                unawaited(showSceneSwitcherSheet(context));
-              },
-            ),
-            if (track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty)
+          padding: EdgeInsets.symmetric(
+            horizontal: context.horizontalPadding,
+            vertical: context.spaceL,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
               _Entry(
-                asset: AppAssets.cameraIcon,
-                label: 'Behind the scenes',
+                asset: AppAssets.sceneSwitchIcon,
+                label: 'Change scene',
                 onTap: () {
                   Navigator.of(context).pop();
-                  unawaited(showBtsModal(context, ref, track));
+                  unawaited(showSceneSwitcherSheet(context));
                 },
               ),
-            SizedBox(height: context.spaceL),
-            Text(
-              'Every track here was played on a real guitar or bass and '
-              'recorded in a room, not generated. The same recordings go up '
-              'on the YouTube channel.',
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontS,
-              ),
+              if (track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty)
+                _Entry(
+                  asset: AppAssets.cameraIcon,
+                  label: 'Behind the scenes',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    unawaited(showBtsModal(context, ref, track));
+                  },
+                ),
+              SizedBox(height: context.spaceL),
+              Text(
+                'Every track here was played on a real guitar or bass and '
+                'recorded in a room, not generated. The same recordings go up '
+                'on the YouTube channel.',
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: context.fontS,
+                ),
               ),
             ],
           ),
