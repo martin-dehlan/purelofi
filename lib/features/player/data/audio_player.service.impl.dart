@@ -6,6 +6,8 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../../common/cache/media_cache.service.dart';
 import '../../../common/errors/app_error.dart';
+import '../domain/audio_interruption.dart';
+import '../domain/audio_interruption.source.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/track.entity.dart';
 
@@ -16,9 +18,14 @@ import '../domain/track.entity.dart';
 class AudioPlayerServiceImpl extends BaseAudioHandler
     with SeekHandler
     implements AudioPlayerService {
-  AudioPlayerServiceImpl({AudioPlayer? player, MediaCache? cache})
-    : _player = player ?? AudioPlayer(),
-      _cache = cache {
+  AudioPlayerServiceImpl({
+    AudioPlayer? player,
+    MediaCache? cache,
+    AudioInterruptionSource? interruptions,
+  }) : _player = player ?? AudioPlayer(),
+       _cache = cache {
+    if (interruptions != null) _listenForInterruptions(interruptions);
+
     _subscriptions.addAll(<StreamSubscription<Object?>>[
       _player.playbackEventStream.listen(
         _broadcastState,
@@ -34,6 +41,10 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
   final AudioPlayer _player;
   final MediaCache? _cache;
+
+  /// Whether the pause on the books is ours or the listener's. Only ours is
+  /// ever undone automatically.
+  bool _pausedByInterruption = false;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
   final StreamController<AppError> _errors =
@@ -97,10 +108,52 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   }
 
   @override
-  Future<void> play() => _guard(_player.play);
+  Future<void> play() {
+    _pausedByInterruption = false;
+
+    return _guard(_player.play);
+  }
 
   @override
-  Future<void> pause() => _guard(_player.pause);
+  Future<void> pause() {
+    // A pause the listener asked for. Nothing may undo it but them.
+    _pausedByInterruption = false;
+
+    return _guard(_player.pause);
+  }
+
+  void _listenForInterruptions(AudioInterruptionSource source) {
+    _subscriptions.addAll(<StreamSubscription<Object?>>[
+      // Headphones out. Pause, and never resume on its own: the speaker is
+      // not where this was meant to be heard.
+      source.becomingNoisy.listen((_) {
+        if (_player.playing) unawaited(pause());
+      }),
+      source.interruptions.listen((InterruptionEvent event) {
+        final InterruptionAction action = actionForInterruption(
+          kind: event.kind,
+          beginning: event.beginning,
+          isPlaying: _player.playing,
+          pausedByInterruption: _pausedByInterruption,
+        );
+
+        switch (action) {
+          case InterruptionAction.none:
+            break;
+          case InterruptionAction.duck:
+            unawaited(_guard(() => _player.setVolume(duckedVolume)));
+          case InterruptionAction.restoreVolume:
+            unawaited(_guard(() => _player.setVolume(1)));
+          case InterruptionAction.pause:
+            _pausedByInterruption = true;
+            unawaited(_guard(_player.pause));
+          case InterruptionAction.resume:
+            _pausedByInterruption = false;
+            unawaited(_guard(_player.play));
+        }
+      }),
+    ]);
+  }
 
   @override
   Future<void> stop() async {
