@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -8,8 +9,10 @@ import '../../../common/errors/app_error.dart';
 import '../../../common/errors/error_mapper.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/player.state.dart';
+import '../domain/scene.entity.dart';
 import '../domain/track.entity.dart';
 import 'player.provider.dart';
+import 'scene.controller.dart';
 import 'track.controller.dart';
 
 part 'player.controller.g.dart';
@@ -70,6 +73,15 @@ class PlayerController extends _$PlayerController {
           }),
         ];
 
+    // The lock screen shows the room, and follows it when the listener
+    // switches scenes.
+    ref.listen<SceneEntity?>(
+      activeSceneControllerProvider,
+      (SceneEntity? _, SceneEntity? scene) =>
+          unawaited(_showArtwork(scene?.thumbnailUrl)),
+      fireImmediately: true,
+    );
+
     ref.onDispose(() {
       for (final StreamSubscription<Object?> subscription in subscriptions) {
         unawaited(subscription.cancel());
@@ -107,6 +119,26 @@ class PlayerController extends _$PlayerController {
     }
 
     await playTrack(_pickNext(tracks, favorites));
+  }
+
+  /// Hands the lock screen a picture of the room.
+  ///
+  /// Through the file cache rather than as a URL: `audio_service` takes a
+  /// `file://` URI straight to the platform, while a remote one goes through
+  /// a downloader of its own. Ours already has the file — and a cover that
+  /// only appears when there is a network would be missing exactly when the
+  /// offline cache is doing its job.
+  Future<void> _showArtwork(String? url) async {
+    final AudioPlayerService audio = ref.read(audioPlayerServiceProvider);
+    if (url == null || url.isEmpty) return audio.setArtwork(null);
+
+    final File? file = await ref.read(mediaCacheProvider)?.store(url);
+
+    // No cache, or the download failed: hand over the URL and let the
+    // platform try. A missing cover is not worth an error.
+    return audio.setArtwork(
+      file == null ? Uri.tryParse(url) : Uri.file(file.path),
+    );
   }
 
   /// Jumps to [position] in the current track.

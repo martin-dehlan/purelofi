@@ -26,11 +26,16 @@ TrackEntity makeTrack(
   createdAt: testCreatedAt,
 );
 
-SceneEntity makeScene(String id, {String title = 'Rainy Room'}) => SceneEntity(
+SceneEntity makeScene(
+  String id, {
+  String title = 'Rainy Room',
+  String? thumbnailUrl,
+}) => SceneEntity(
   id: id,
   title: title,
   videoUrl: 'https://example.com/$id.mp4',
   sortOrder: 0,
+  thumbnailUrl: thumbnailUrl,
 );
 
 TrackModel makeTrackModel(

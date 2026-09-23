@@ -1,15 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/player/controller/player.controller.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
+import 'package:purelofi/features/player/controller/scene.controller.dart';
 import 'package:purelofi/features/player/controller/track.controller.dart';
+import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/player.state.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_favorites.repository.dart';
+import '../../../helpers/fake_media_cache.dart';
 import '../../../helpers/mock_repositories.dart';
 
 void main() {
@@ -17,6 +22,7 @@ void main() {
   late FakeAudioPlayerService fakeAudio;
   late FakeFavoritesRepository fakeFavorites;
   late ProviderContainer container;
+  FakeMediaCache? cacheOverride;
 
   Future<ProviderContainer> makeContainer(
     List<TrackEntity> tracks, {
@@ -31,6 +37,8 @@ void main() {
         contentRepositoryProvider.overrideWithValue(mockRepo),
         audioPlayerServiceProvider.overrideWithValue(fakeAudio),
         favoritesRepositoryProvider.overrideWithValue(fakeFavorites),
+        if (cacheOverride != null)
+          mediaCacheProvider.overrideWithValue(cacheOverride),
       ],
       retry: (_, _) => null,
     );
@@ -40,7 +48,11 @@ void main() {
     return container;
   }
 
+  /// Lets the provider listeners run.
+  Future<void> pump() => Future<void>.delayed(Duration.zero);
+
   setUp(() {
+    cacheOverride = null;
     mockRepo = MockContentRepository();
     fakeAudio = FakeAudioPlayerService();
     addTearDown(fakeAudio.dispose);
@@ -235,5 +247,97 @@ void main() {
         completes,
       );
     });
+  });
+  group('lock screen artwork', () {
+    test('shows the scene the listener is looking at', () async {
+      when(() => mockRepo.getScenes()).thenAnswer(
+        (_) async => <SceneEntity>[
+          makeScene('scene-a', thumbnailUrl: 'https://example.com/a.png'),
+        ],
+      );
+      container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+      await container.read(sceneListControllerProvider.future);
+      await pump();
+
+      expect(fakeAudio.artUri, Uri.parse('https://example.com/a.png'));
+    });
+
+    test(
+      'follows a scene switch, without waiting for the next track',
+      () async {
+        final SceneEntity second = makeScene(
+          'scene-b',
+          thumbnailUrl: 'https://example.com/b.png',
+        );
+        when(() => mockRepo.getScenes()).thenAnswer(
+          (_) async => <SceneEntity>[
+            makeScene('scene-a', thumbnailUrl: 'https://example.com/a.png'),
+            second.copyWith(sortOrder: 1),
+          ],
+        );
+        container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+        await container.read(sceneListControllerProvider.future);
+        await pump();
+
+        container
+            .read(activeSceneControllerProvider.notifier)
+            .switchTo(second.copyWith(sortOrder: 1));
+        await pump();
+
+        expect(fakeAudio.artUri, Uri.parse('https://example.com/b.png'));
+      },
+    );
+
+    test(
+      'goes through the file cache, so it is there without a network',
+      () async {
+        // audio_service takes a file:// URI straight to the platform; a remote
+        // one goes through a downloader of its own, and a cover that needs the
+        // network would be missing exactly when the offline cache is working.
+        final File cover = File('${Directory.systemTemp.path}/cover.png');
+        cacheOverride = FakeMediaCache(file: cover);
+
+        when(() => mockRepo.getScenes()).thenAnswer(
+          (_) async => <SceneEntity>[
+            makeScene('scene-a', thumbnailUrl: 'https://example.com/a.png'),
+          ],
+        );
+        container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+        await container.read(sceneListControllerProvider.future);
+        await pump();
+
+        expect(cacheOverride!.stored, <String>['https://example.com/a.png']);
+        expect(fakeAudio.artUri, Uri.file(cover.path));
+      },
+    );
+
+    test('falls back to the url when the download fails', () async {
+      cacheOverride = FakeMediaCache();
+
+      when(() => mockRepo.getScenes()).thenAnswer(
+        (_) async => <SceneEntity>[
+          makeScene('scene-a', thumbnailUrl: 'https://example.com/a.png'),
+        ],
+      );
+      container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+      await container.read(sceneListControllerProvider.future);
+      await pump();
+
+      expect(fakeAudio.artUri, Uri.parse('https://example.com/a.png'));
+    });
+
+    test(
+      'a scene with no cover leaves the card blank rather than broken',
+      () async {
+        when(
+          () => mockRepo.getScenes(),
+        ).thenAnswer((_) async => <SceneEntity>[makeScene('scene-a')]);
+        container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+        await container.read(sceneListControllerProvider.future);
+        await pump();
+
+        expect(fakeAudio.artUri, isNull);
+      },
+    );
   });
 }

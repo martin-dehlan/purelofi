@@ -146,6 +146,12 @@ class SceneManifest {
   /// Layers back to front, each paired with what `scene.json` says about it.
   final List<(SpriteFileName file, LayerManifest settings)> layers;
 
+  /// The file a scene's cover is expected under, if one was built.
+  ///
+  /// Not a layer: nothing draws it. It is what the lock screen shows while a
+  /// track from this scene plays, which is otherwise a black rectangle.
+  static const String coverFileName = 'cover.png';
+
   /// Builds a manifest from `scene.json` and the PNG names beside it.
   ///
   /// Every sprite must have an entry and every entry a sprite: a silent
@@ -163,9 +169,14 @@ class SceneManifest {
         (json['layers'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
     final List<SpriteFileName> files =
-        spriteFileNames.map(SpriteFileName.parse).toList()..sort(
-          (SpriteFileName a, SpriteFileName b) => a.zIndex.compareTo(b.zIndex),
-        );
+        spriteFileNames
+            .where((String name) => name != coverFileName)
+            .map(SpriteFileName.parse)
+            .toList()
+          ..sort(
+            (SpriteFileName a, SpriteFileName b) =>
+                a.zIndex.compareTo(b.zIndex),
+          );
 
     final Set<int> seen = <int>{};
     for (final SpriteFileName file in files) {
