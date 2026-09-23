@@ -142,11 +142,14 @@ class _Progress extends ConsumerWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
+            // Clock, title and heart all read at the same size: three things
+            // on one line at three sizes looked like three unrelated things.
+            // The clock is only dimmer.
             Text(
               PlayerControls._clock(position),
               style: TextStyle(
                 color: cs.onSurfaceVariant,
-                fontSize: context.fontS,
+                fontSize: context.fontM,
               ),
             ),
             SizedBox(width: context.spaceM),
@@ -158,7 +161,7 @@ class _Progress extends ConsumerWidget {
               ),
             ),
             if (seed.isNotEmpty)
-              FavoriteButton(trackId: seed, size: context.screenWidth * 0.05),
+              FavoriteButton(trackId: seed, size: context.fontM),
           ],
         ),
         SizedBox(height: context.spaceS),

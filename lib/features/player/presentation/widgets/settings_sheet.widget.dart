@@ -6,9 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/utils/app_assets.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/pixel_icon.widget.dart';
+import '../../../../common/utils/app_version.dart';
+import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'bts_modal.widget.dart';
+import 'favorites_sheet.widget.dart';
 import 'scene_switcher_sheet.widget.dart';
 
 /// Everything that is not playback: which scene, the footage, and who made
@@ -24,6 +27,7 @@ class SettingsSheet extends ConsumerWidget {
     final TrackEntity? track = ref.watch(
       playerControllerProvider.select((state) => state.currentTrack),
     );
+    final int favoriteCount = ref.watch(favoriteTracksProvider).length;
 
     return SafeArea(
       // A sheet that outgrows its space must scroll, not overflow.
@@ -45,6 +49,18 @@ class SettingsSheet extends ConsumerWidget {
                   unawaited(showSceneSwitcherSheet(context));
                 },
               ),
+              _Entry(
+                asset: favoriteCount > 0
+                    ? AppAssets.favoriteOnIcon
+                    : AppAssets.favoriteIcon,
+                label: favoriteCount > 0
+                    ? 'Favorites ($favoriteCount)'
+                    : 'Favorites',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  unawaited(showFavoritesSheet(context));
+                },
+              ),
               if (track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty)
                 _Entry(
                   asset: AppAssets.cameraIcon,
@@ -62,6 +78,14 @@ class SettingsSheet extends ConsumerWidget {
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
                   fontSize: context.fontS,
+                ),
+              ),
+              SizedBox(height: context.spaceM),
+              Text(
+                'PureLofi $appVersion',
+                style: TextStyle(
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                  fontSize: context.fontXs,
                 ),
               ),
             ],
