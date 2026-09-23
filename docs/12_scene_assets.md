@@ -285,6 +285,34 @@ notices for a week.
 
 ---
 
+## The cover
+
+The lock screen and the media notification show a picture beside the track.
+Without one both platforms draw a grey rectangle, which is what PureLofi had
+until the cover existed.
+
+The cover is the scene itself — the first frame of every layer composited in
+draw order, the lit room. Square, because that is the shape every lock screen
+wants, and scaled by a whole number so the pixels stay pixels:
+
+```bash
+python3 tool/scene_cover.py ~/Desktop/rainy_room
+```
+
+Which square is a judgement call, so `scene.json` makes it, in canvas pixels:
+
+```json
+"cover": [0, 140, 320]
+```
+
+Left out, it takes a centred square. Rainy Room's crop holds the window, the
+lamp, the radio and the mug — the whole room in one frame.
+
+The upload tool picks `cover.png` up from the folder, puts it in storage and
+writes it to the scene's `thumbnail_url`. The app downloads it through the
+same file cache as everything else and hands the platform a `file://` URI,
+so the cover is there on a train too.
+
 ## Uploading
 
 ```bash

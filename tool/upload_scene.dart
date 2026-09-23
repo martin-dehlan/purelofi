@@ -312,8 +312,29 @@ Future<void> _run(_Args args) async {
     stdout.writeln('  ${file.fileName}');
   }
 
-  // 4. Upsert the scene, then replace its layers.
-  final String sceneId = await _upsertScene(env, args.scene, manifest);
+  // 4. The cover, if one was built. Not a layer — nothing draws it; it is
+  //    what the lock screen shows instead of a black rectangle.
+  String? coverUrl;
+  final File cover = File('${args.dir.path}/${SceneManifest.coverFileName}');
+  if (cover.existsSync()) {
+    final String path = '${args.scene}/${SceneManifest.coverFileName}';
+    await _uploadSprite(env, path, cover);
+    coverUrl = '${env.url}/storage/v1/object/public/$_bucket/$path';
+    stdout.writeln('  ${SceneManifest.coverFileName}');
+  } else {
+    stdout.writeln(
+      '\nNo ${SceneManifest.coverFileName}: the lock screen will be blank. '
+      'Build one with tool/scene_cover.py.',
+    );
+  }
+
+  // 5. Upsert the scene, then replace its layers.
+  final String sceneId = await _upsertScene(
+    env,
+    args.scene,
+    manifest,
+    coverUrl,
+  );
   await _replaceLayers(env, sceneId, manifest, spriteUrls);
 
   stdout.writeln(
@@ -443,6 +464,7 @@ Future<String> _upsertScene(
   _Env env,
   String slug,
   SceneManifest manifest,
+  String? coverUrl,
 ) async {
   final http.Response response = await http.post(
     Uri.parse('${env.url}/rest/v1/scenes?on_conflict=slug'),
@@ -459,6 +481,7 @@ Future<String> _upsertScene(
       'canvas_width': manifest.canvasWidth,
       'canvas_height': manifest.canvasHeight,
       'is_active': true,
+      'thumbnail_url': ?coverUrl,
     }),
   );
 

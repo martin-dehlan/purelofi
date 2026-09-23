@@ -24,6 +24,13 @@ abstract class AudioPlayerService {
   /// Loads [track] and starts playing it.
   Future<void> playTrack(TrackEntity track);
 
+  /// The picture the lock screen and the notification show.
+  ///
+  /// Set from the scene, because that is what the listener is actually
+  /// looking at. Without it both platforms draw a black rectangle where the
+  /// cover belongs.
+  Future<void> setArtwork(Uri? artUri);
+
   Future<void> play();
 
   Future<void> pause();

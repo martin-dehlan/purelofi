@@ -48,6 +48,12 @@ class FakeAudioPlayerService implements AudioPlayerService {
     positionController.add(position);
   }
 
+  /// What the lock screen was last told to show.
+  Uri? artUri;
+
+  @override
+  Future<void> setArtwork(Uri? uri) async => artUri = uri;
+
   @override
   Future<void> playTrack(TrackEntity track) async {
     final AppError? failure = failureOnPlay;

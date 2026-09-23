@@ -45,6 +45,8 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   /// Whether the pause on the books is ours or the listener's. Only ours is
   /// ever undone automatically.
   bool _pausedByInterruption = false;
+
+  Uri? _artUri;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
   final StreamController<AppError> _errors =
@@ -71,12 +73,24 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
+  Future<void> setArtwork(Uri? artUri) async {
+    _artUri = artUri;
+
+    // A track is already playing: give it the new picture now rather than
+    // waiting for the next one, or switching scenes leaves a lock screen
+    // showing the room the listener just left.
+    final MediaItem? current = mediaItem.valueOrNull;
+    if (current != null) mediaItem.add(current.copyWith(artUri: artUri));
+  }
+
+  @override
   Future<void> playTrack(TrackEntity track) async {
     mediaItem.add(
       MediaItem(
         id: track.id,
         title: track.title,
         artist: 'PureLofi',
+        artUri: _artUri,
         duration: track.durationSeconds == null
             ? null
             : Duration(seconds: track.durationSeconds!),
