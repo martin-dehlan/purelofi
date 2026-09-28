@@ -105,7 +105,10 @@ void main() {
     await openFootage(tester);
 
     for (final (String, Map<String, Object>) event in analytics.events) {
-      expect(event.$2.keys, everyElement(anyOf('track_id', 'scene_id')));
+      expect(
+        event.$2.keys,
+        everyElement(anyOf('track_id', 'scene_id', 'source')),
+      );
     }
   });
 }

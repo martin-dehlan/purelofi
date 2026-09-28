@@ -89,7 +89,8 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       MediaItem(
         id: track.id,
         title: track.title,
-        artist: 'PureLofi',
+        // A listener's own file is not ours to sign: their tags or nothing.
+        artist: track.source == TrackSource.local ? track.artist : 'PureLofi',
         artUri: _artUri,
         duration: track.durationSeconds == null
             ? null
@@ -110,6 +111,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   /// download is deliberately not awaited: playback should start now, not
   /// when the last byte lands.
   Future<AudioSource> _sourceFor(String url) async {
+    // The listener's own music is already on disk, and it is the only copy:
+    // it must never pass through the cache, which evicts (#66).
+    final Uri uri = Uri.parse(url);
+    if (uri.scheme == 'file') return AudioSource.file(uri.toFilePath());
+
     final MediaCache? cache = _cache;
     if (cache == null) return AudioSource.uri(Uri.parse(url));
 

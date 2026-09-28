@@ -11,6 +11,11 @@ abstract class AnalyticsService {
 
   Future<void> trackPlayed(String trackId);
 
+  /// One of the listener's own files started (#66). Deliberately without an
+  /// id or a title: what someone keeps on their phone is none of PostHog's
+  /// business. The source alone says whether the feature is used.
+  Future<void> localTrackPlayed();
+
   Future<void> btsOpened(String trackId);
 
   Future<void> sceneSwitched(String sceneId);
@@ -54,6 +59,12 @@ class PostHogAnalyticsService implements AnalyticsService {
   );
 
   @override
+  Future<void> localTrackPlayed() => _capture(
+    AnalyticsEvents.trackPlayed,
+    <String, Object>{'source': 'local'},
+  );
+
+  @override
   Future<void> btsOpened(String trackId) => _capture(
     AnalyticsEvents.btsOpened,
     <String, Object>{'track_id': trackId},
@@ -78,6 +89,9 @@ class NoopAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> trackPlayed(String trackId) async {}
+
+  @override
+  Future<void> localTrackPlayed() async {}
 
   @override
   Future<void> btsOpened(String trackId) async {}

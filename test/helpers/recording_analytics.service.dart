@@ -20,6 +20,12 @@ class RecordingAnalyticsService implements AnalyticsService {
   ));
 
   @override
+  Future<void> localTrackPlayed() async => events.add((
+    AnalyticsEvents.trackPlayed,
+    <String, Object>{'source': 'local'},
+  ));
+
+  @override
   Future<void> btsOpened(String trackId) async => events.add((
     AnalyticsEvents.btsOpened,
     <String, Object>{'track_id': trackId},

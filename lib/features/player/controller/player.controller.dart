@@ -7,10 +7,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/analytics/analytics.provider.dart';
 import '../../../common/errors/app_error.dart';
 import '../../../common/errors/error_mapper.dart';
+import '../../library/controller/library.provider.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/player.state.dart';
 import '../domain/scene.entity.dart';
 import '../domain/track.entity.dart';
+import 'playback_source.controller.dart';
 import 'player.provider.dart';
 import 'scene.controller.dart';
 import 'track.controller.dart';
@@ -94,11 +96,14 @@ class PlayerController extends _$PlayerController {
   /// Starts a random track. Called when the app opens and whenever a track
   /// ends — the stream never stops on its own.
   Future<void> playNext() async {
+    final TrackSource source = ref.read(playbackSourceControllerProvider);
     final List<TrackEntity> tracks;
     try {
       // Awaiting the future means the first play works even if nothing has
       // loaded the track list yet.
-      tracks = await ref.read(trackListControllerProvider.future);
+      tracks = source == TrackSource.local
+          ? await ref.read(libraryRepositoryProvider).getTracks()
+          : await ref.read(trackListControllerProvider.future);
     } on Object catch (error, stackTrace) {
       state = state.copyWith(
         error: ErrorMapper.fromException(error, stackTrace),
@@ -110,12 +115,17 @@ class PlayerController extends _$PlayerController {
     if (tracks.isEmpty) return;
 
     // A failure here must not stop the music: an unreadable favourites table
-    // means an unweighted shuffle, not silence.
+    // means an unweighted shuffle, not silence. Favourites are catalogue
+    // marks, so the listener's own library shuffles evenly.
     Set<String> favorites = const <String>{};
-    try {
-      favorites = await ref.read(favoritesRepositoryProvider).getFavoriteIds();
-    } on Object {
-      favorites = const <String>{};
+    if (source == TrackSource.catalogue) {
+      try {
+        favorites = await ref
+            .read(favoritesRepositoryProvider)
+            .getFavoriteIds();
+      } on Object {
+        favorites = const <String>{};
+      }
     }
 
     await playTrack(_pickNext(tracks, favorites));
@@ -167,8 +177,22 @@ class PlayerController extends _$PlayerController {
           : Duration(seconds: track.durationSeconds!),
       error: null,
     );
-    unawaited(ref.read(analyticsServiceProvider).trackPlayed(track.id));
+    unawaited(
+      track.source == TrackSource.local
+          ? ref.read(analyticsServiceProvider).localTrackPlayed()
+          : ref.read(analyticsServiceProvider).trackPlayed(track.id),
+    );
     await ref.read(audioPlayerServiceProvider).playTrack(track);
+  }
+
+  /// Switches the stream between PureLofi's music and the listener's own,
+  /// and starts something from the new side straight away: a switch that
+  /// kept playing the old source until the track ended would feel broken.
+  Future<void> useSource(TrackSource source) async {
+    if (ref.read(playbackSourceControllerProvider) == source) return;
+
+    ref.read(playbackSourceControllerProvider.notifier).select(source);
+    await playNext();
   }
 
   Future<void> togglePlayPause() async {
