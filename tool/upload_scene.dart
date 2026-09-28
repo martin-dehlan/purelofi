@@ -10,6 +10,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:purelofi/features/player/data/scene_manifest.dart';
 
@@ -307,8 +308,10 @@ Future<void> _run(_Args args) async {
   for (final (SpriteFileName file, _) in manifest.layers) {
     final String path = '${args.scene}/${file.fileName}';
     await _uploadSprite(env, path, filesByName[file.fileName]!);
-    spriteUrls[file.fileName] =
-        '${env.url}/storage/v1/object/public/$_bucket/$path';
+    spriteUrls[file.fileName] = _versioned(
+      '${env.url}/storage/v1/object/public/$_bucket/$path',
+      filesByName[file.fileName]!,
+    );
     stdout.writeln('  ${file.fileName}');
   }
 
@@ -319,7 +322,10 @@ Future<void> _run(_Args args) async {
   if (cover.existsSync()) {
     final String path = '${args.scene}/${SceneManifest.coverFileName}';
     await _uploadSprite(env, path, cover);
-    coverUrl = '${env.url}/storage/v1/object/public/$_bucket/$path';
+    coverUrl = _versioned(
+      '${env.url}/storage/v1/object/public/$_bucket/$path',
+      cover,
+    );
     stdout.writeln('  ${SceneManifest.coverFileName}');
   } else {
     stdout.writeln(
@@ -435,6 +441,20 @@ class _Env {
 
     return values;
   }
+}
+
+/// [url] with a short hash of [file]'s content appended.
+///
+/// The app caches every file by its URL and never asks again. A sprite
+/// re-uploaded under the same name therefore never reached anyone who had
+/// the scene already: the fixed snow and the redrawn dog both sat behind the
+/// old files on every phone that had played them. With the content in the
+/// URL, a changed file is a new URL and is fetched; an unchanged one keeps
+/// its URL and stays cached. Storage ignores the query, so nothing else
+/// changes.
+String _versioned(String url, File file) {
+  final String hash = sha1.convert(file.readAsBytesSync()).toString();
+  return '$url?v=${hash.substring(0, 10)}';
 }
 
 Future<void> _uploadSprite(_Env env, String path, File file) async {

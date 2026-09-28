@@ -162,9 +162,13 @@ class FileMediaCache implements MediaCache {
   /// nothing on disk depends on a server's idea of a filename.
   static String _fileNameFor(String url) {
     final String digest = sha1.convert(url.codeUnits).toString();
-    final int dot = url.lastIndexOf('.');
-    final String extension = dot > url.lastIndexOf('/') && dot != -1
-        ? url.substring(dot)
+    // From the path alone: a version query (`?v=…`, see the upload tool) is
+    // part of what makes the URL unique, so it is in the digest, but it is
+    // not part of the file type.
+    final String path = Uri.tryParse(url)?.path ?? url;
+    final int dot = path.lastIndexOf('.');
+    final String extension = dot > path.lastIndexOf('/') && dot != -1
+        ? path.substring(dot)
         : '';
 
     return '$digest$extension';
