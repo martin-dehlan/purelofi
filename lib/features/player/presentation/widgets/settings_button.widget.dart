@@ -2,9 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../common/utils/app_assets.dart';
 import '../../../../common/utils/responsive.dart';
-import '../../../../common/widgets/pixel_icon.widget.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
 import 'settings_sheet.widget.dart';
 
 /// The one button that is not about playback, top right of the scene.
@@ -21,10 +20,7 @@ class SettingsButton extends StatelessWidget {
         onTap: () => unawaited(showSettingsSheet(context)),
         child: Padding(
           padding: EdgeInsets.all(context.spaceM),
-          child: PixelIcon(
-            asset: AppAssets.settingsIcon,
-            size: context.screenWidth * 0.07,
-          ),
+          child: AppIcon(AppGlyph.menu, size: context.screenWidth * 0.07),
         ),
       ),
     );

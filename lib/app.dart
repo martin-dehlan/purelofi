@@ -2,17 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'common/routes/app_router.dart';
+import 'common/utils/app_fonts.dart';
 
-/// Dark, and in the same pixel grid the scenes are drawn on.
+/// Dark, with quiet type.
 ///
-/// The typeface is part of the art, not decoration: a rounded system face
-/// over a pixel-art room reads as two apps stacked on each other. Pixelify
-/// Sans keeps lowercase, which Silkscreen does not, so a track title stays a
-/// title rather than a shout.
+/// The pixel art belongs to the rooms. Chrome that repeats it reads as a
+/// costume, and Pixelify Sans across every label was exactly that. Karla is
+/// plain and a little warm, so the text stays out of the scene's way; the
+/// pixel face is kept for the wordmark alone (#67).
+///
+/// The one accent is the lamp: the warm light every room has, taken from the
+/// scene palette (`assets/palette/purelofi.gpl`, Lamp #F0A05D). It marks what
+/// is active — the track playing, the room you are in.
 final ThemeData _theme = ThemeData.dark(useMaterial3: true).copyWith(
+  colorScheme: ThemeData.dark(useMaterial3: true).colorScheme.copyWith(
+    primary: const Color(0xFFF0A05D),
+    onPrimary: const Color(0xFF030308),
+  ),
   textTheme: ThemeData.dark(
     useMaterial3: true,
-  ).textTheme.apply(fontFamily: 'PixelifySans'),
+  ).textTheme.apply(fontFamily: AppFonts.body),
 );
 
 /// The app shell. A lo-fi player is a night-time app, so it is dark by

@@ -66,7 +66,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Behind the scenes');
+    await openFootage(tester);
 
     expect(analytics.eventNames, contains('bts_opened'));
     expect(
@@ -102,7 +102,7 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Behind the scenes');
+    await openFootage(tester);
 
     for (final (String, Map<String, Object>) event in analytics.events) {
       expect(event.$2.keys, everyElement(anyOf('track_id', 'scene_id')));

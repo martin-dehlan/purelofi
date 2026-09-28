@@ -47,7 +47,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await openMenu(tester);
-      await tapMenuEntry(tester, 'Behind the scenes');
+      await openFootage(tester);
 
       expect(find.byType(BtsModal), findsOneWidget);
       expect(find.text('bts https://example.com/a-bts.mp4'), findsOneWidget);
@@ -60,7 +60,7 @@ void main() {
       expect(fakeAudio.playedTracks, hasLength(1));
 
       await openMenu(tester);
-      await tapMenuEntry(tester, 'Behind the scenes');
+      await openFootage(tester);
 
       expect(fakeAudio.pauseCalls, 1);
     });
@@ -70,7 +70,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await openMenu(tester);
-      await tapMenuEntry(tester, 'Behind the scenes');
+      await openFootage(tester);
       Navigator.of(tester.element(find.byType(BtsModal))).pop();
       await tester.pumpAndSettle();
 
@@ -85,7 +85,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await openMenu(tester);
-      expect(find.text('Behind the scenes'), findsNothing);
+      expect(footageCamera, findsNothing);
       expect(find.byType(BtsModal), findsNothing);
     });
   });
@@ -102,7 +102,7 @@ void main() {
       await openMenu(tester);
 
       expect(
-        find.text('Behind the scenes'),
+        footageCamera,
         findsNothing,
         reason:
             'but no camera is drawn — one that opens no clip is a dead '

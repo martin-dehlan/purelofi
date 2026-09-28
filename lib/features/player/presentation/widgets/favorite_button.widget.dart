@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_assets.dart';
-import '../../../../common/widgets/pixel_icon.widget.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/favorites.controller.dart';
 
-/// The heart beside the track title.
+/// The heart that marks a track as a favourite.
 ///
-/// Beside the title rather than in the transport on purpose: the row of
-/// controls stays at three, which is what keeps the chrome out of the way of
-/// the scene (`docs/09`).
+/// Not shown anywhere since #67: with a handful of tracks there is nothing to
+/// choose between. Kept, with its sheet and repository, for when the
+/// catalogue is big enough — it goes back beside the title, not into the
+/// transport, so the row of controls stays at three (`docs/09`).
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({required this.trackId, required this.size, super.key});
 
@@ -40,10 +40,8 @@ class FavoriteButton extends ConsumerWidget {
         ),
         child: Padding(
           padding: EdgeInsets.all(size * 0.4),
-          child: PixelIcon(
-            asset: isFavorite
-                ? AppAssets.favoriteOnIcon
-                : AppAssets.favoriteIcon,
+          child: AppIcon(
+            isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
             // [size] is a font size. A glyph leaves room above and below its
             // cap height; the icon fills its box edge to edge, so matching
             // the numbers would make the heart look bigger than the text it
