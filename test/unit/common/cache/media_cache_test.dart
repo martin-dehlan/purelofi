@@ -81,6 +81,33 @@ void main() {
       expect(file!.path, endsWith('.mp3'));
     });
 
+    test('a versioned URL keeps the plain extension', () async {
+      // The upload tool appends ?v=<content hash> so a changed sprite is a
+      // new URL. The file type is still just .png.
+      final FileMediaCache cache = cacheWith(client: serving());
+
+      final File? file = await cache.store(
+        'https://x/a/strip.png?v=3f9a1c2b7e',
+      );
+
+      expect(file!.path, endsWith('.png'));
+    });
+
+    test('a new version is a new file, not the old one again', () async {
+      final List<Uri> requested = <Uri>[];
+      final FileMediaCache cache = cacheWith(
+        client: MockClient((http.Request r) async {
+          requested.add(r.url);
+          return http.Response.bytes(<int>[1, 2, 3], 200);
+        }),
+      );
+
+      await cache.store('https://x/strip.png?v=aaaaaaaaaa');
+      await cache.store('https://x/strip.png?v=bbbbbbbbbb');
+
+      expect(requested, hasLength(2));
+    });
+
     test('a failed download is a miss, not an error', () async {
       final FileMediaCache cache = cacheWith(client: serving(status: 404));
 
