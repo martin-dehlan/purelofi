@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ import 'common/analytics/analytics.service.dart';
 import 'common/config/env.dart';
 import 'common/database/app_database.dart';
 import 'common/database/daos/cached_file.dao.dart';
+import 'features/library/controller/library.provider.dart';
+import 'features/library/data/library.repository.impl.dart';
 import 'features/player/controller/player.provider.dart';
 import 'features/player/data/audio_player.service.impl.dart';
 import 'features/player/data/audio_session.source.dart';
@@ -38,6 +41,9 @@ Future<void> main() async {
   // Anything left over the limit by a previous run goes now, while nothing
   // is playing.
   unawaited(cache.evict());
+
+  // The listener's own music (#66): beside the cache, never inside it.
+  final Directory library = await LibraryRepositoryImpl.defaultDirectory();
 
   // What the platform says about calls, other players and the headphones.
   // `audio_service` configures the session; deciding what an interruption
@@ -82,6 +88,7 @@ Future<void> main() async {
         analyticsServiceProvider.overrideWithValue(analytics),
         appDatabaseProvider.overrideWithValue(database),
         mediaCacheProvider.overrideWithValue(cache),
+        libraryDirectoryProvider.overrideWithValue(library),
       ],
       child: const PureLofiApp(),
     ),

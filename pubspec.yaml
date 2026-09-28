@@ -51,6 +51,9 @@ dependencies:
   path_provider: ^2.1.6
   crypto: ^3.0.7
   audio_session: ^0.2.4
+  file_picker: ^13.1.0
+  audio_metadata_reader: ^1.8.0
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:
