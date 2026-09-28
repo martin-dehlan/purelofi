@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/errors/app_error.dart';
-import '../../../../common/utils/app_assets.dart';
+import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
-import '../../../../common/widgets/pixel_icon.widget.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
-import 'favorite_button.widget.dart';
 import 'waveform.widget.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport.
@@ -78,14 +77,14 @@ class PlayerControls extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _TransportButton(
-                asset: AppAssets.prevIcon,
+                glyph: AppGlyph.previous,
                 label: 'Start over',
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).restart,
               ),
               SizedBox(width: context.spaceXl),
               _TransportButton(
-                asset: isPlaying ? AppAssets.pauseIcon : AppAssets.playIcon,
+                glyph: isPlaying ? AppGlyph.pause : AppGlyph.play,
                 label: isPlaying ? 'Pause' : 'Play',
                 size: context.screenWidth * 0.13,
                 onTap: ref
@@ -94,7 +93,7 @@ class PlayerControls extends ConsumerWidget {
               ),
               SizedBox(width: context.spaceXl),
               _TransportButton(
-                asset: AppAssets.nextIcon,
+                glyph: AppGlyph.next,
                 label: 'Next track',
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
@@ -142,13 +141,15 @@ class _Progress extends ConsumerWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            // Clock, title and heart all read at the same size: three things
-            // on one line at three sizes looked like three unrelated things.
-            // The clock is only dimmer.
+            // Clock and title read at the same size: two things on one line
+            // at two sizes looked like two unrelated things. The clock is only
+            // dimmer, and set in the mono face so it does not jitter as the
+            // digits change.
             Text(
               PlayerControls._clock(position),
               style: TextStyle(
                 color: cs.onSurfaceVariant,
+                fontFamily: AppFonts.mono,
                 fontSize: context.fontM,
               ),
             ),
@@ -160,8 +161,6 @@ class _Progress extends ConsumerWidget {
                 style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
               ),
             ),
-            if (seed.isNotEmpty)
-              FavoriteButton(trackId: seed, size: context.fontM),
           ],
         ),
         SizedBox(height: context.spaceS),
@@ -186,13 +185,13 @@ class _Progress extends ConsumerWidget {
 
 class _TransportButton extends StatelessWidget {
   const _TransportButton({
-    required this.asset,
+    required this.glyph,
     required this.label,
     required this.size,
     required this.onTap,
   });
 
-  final String asset;
+  final AppGlyph glyph;
   final String label;
   final double size;
   final Future<void> Function() onTap;
@@ -207,7 +206,7 @@ class _TransportButton extends StatelessWidget {
         onTap: () => unawaited(onTap()),
         child: Padding(
           padding: EdgeInsets.all(context.spaceS),
-          child: PixelIcon(asset: asset, size: size),
+          child: AppIcon(glyph, size: size),
         ),
       ),
     );

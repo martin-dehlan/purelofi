@@ -5,8 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/common/widgets/empty_state.widget.dart';
 import 'package:purelofi/common/widgets/error_state.widget.dart';
-import 'package:purelofi/common/widgets/pixel_icon.widget.dart';
-import 'package:purelofi/common/utils/app_assets.dart';
+import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
@@ -83,7 +82,7 @@ void main() {
       expect(find.text('No tracks yet.'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (Widget w) => w is PixelIcon && w.asset == AppAssets.playIcon,
+          (Widget w) => w is AppIcon && w.glyph == AppGlyph.play,
         ),
         findsNothing,
         reason: 'an inert play button looks like a bug',
@@ -120,7 +119,7 @@ void main() {
       expect(find.text('No tracks yet.'), findsNothing);
       expect(
         find.byWidgetPredicate(
-          (Widget w) => w is PixelIcon && w.asset == AppAssets.playIcon,
+          (Widget w) => w is AppIcon && w.glyph == AppGlyph.play,
         ),
         findsOneWidget,
       );

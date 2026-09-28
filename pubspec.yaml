@@ -86,8 +86,9 @@ flutter:
 
   assets:
     - .env
-    - assets/icons/
     - assets/fonts/OFL.txt
+    - assets/fonts/OFL-Karla.txt
+    - assets/fonts/OFL-DMMono.txt
     # Development placeholder scene; see lib/features/player/dev/.
     - assets/dev/scenes/test_room/
 
@@ -98,10 +99,22 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # Pixelify Sans, SIL Open Font License 1.1 (assets/fonts/OFL.txt).
-    # A variable font: one file, weight set per style. Chosen over Silkscreen
-    # (capitals only, which mangles track titles) and VT323 (a terminal face
-    # that fights the room).
+    # All SIL Open Font License 1.1, bundled rather than fetched: a face that
+    # has to be downloaded first is missing exactly when the app is offline.
+    #
+    # Karla for everything that is read. Plain and a little warm, so the
+    # chrome stays quiet and the pixel art is left to the rooms (#67).
+    # A variable font: one file, weight set per style.
+    - family: Karla
+      fonts:
+        - asset: assets/fonts/Karla.ttf
+    # DM Mono for durations and numbers, so they line up in a column.
+    - family: DMMono
+      fonts:
+        - asset: assets/fonts/DMMono-Regular.ttf
+        - asset: assets/fonts/DMMono-Medium.ttf
+          weight: 500
+    # Pixelify Sans, now only for the PureLofi wordmark.
     - family: PixelifySans
       fonts:
         - asset: assets/fonts/PixelifySans.ttf

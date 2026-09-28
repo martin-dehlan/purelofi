@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
-import 'package:purelofi/common/utils/app_assets.dart';
-import 'package:purelofi/common/widgets/pixel_icon.widget.dart';
+import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/player_controls.widget.dart';
@@ -31,20 +30,15 @@ void main() {
     audioPlayerServiceProvider.overrideWithValue(fakeAudio),
   ];
 
-  /// The play/pause button — the chrome holds other pixel icons too.
+  /// The play/pause button — the chrome holds other icons too.
   final Finder playPause = find.byWidgetPredicate(
     (Widget widget) =>
-        widget is PixelIcon &&
-        (widget.asset == AppAssets.playIcon ||
-            widget.asset == AppAssets.pauseIcon),
+        widget is AppIcon &&
+        (widget.glyph == AppGlyph.play || widget.glyph == AppGlyph.pause),
   );
 
-  String assetOf(WidgetTester tester) {
-    final Image image = tester.widget<Image>(
-      find.descendant(of: playPause, matching: find.byType(Image)),
-    );
-    return (image.image as AssetImage).assetName;
-  }
+  AppGlyph glyphOf(WidgetTester tester) =>
+      tester.widget<AppIcon>(playPause).glyph;
 
   testWidgets('shows the play icon while paused', (tester) async {
     await tester.pumpProviderApp(
@@ -53,21 +47,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(assetOf(tester), AppAssets.playIcon);
-  });
-
-  testWidgets('renders pixel assets without smoothing', (tester) async {
-    await tester.pumpProviderApp(
-      child: const PlayerControls(),
-      overrides: overrides(),
-    );
-    await tester.pumpAndSettle();
-
-    final Image image = tester.widget<Image>(
-      find.descendant(of: playPause, matching: find.byType(Image)),
-    );
-    expect(image.filterQuality, FilterQuality.none);
-    expect(image.isAntiAlias, isFalse);
+    expect(glyphOf(tester), AppGlyph.play);
   });
 
   testWidgets('tapping starts playback and swaps to the pause icon', (
@@ -83,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fakeAudio.playedTracks.single.id, 'a');
-    expect(assetOf(tester), AppAssets.pauseIcon);
+    expect(glyphOf(tester), AppGlyph.pause);
   });
 
   testWidgets('tapping again pauses', (tester) async {
@@ -99,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fakeAudio.pauseCalls, 1);
-    expect(assetOf(tester), AppAssets.playIcon);
+    expect(glyphOf(tester), AppGlyph.play);
   });
 
   testWidgets('shows the track title once something is playing', (

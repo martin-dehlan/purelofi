@@ -1,36 +1,30 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_assets.dart';
-import '../../../../common/utils/responsive.dart';
-import '../../../../common/widgets/pixel_icon.widget.dart';
+import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_version.dart';
-import '../../controller/favorites.controller.dart';
-import '../../controller/player.controller.dart';
-import '../../domain/track.entity.dart';
-import 'bts_modal.widget.dart';
-import 'favorites_sheet.widget.dart';
+import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
 import 'scene_switcher_sheet.widget.dart';
+import 'track_list.widget.dart';
 
-/// Everything that is not playback: which scene, the footage, and who made
-/// the music.
+/// The menu: the tracks first, then the room, then who made the music.
 ///
-/// It lives behind one button so the scene itself stays uncluttered.
-class SettingsSheet extends ConsumerWidget {
+/// The track list is what people look for in a player, so it leads (#67).
+/// Behind-the-scenes footage is reached from its track's row, not from an
+/// entry of its own. Favourites are out of the menu until the catalogue is
+/// big enough for choosing among tracks to matter; the code for them stays.
+class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final TrackEntity? track = ref.watch(
-      playerControllerProvider.select((state) => state.currentTrack),
-    );
-    final int favoriteCount = ref.watch(favoriteTracksProvider).length;
 
     return SafeArea(
-      // A sheet that outgrows its space must scroll, not overflow.
+      // A sheet that outgrows its space must scroll, not overflow: a short
+      // screen or a landscape phone cannot fit the list and the rest at once.
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -41,36 +35,17 @@ class SettingsSheet extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              const TrackList(),
+              SizedBox(height: context.spaceM),
               _Entry(
-                asset: AppAssets.sceneSwitchIcon,
+                glyph: AppGlyph.scene,
                 label: 'Change scene',
                 onTap: () {
                   Navigator.of(context).pop();
                   unawaited(showSceneSwitcherSheet(context));
                 },
               ),
-              _Entry(
-                asset: favoriteCount > 0
-                    ? AppAssets.favoriteOnIcon
-                    : AppAssets.favoriteIcon,
-                label: favoriteCount > 0
-                    ? 'Favorites ($favoriteCount)'
-                    : 'Favorites',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showFavoritesSheet(context));
-                },
-              ),
-              if (track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty)
-                _Entry(
-                  asset: AppAssets.cameraIcon,
-                  label: 'Behind the scenes',
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    unawaited(showBtsModal(context, ref, track));
-                  },
-                ),
-              SizedBox(height: context.spaceL),
+              SizedBox(height: context.spaceM),
               Text(
                 'Every track here was played on a real guitar or bass and '
                 'recorded in a room, not generated. The same recordings go up '
@@ -78,6 +53,7 @@ class SettingsSheet extends ConsumerWidget {
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
                   fontSize: context.fontS,
+                  height: 1.5,
                 ),
               ),
               SizedBox(height: context.spaceM),
@@ -85,6 +61,7 @@ class SettingsSheet extends ConsumerWidget {
                 'PureLofi $appVersion',
                 style: TextStyle(
                   color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                  fontFamily: AppFonts.wordmark,
                   fontSize: context.fontXs,
                 ),
               ),
@@ -97,9 +74,9 @@ class SettingsSheet extends ConsumerWidget {
 }
 
 class _Entry extends StatelessWidget {
-  const _Entry({required this.asset, required this.label, required this.onTap});
+  const _Entry({required this.glyph, required this.label, required this.onTap});
 
-  final String asset;
+  final AppGlyph glyph;
   final String label;
   final VoidCallback onTap;
 
@@ -117,8 +94,10 @@ class _Entry extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: context.spaceM),
           child: Row(
             children: <Widget>[
-              PixelIcon(asset: asset, size: context.screenWidth * 0.07),
-              SizedBox(width: context.spaceL),
+              AppIcon(glyph, size: context.fontL),
+              // The same gap as a track row, so this label lines up with the
+              // titles above it.
+              SizedBox(width: context.spaceM),
               Expanded(
                 child: Text(
                   label,
@@ -138,9 +117,14 @@ class _Entry extends StatelessWidget {
 }
 
 /// Opens the menu as a bottom sheet.
+///
+/// Scroll-controlled so it may grow past Flutter's default of 9/16 of the
+/// screen: a full track list plus the rest of the menu does not fit in that.
+/// The list caps itself, so the sheet still never covers the whole scene.
 Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
+    isScrollControlled: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (BuildContext context) => const SettingsSheet(),
   );

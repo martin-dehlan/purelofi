@@ -14,15 +14,19 @@ MANDATORY:
 - Buttons/controls: keep the player chrome minimal (play/pause + scene + info)
 ```
 
-> **Pixel-art clarification for PureLofi:** the retro/pixel *vibe* comes from the
-> **assets** — the sprite layers of a scene (see [`docs/12`](12_scene_assets.md))
-> and the pixel PNG icons (play/pause, camera, scene-switch) from PixelLab.
-> What keeps them crisp is integer scaling: the renderer picks a whole-number
-> scale factor and draws with `FilterQuality.none`, so one authored pixel is
-> always an exact block of screen pixels. It does **not** come from Flutter styling.
-> The Flutter chrome (overlays, the BTS modal, text) stays clean and flat per
-> the rules below. Do not fake "pixel art" with gradients, glows, or drop
-> shadows in Dart — put that character in the PNG/MP4 assets instead.
+> **Pixel-art clarification for PureLofi:** the retro/pixel *vibe* comes from
+> the **scenes** alone — the sprite layers of a room (see
+> [`docs/12`](12_scene_assets.md)). What keeps them crisp is integer scaling:
+> the renderer picks a whole-number scale factor and draws with
+> `FilterQuality.none`, so one authored pixel is always an exact block of
+> screen pixels.
+>
+> The chrome does **not** repeat it (#67). Pixel type and pixel icons over a
+> pixel room read as a costume, so the text is Karla (numbers in DM Mono) and
+> the icons are flat filled shapes drawn by `AppIcon`, coloured from the
+> theme. The one pixel element left in the chrome is the PureLofi wordmark in
+> Pixelify Sans. Do not fake "pixel art" with gradients, glows, or drop
+> shadows in Dart either — put that character in the scene assets.
 
 ## Pre-Flight Checklist
 
@@ -32,8 +36,9 @@ MANDATORY:
 - [ ] Minimal player chrome — don't crowd the scene
 - [ ] Clear hierarchy (now-playing title > controls > info)
 - [ ] Separate Widget classes (no `_build*` methods)
-- [ ] Pixel PNG icons rendered crisply — use `FilterQuality.none` on pixel assets
-      so they don't blur when scaled
+- [ ] Icons are `AppIcon` glyphs, coloured from `colorScheme` — no image icons
+- [ ] Type from the theme (Karla); `AppFonts.mono` for numbers, `AppFonts.wordmark`
+      only for the PureLofi wordmark
 
 ---
 
@@ -57,7 +62,7 @@ color: cs.surface                      // Theme colors
 elevation: 0                           // Minimal elevation
 SizedBox(height: h * 0.03)            // MediaQuery spacing
 class PlayerControls extends StatelessWidget // Separate widgets
-Image.asset('assets/icons/play_icon.png', filterQuality: FilterQuality.none)
+AppIcon(AppGlyph.play, size: context.screenWidth * 0.13)
 ```
 
 ---

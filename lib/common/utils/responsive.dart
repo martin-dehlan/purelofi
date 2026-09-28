@@ -15,8 +15,8 @@ extension ResponsiveContext on BuildContext {
   double get spaceXl => screenHeight * 0.04;
   double get spaceXxl => screenHeight * 0.06;
 
-  // Font sizes (width-based), snapped to whole device pixels so the pixel
-  // font stays crisp.
+  // Font sizes (width-based), snapped to whole device pixels so text sits
+  // on the same grid as the scene.
   double get fontXs => pixel(screenWidth * 0.025);
   double get fontS => pixel(screenWidth * 0.032);
   double get fontM => pixel(screenWidth * 0.040);
@@ -26,9 +26,9 @@ extension ResponsiveContext on BuildContext {
 
   /// A size that lands on whole device pixels.
   ///
-  /// A pixel font drawn at 13.4 logical points is a pixel font with blurred
-  /// edges. Everything here is still derived from the screen (`docs/03`);
-  /// this only snaps the result to the grid the glyphs were drawn on.
+  /// The wordmark is a pixel font, and a pixel font drawn at 13.4 logical
+  /// points has blurred edges. Everything here is still derived from the
+  /// screen (`docs/03`); this only snaps the result to whole pixels.
   double pixel(double size) {
     final double ratio = MediaQuery.of(this).devicePixelRatio;
     if (ratio <= 0) return size;

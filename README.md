@@ -30,8 +30,9 @@ MVP (`v0.1.0`). The player works end to end:
 
 Offline caching, favorites and a paid tier are Phase 2.
 
-The pixel icons in `assets/icons/` are placeholders — plain white glyphs, to
-be replaced with the real PixelLab art. Scenes are authored as sprite layers;
+The chrome is deliberately plain — Karla, DM Mono for numbers, flat icons
+drawn in code (`AppIcon`) — so the pixel art is left to the rooms (#67).
+Scenes are authored as sprite layers;
 [`docs/12`](docs/12_scene_assets.md) is the authoring contract, and
 
 ```bash
@@ -95,8 +96,8 @@ lib/
     config/        env, supabase client provider
     errors/        app_error (sealed union) + error_mapper
     routes/        app_routes, app_router
-    utils/         responsive, app_assets
-    widgets/       loading/error state, pixel_icon
+    utils/         responsive, app_fonts
+    widgets/       loading/error state, app_icon
 ```
 
 Layer flow: **Domain → Data → Controller → UI.** Domain is pure Dart and
