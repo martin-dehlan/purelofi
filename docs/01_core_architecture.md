@@ -19,6 +19,13 @@ Golden Rules:
 > nothing is ever written back to it. What the Drift layer added in 0.2.0 is
 > a read-through cache, not a second master: a fetch fills it, and it is what
 > the repository reads from afterwards.
+>
+> **The exception is the listener's own music (#66).** Files they import
+> live only on the device, in `local_tracks` and `library/`, and are never
+> synced — there is no account to sync them to, and they are theirs, not
+> PureLofi's. So for that one feature Drift is the source of truth, and the
+> mirror rules in docs/04 do not apply. Everything Supabase serves stays as
+> described above.
 
 ## Checklist
 
