@@ -292,7 +292,8 @@ Without one both platforms draw a grey rectangle, which is what PureLofi had
 until the cover existed.
 
 The cover is the scene itself — the first frame of every layer composited in
-draw order, the lit room. Square, because that is the shape every lock screen
+draw order, the lit room, with tiling layers repeated across the canvas as the
+app repeats them. Square, because that is the shape every lock screen
 wants, and scaled by a whole number so the pixels stay pixels:
 
 ```bash

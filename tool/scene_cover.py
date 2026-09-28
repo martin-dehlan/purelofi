@@ -7,7 +7,8 @@ puts it on the track's lock-screen card, which is otherwise a black
 rectangle.
 
 The cover is the first frame of every layer, composited in draw order — the
-lit room, the way it looks while something is playing. Square, because that
+lit room, the way it looks while something is playing. Tiling layers repeat
+across the canvas as they do in the app. Square, because that
 is the shape every lock screen and notification wants, and scaled by a whole
 number so the pixels stay pixels.
 
@@ -40,8 +41,12 @@ def build(folder):
         strip = Image.open(os.path.join(folder, name)).convert('RGBA')
         frame_width = strip.width // int(frames[:-1])
         first = strip.crop((0, 0, frame_width, strip.height))
-        offset_x, offset_y = layers.get(key, {}).get('offset', [0, 0])
-        canvas.alpha_composite(first, (offset_x, offset_y))
+        layer = layers.get(key, {})
+        offset_x, offset_y = layer.get('offset', [0, 0])
+        if layer.get('tiles'):
+            _tile(canvas, first, offset_x, offset_y)
+        else:
+            canvas.alpha_composite(first, (offset_x, offset_y))
 
     size = min(width, height)
     default = [(width - size) // 2, (height - size) // 2, size]
@@ -54,6 +59,22 @@ def build(folder):
 
     print('cover.png  %dx%d from (%d,%d) %dx%d'
           % (size * SCALE, size * SCALE, x, y, size, size))
+
+
+def _tile(canvas, tile, offset_x, offset_y):
+    """Repeats [tile] over the canvas the way the renderer does: from one
+    tile before the offset onwards. Drawn once at its offset instead, a
+    landscape strip covers a single tile's width and the rest of the window
+    is empty — which is what Night Train's first cover looked like."""
+    w, h = tile.size
+    for y in range(offset_y - h, canvas.height, h):
+        for x in range(offset_x - w, canvas.width, w):
+            # alpha_composite takes no negative destination; clip instead.
+            left, top = max(0, -x), max(0, -y)
+            if left >= w or top >= h:
+                continue
+            canvas.alpha_composite(tile.crop((left, top, w, h)),
+                                   (x + left, y + top))
 
 
 if __name__ == '__main__':
