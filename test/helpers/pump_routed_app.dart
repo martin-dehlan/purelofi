@@ -9,7 +9,12 @@ import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
+import 'package:purelofi/features/library/controller/library.provider.dart';
+
 import 'fake_favorites.repository.dart';
+import 'fake_library.repository.dart';
+import 'fake_library_preferences.dart';
+import 'fake_track_picker.dart';
 
 /// Favourites in memory, so no widget test opens a database.
 ///
@@ -21,6 +26,23 @@ Override _fakeFavorites(FakeFavoritesRepository? repository) {
   addTearDown(fake.dispose);
 
   return favoritesRepositoryProvider.overrideWithValue(fake);
+}
+
+/// The listener's library and the file picker, in memory, for the same
+/// reason as the favourites: no widget test opens a database or a dialog
+/// it cannot answer.
+List<Override> _fakeLibrary(
+  FakeLibraryRepository? library,
+  FakeTrackPicker? picker,
+) {
+  final FakeLibraryRepository fake = library ?? FakeLibraryRepository();
+  addTearDown(fake.dispose);
+
+  return <Override>[
+    libraryRepositoryProvider.overrideWithValue(fake),
+    trackPickerProvider.overrideWithValue(picker ?? FakeTrackPicker()),
+    libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
+  ];
 }
 
 extension PumpRouted on WidgetTester {
@@ -38,11 +60,17 @@ extension PumpRouted on WidgetTester {
     required Widget child,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
+    FakeLibraryRepository? library,
+    FakeTrackPicker? picker,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
       ProviderScope(
-        overrides: <Override>[_fakeFavorites(favorites), ...overrides],
+        overrides: <Override>[
+          _fakeFavorites(favorites),
+          ..._fakeLibrary(library, picker),
+          ...overrides,
+        ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
@@ -57,11 +85,17 @@ extension PumpRouted on WidgetTester {
     String initialRoute = '/',
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
+    FakeLibraryRepository? library,
+    FakeTrackPicker? picker,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
       ProviderScope(
-        overrides: <Override>[_fakeFavorites(favorites), ...overrides],
+        overrides: <Override>[
+          _fakeFavorites(favorites),
+          ..._fakeLibrary(library, picker),
+          ...overrides,
+        ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
           theme: ThemeData.dark(useMaterial3: true),

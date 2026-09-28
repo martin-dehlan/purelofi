@@ -15,6 +15,7 @@ enum AppGlyph {
   nowPlaying,
   heart,
   heartOutline,
+  add,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -111,6 +112,10 @@ class _GlyphPainter extends CustomPainter {
           ),
           Offset.zero,
         );
+      case AppGlyph.add:
+        p
+          ..addRRect(_bar(10.7, 4, 2.6, 16))
+          ..addRRect(_bar(4, 10.7, 16, 2.6));
       case AppGlyph.nowPlaying:
         p
           ..addRRect(_bar(5, 11, 3, 6))

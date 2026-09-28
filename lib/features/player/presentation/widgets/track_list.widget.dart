@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/app_fonts.dart';
+import '../../../../common/utils/clock.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/player.controller.dart';
@@ -112,7 +113,7 @@ class _TrackRow extends ConsumerWidget {
               if (track.durationSeconds != null) ...<Widget>[
                 SizedBox(width: context.spaceM),
                 Text(
-                  _clock(track.durationSeconds!),
+                  clockOf(track.durationSeconds!),
                   style: TextStyle(
                     color: cs.onSurfaceVariant,
                     fontFamily: AppFonts.mono,
@@ -126,9 +127,6 @@ class _TrackRow extends ConsumerWidget {
       ),
     );
   }
-
-  static String _clock(int seconds) =>
-      '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
 }
 
 /// The camera on a row: the footage of this track being played.

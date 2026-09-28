@@ -11,6 +11,16 @@
 >
 > Favorites (`#15`) are the first data that will be written locally *first*,
 > which is what `isSynced` exists for. Nothing writes it yet.
+>
+> **The one exception is `local_tracks` (#66):** the listener's own music,
+> copied into the app. It exists only on this device and is never synced, so
+> none of the mirror rules apply to it:
+>
+> - Never put these rows in `tracks`. `replaceTracks` deletes whatever the
+>   server did not send.
+> - Never put these files in `media_cache/`. Eviction would delete the only
+>   copy. They live in `library/`, beside it.
+> - Its migration must keep the rows. No fetch can bring them back.
 
 ---
 

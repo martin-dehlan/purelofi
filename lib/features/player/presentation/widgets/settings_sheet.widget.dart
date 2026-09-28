@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_version.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../library/presentation/widgets/my_music.widget.dart';
+import '../../controller/playback_source.controller.dart';
+import '../../domain/track.entity.dart';
 import 'scene_switcher_sheet.widget.dart';
 import 'track_list.widget.dart';
 
@@ -15,8 +19,19 @@ import 'track_list.widget.dart';
 /// Behind-the-scenes footage is reached from its track's row, not from an
 /// entry of its own. Favourites are out of the menu until the catalogue is
 /// big enough for choosing among tracks to matter; the code for them stays.
-class SettingsSheet extends StatelessWidget {
+///
+/// Beside PureLofi's list sits the listener's own (#66). A tab only shows a
+/// list; the stream changes side when a track from the other one is played.
+/// The menu opens on whichever side is playing.
+class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
+
+  @override
+  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends ConsumerState<SettingsSheet> {
+  late TrackSource _tab = ref.read(playbackSourceControllerProvider);
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +50,15 @@ class SettingsSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const TrackList(),
+              _SourceTabs(
+                selected: _tab,
+                onSelect: (TrackSource tab) => setState(() => _tab = tab),
+              ),
+              SizedBox(height: context.spaceS),
+              if (_tab == TrackSource.catalogue)
+                const TrackList()
+              else
+                const MyMusic(),
               SizedBox(height: context.spaceM),
               _Entry(
                 glyph: AppGlyph.scene,
@@ -68,6 +91,65 @@ class SettingsSheet extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SourceTabs extends StatelessWidget {
+  const _SourceTabs({required this.selected, required this.onSelect});
+
+  final TrackSource selected;
+  final ValueChanged<TrackSource> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    Widget tab(TrackSource source, String label) {
+      final bool on = source == selected;
+
+      return Semantics(
+        button: true,
+        selected: on,
+        label: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onSelect(source),
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: context.spaceS),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: cs.primary.withValues(alpha: on ? 1 : 0),
+                  width: context.screenWidth * 0.006,
+                ),
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: on ? cs.onSurface : cs.onSurfaceVariant,
+                fontSize: context.fontM,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
+      ),
+      child: Row(
+        children: <Widget>[
+          // PureLofi first: the recordings are what the app is for.
+          tab(TrackSource.catalogue, 'PureLofi'),
+          SizedBox(width: context.spaceL),
+          tab(TrackSource.local, 'My music'),
+        ],
       ),
     );
   }
