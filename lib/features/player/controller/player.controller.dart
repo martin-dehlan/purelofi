@@ -7,7 +7,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/analytics/analytics.provider.dart';
 import '../../../common/errors/app_error.dart';
 import '../../../common/errors/error_mapper.dart';
+import '../../library/controller/library.controller.dart';
 import '../../library/controller/library.provider.dart';
+import '../../library/domain/library_view.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/player.state.dart';
 import '../domain/scene.entity.dart';
@@ -128,8 +130,76 @@ class PlayerController extends _$PlayerController {
       }
     }
 
+    if (source == TrackSource.local) {
+      final LibraryView view = await _libraryView();
+      if (view.order == LibraryOrder.inOrder) {
+        return playTrack(_step(sortTracks(tracks, view.sort), 1));
+      }
+    }
+
     await playTrack(_pickNext(tracks, favorites));
   }
+
+  /// The previous-track button.
+  ///
+  /// For PureLofi's stream there is no history to go back through — it
+  /// picks at random — so it starts the track again. The listener's own
+  /// music has an order, so there it goes back: to the track above in the
+  /// list, or in shuffle to the one that actually played before. A few
+  /// seconds in, it starts the track again first, as every player does.
+  Future<void> previous() async {
+    final TrackEntity? current = state.currentTrack;
+    if (current == null) return;
+
+    if (current.source != TrackSource.local ||
+        state.position > restartThreshold) {
+      return restart();
+    }
+
+    final LibraryView view = await _libraryView();
+    if (view.order == LibraryOrder.inOrder) {
+      final List<TrackEntity> tracks;
+      try {
+        tracks = await ref.read(libraryRepositoryProvider).getTracks();
+      } on Object {
+        return restart();
+      }
+      if (tracks.isEmpty) return restart();
+      return playTrack(_step(sortTracks(tracks, view.sort), -1), back: true);
+    }
+
+    if (_played.isEmpty) return restart();
+    return playTrack(_played.removeLast(), back: true);
+  }
+
+  /// How far into a track "previous" means "from the top" rather than "the
+  /// one before".
+  static const Duration restartThreshold = Duration(seconds: 3);
+
+  /// The track [by] places from the current one in [sorted], round the ends.
+  /// Anything not in the list — the first local track after a switch — starts
+  /// at the top.
+  TrackEntity _step(List<TrackEntity> sorted, int by) {
+    final int at = sorted.indexWhere(
+      (TrackEntity t) => t.id == state.currentTrack?.id,
+    );
+    if (at < 0) return sorted.first;
+
+    return sorted[(at + by) % sorted.length];
+  }
+
+  Future<LibraryView> _libraryView() async {
+    try {
+      return await ref.read(libraryViewControllerProvider.future);
+    } on Object {
+      return const LibraryView();
+    }
+  }
+
+  /// The listener's own tracks in the order they actually played, for
+  /// "previous" in shuffle. Bounded: nobody goes back fifty songs.
+  final List<TrackEntity> _played = <TrackEntity>[];
+  static const int _historyLimit = 50;
 
   /// Hands the lock screen a picture of the room.
   ///
@@ -168,7 +238,19 @@ class PlayerController extends _$PlayerController {
     await seek(Duration.zero);
   }
 
-  Future<void> playTrack(TrackEntity track) async {
+  /// Plays [track]. [back] is set when "previous" is the reason, so going
+  /// back does not itself become a step to go back to.
+  Future<void> playTrack(TrackEntity track, {bool back = false}) async {
+    final TrackEntity? current = state.currentTrack;
+    if (!back &&
+        current != null &&
+        current.source == TrackSource.local &&
+        track.source == TrackSource.local &&
+        current.id != track.id) {
+      _played.add(current);
+      if (_played.length > _historyLimit) _played.removeAt(0);
+    }
+
     // Picking a track from the other list is choosing that side: the stream
     // carries on from wherever the listener's last choice came from.
     if (ref.read(playbackSourceControllerProvider) != track.source) {

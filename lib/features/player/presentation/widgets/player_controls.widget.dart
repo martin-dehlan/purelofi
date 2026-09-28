@@ -80,9 +80,13 @@ class PlayerControls extends ConsumerWidget {
             children: <Widget>[
               _TransportButton(
                 glyph: AppGlyph.previous,
-                label: 'Start over',
+                // Only the listener's own music has an order to go back
+                // through; PureLofi's stream starts the track again.
+                label: track?.source == TrackSource.local
+                    ? 'Previous track'
+                    : 'Start over',
                 size: context.screenWidth * 0.07,
-                onTap: ref.read(playerControllerProvider.notifier).restart,
+                onTap: ref.read(playerControllerProvider.notifier).previous,
               ),
               SizedBox(width: context.spaceXl),
               _TransportButton(

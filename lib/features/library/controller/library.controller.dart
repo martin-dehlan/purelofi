@@ -4,6 +4,7 @@ import '../../player/controller/player.controller.dart';
 import '../../player/domain/player.state.dart';
 import '../../player/domain/track.entity.dart';
 import '../domain/import_report.dart';
+import '../domain/library_view.dart';
 import 'library.provider.dart';
 
 part 'library.controller.g.dart';
@@ -43,5 +44,30 @@ class LibraryController extends _$LibraryController {
     await ref.read(libraryRepositoryProvider).delete(id);
 
     if (isCurrent) await ref.read(playerControllerProvider.notifier).playNext();
+  }
+}
+
+/// Order and sort for the library, remembered across launches (#66).
+@Riverpod(keepAlive: true)
+class LibraryViewController extends _$LibraryViewController {
+  @override
+  Future<LibraryView> build() => ref.read(libraryPreferencesProvider).load();
+
+  Future<void> setOrder(LibraryOrder order) =>
+      _update((LibraryView view) => view.copyWith(order: order));
+
+  Future<void> setSort(LibrarySort sort) =>
+      _update((LibraryView view) => view.copyWith(sort: sort));
+
+  Future<void> _update(LibraryView Function(LibraryView) change) async {
+    final LibraryView next = change(state.value ?? const LibraryView());
+    // Shown at once; written behind it. A preference that fails to save is
+    // one the listener sets again next time, not an error to show them.
+    state = AsyncData<LibraryView>(next);
+    try {
+      await ref.read(libraryPreferencesProvider).save(next);
+    } on Object {
+      // Deliberately ignored, see above.
+    }
   }
 }

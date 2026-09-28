@@ -13,6 +13,7 @@ import 'package:purelofi/features/library/controller/library.provider.dart';
 
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
+import 'fake_library_preferences.dart';
 import 'fake_track_picker.dart';
 
 /// Favourites in memory, so no widget test opens a database.
@@ -40,6 +41,7 @@ List<Override> _fakeLibrary(
   return <Override>[
     libraryRepositoryProvider.overrideWithValue(fake),
     trackPickerProvider.overrideWithValue(picker ?? FakeTrackPicker()),
+    libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
   ];
 }
 

@@ -5,9 +5,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/database/daos/local_track.dao.dart';
 import '../../player/controller/player.provider.dart';
 import '../data/library.repository.impl.dart';
+import '../data/library_preferences.service.impl.dart';
 import '../data/tag_reader.service.impl.dart';
 import '../data/track_picker.service.impl.dart';
 import '../domain/library.repository.dart';
+import '../domain/library_preferences.service.dart';
 import '../domain/track_picker.service.dart';
 
 part 'library.provider.g.dart';
@@ -36,3 +38,8 @@ LibraryRepository libraryRepository(Ref ref) => LibraryRepositoryImpl(
 /// The system file picker. Overridden in widget tests, which cannot open it.
 @Riverpod(keepAlive: true)
 TrackPickerService trackPicker(Ref ref) => const TrackPickerServiceImpl();
+
+/// Where order and sort are remembered. Overridden in tests with one in
+/// memory.
+@Riverpod(keepAlive: true)
+LibraryPreferences libraryPreferences(Ref ref) => LibraryPreferencesImpl();

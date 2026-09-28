@@ -191,4 +191,82 @@ void main() {
       expect(find.text('Kitchen Demo'), findsNothing);
     });
   });
+
+  group('order, sort and search', () {
+    List<TrackEntity> named(List<String> titles) => <TrackEntity>[
+      for (final String title in titles) makeLocalTrack(title, title: title),
+    ];
+
+    /// The titles in the list, top to bottom.
+    List<String> shown(WidgetTester tester) => tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(MyMusic),
+            matching: find.byWidgetPredicate(
+              (Widget w) =>
+                  w is Text &&
+                  w.data != null &&
+                  w.style?.fontWeight == FontWeight.w500,
+            ),
+          ),
+        )
+        .map((Text t) => t.data!)
+        .toList();
+
+    testWidgets('play order switches between shuffle and in order', (
+      tester,
+    ) async {
+      library = FakeLibraryRepository(named(<String>['Bravo', 'Alpha']));
+      await start(tester);
+      await openMyMusic(tester);
+
+      expect(find.bySemanticsLabel('Play order: Shuffle'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Play order: Shuffle'));
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Play order: In order'), findsOneWidget);
+    });
+
+    testWidgets('sorting by title reorders the list', (tester) async {
+      library = FakeLibraryRepository(
+        named(<String>['Charlie', 'Alpha', 'Bravo']),
+      );
+      await start(tester);
+      await openMyMusic(tester);
+
+      await tester.tap(find.bySemanticsLabel('Sort by: Recently added'));
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Sort by: Title'), findsOneWidget);
+      expect(shown(tester), <String>['Alpha', 'Bravo', 'Charlie']);
+    });
+
+    testWidgets('search appears only once the library is big enough', (
+      tester,
+    ) async {
+      library = FakeLibraryRepository(named(<String>['a', 'b', 'c']));
+      await start(tester);
+      await openMyMusic(tester);
+
+      expect(find.byType(TextField), findsNothing);
+    });
+
+    testWidgets('search narrows the list by title', (tester) async {
+      library = FakeLibraryRepository(
+        named(<String>['Kitchen Demo', 'Late Tape', 'c', 'd', 'e', 'f']),
+      );
+      await start(tester);
+      await openMyMusic(tester);
+
+      await tester.enterText(find.byType(TextField), 'kitchen');
+      await tester.pumpAndSettle();
+
+      expect(shown(tester), <String>['Kitchen Demo']);
+
+      await tester.enterText(find.byType(TextField), 'nothing like it');
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Nothing called'), findsOneWidget);
+    });
+  });
 }
