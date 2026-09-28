@@ -7,6 +7,7 @@ import '../../../../common/errors/app_error.dart';
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../controller/playback_source.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/player.state.dart';
@@ -64,6 +65,7 @@ class PlayerControls extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _Progress(title: track?.title ?? '', seed: track?.id ?? 'purelofi'),
+          const _BackToPureLofi(),
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
@@ -207,6 +209,54 @@ class _TransportButton extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(context.spaceS),
           child: AppIcon(glyph, size: size),
+        ),
+      ),
+    );
+  }
+}
+
+/// While the listener's own music plays, a quiet way back to PureLofi's
+/// (#66). Nothing at all while the recordings play, so the chrome is
+/// unchanged for everyone who never opens their library.
+class _BackToPureLofi extends ConsumerWidget {
+  const _BackToPureLofi();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TrackSource source = ref.watch(playbackSourceControllerProvider);
+    if (source != TrackSource.local) return const SizedBox.shrink();
+
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    // One label, not the label and the line read out after it.
+    return Semantics(
+      button: true,
+      label: 'Back to PureLofi',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => unawaited(
+          ref
+              .read(playerControllerProvider.notifier)
+              .useSource(TrackSource.catalogue),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(top: context.spaceS),
+          child: Text.rich(
+            TextSpan(
+              children: <InlineSpan>[
+                TextSpan(
+                  text: 'Your music  ·  ',
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+                TextSpan(
+                  text: 'Back to PureLofi',
+                  style: TextStyle(color: cs.primary),
+                ),
+              ],
+            ),
+            style: TextStyle(fontSize: context.fontS),
+          ),
         ),
       ),
     );

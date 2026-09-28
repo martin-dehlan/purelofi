@@ -169,6 +169,12 @@ class PlayerController extends _$PlayerController {
   }
 
   Future<void> playTrack(TrackEntity track) async {
+    // Picking a track from the other list is choosing that side: the stream
+    // carries on from wherever the listener's last choice came from.
+    if (ref.read(playbackSourceControllerProvider) != track.source) {
+      ref.read(playbackSourceControllerProvider.notifier).select(track.source);
+    }
+
     state = state.copyWith(
       currentTrack: track,
       position: Duration.zero,
