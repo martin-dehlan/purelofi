@@ -60,7 +60,7 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   simply is not there otherwise. An empty bed is better than a cat falling
   off one. It also silences the tool's refusal, because a layer that takes
   itself off screen cannot be tapped at a place that is not shown.
-- **One palette of 39 colours for every layer in a scene.** This is the
+- **One palette of 43 colours for every layer in a scene.** This is the
   single biggest lever for "looks like one piece of work". Lock it in
   Aseprite (`Sprite → Color Mode → Indexed`) before anything else.
 
@@ -70,7 +70,8 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   palette that cannot draw warm wood or a plant is a palette the art will
   fight. Dusk came the same way, from Rooftop Dusk: without it an evening
   sky's slate blue fell into the teal of Deep and the whole sky turned
-  green-blue:
+  green-blue. Sky came from Home Studio for the same reason: a clear morning
+  blue fell into Teal and the dawn turned grey-green:
 
   | Ramp | Steps | For |
   |---|---|---|
@@ -83,6 +84,7 @@ good one-minute loop, and sprite blits cost less battery than a video decoder.
   | Wood | 4 | desks, shelves, floors |
   | Green | 2 | plants, deliberately saturated so they attract leaves rather than grey-blue |
   | Dusk | 4 | the slate blue of an evening sky, and its turn towards rose |
+  | Sky | 4 | a clear daytime or morning blue, for any window that is not night |
   | Ink / White | 1 + 1 | near-black, one warm white |
 
   Lamp is the only light source in a scene, so every shadow has one direction
