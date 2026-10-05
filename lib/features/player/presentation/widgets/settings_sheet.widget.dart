@@ -13,16 +13,19 @@ import '../../domain/track.entity.dart';
 import 'scene_switcher_sheet.widget.dart';
 import 'track_list.widget.dart';
 
-/// The menu: the tracks first, then the room, then who made the music.
+/// The menu: the tracks first, then a way to the next room.
 ///
 /// The track list is what people look for in a player, so it leads (#67).
 /// Behind-the-scenes footage is reached from its track's row, not from an
 /// entry of its own. Favourites are out of the menu until the catalogue is
 /// big enough for choosing among tracks to matter; the code for them stays.
 ///
-/// Beside PureLofi's list sits the listener's own (#66). A tab only shows a
-/// list; the stream changes side when a track from the other one is played.
-/// The menu opens on whichever side is playing.
+/// Beside PureLofi's list sits the listener's own (#66). The switch between
+/// them only shows a list; the stream changes side when a track from the
+/// other one is played. The menu opens on whichever side is playing.
+///
+/// Built from Material's own parts — a segmented switch, list tiles, a
+/// tonal button — so it reads and behaves the way a phone's menus do.
 class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
@@ -42,46 +45,31 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
       // screen or a landscape phone cannot fit the list and the rest at once.
       child: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.horizontalPadding,
-            vertical: context.spaceL,
+          padding: EdgeInsets.fromLTRB(
+            context.horizontalPadding,
+            0,
+            context.horizontalPadding,
+            context.spaceM,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              _SourceTabs(
+              _SourceSwitch(
                 selected: _tab,
                 onSelect: (TrackSource tab) => setState(() => _tab = tab),
               ),
-              SizedBox(height: context.spaceS),
+              SizedBox(height: context.spaceM),
               if (_tab == TrackSource.catalogue)
                 const TrackList()
               else
                 const MyMusic(),
               SizedBox(height: context.spaceM),
-              _Entry(
-                glyph: AppGlyph.scene,
-                label: 'Change scene',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showSceneSwitcherSheet(context));
-                },
-              ),
-              SizedBox(height: context.spaceM),
-              Text(
-                'Every track here was played on a real guitar or bass and '
-                'recorded in a room, not generated. The same recordings go up '
-                'on the YouTube channel.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
-                  height: 1.5,
-                ),
-              ),
+              const _ChangeSceneButton(),
               SizedBox(height: context.spaceM),
               Text(
                 'PureLofi $appVersion',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                   fontFamily: AppFonts.wordmark,
@@ -96,104 +84,61 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   }
 }
 
-class _SourceTabs extends StatelessWidget {
-  const _SourceTabs({required this.selected, required this.onSelect});
+/// PureLofi's music or the listener's own, as one full-width switch.
+class _SourceSwitch extends StatelessWidget {
+  const _SourceSwitch({required this.selected, required this.onSelect});
 
   final TrackSource selected;
   final ValueChanged<TrackSource> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextStyle label = TextStyle(
+      fontSize: context.fontM,
+      fontWeight: FontWeight.w600,
+    );
 
-    Widget tab(TrackSource source, String label) {
-      final bool on = source == selected;
-
-      return Semantics(
-        button: true,
-        selected: on,
-        label: label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onSelect(source),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: context.spaceS),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: cs.primary.withValues(alpha: on ? 1 : 0),
-                  width: context.screenWidth * 0.006,
-                ),
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: on ? cs.onSurface : cs.onSurfaceVariant,
-                fontSize: context.fontM,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+    return SegmentedButton<TrackSource>(
+      expandedInsets: EdgeInsets.zero,
+      showSelectedIcon: false,
+      segments: <ButtonSegment<TrackSource>>[
+        // PureLofi first: the recordings are what the app is for.
+        ButtonSegment<TrackSource>(
+          value: TrackSource.catalogue,
+          label: Text('PureLofi', style: label),
         ),
-      );
-    }
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
-      ),
-      child: Row(
-        children: <Widget>[
-          // PureLofi first: the recordings are what the app is for.
-          tab(TrackSource.catalogue, 'PureLofi'),
-          SizedBox(width: context.spaceL),
-          tab(TrackSource.local, 'My music'),
-        ],
-      ),
+        ButtonSegment<TrackSource>(
+          value: TrackSource.local,
+          label: Text('My music', style: label),
+        ),
+      ],
+      selected: <TrackSource>{selected},
+      onSelectionChanged: (Set<TrackSource> picked) => onSelect(picked.single),
     );
   }
 }
 
-class _Entry extends StatelessWidget {
-  const _Entry({required this.glyph, required this.label, required this.onTap});
-
-  final AppGlyph glyph;
-  final String label;
-  final VoidCallback onTap;
+class _ChangeSceneButton extends StatelessWidget {
+  const _ChangeSceneButton();
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
-    return Semantics(
-      button: true,
-      label: label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: context.spaceM),
-          child: Row(
-            children: <Widget>[
-              AppIcon(glyph, size: context.fontL),
-              // The same gap as a track row, so this label lines up with the
-              // titles above it.
-              SizedBox(width: context.spaceM),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: context.fontM,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return FilledButton.tonalIcon(
+      style: FilledButton.styleFrom(
+        padding: EdgeInsets.symmetric(vertical: context.spaceM),
       ),
+      icon: AppIcon(
+        AppGlyph.scene,
+        size: context.fontL,
+        color: cs.onSecondaryContainer,
+      ),
+      label: Text('Change scene', style: TextStyle(fontSize: context.fontM)),
+      onPressed: () {
+        Navigator.of(context).pop();
+        unawaited(showSceneSwitcherSheet(context));
+      },
     );
   }
 }
@@ -207,7 +152,6 @@ Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (BuildContext context) => const SettingsSheet(),
   );
 }

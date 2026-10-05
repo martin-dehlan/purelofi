@@ -43,64 +43,48 @@ class LocalTrackRow extends ConsumerWidget {
       onDismissed: (_) => unawaited(
         ref.read(libraryControllerProvider.notifier).remove(track.id),
       ),
-      child: Semantics(
-        button: true,
+      child: ListTile(
         selected: isCurrent,
-        label: track.title,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            Navigator.of(context).pop();
-            unawaited(
-              ref.read(playerControllerProvider.notifier).playTrack(track),
-            );
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: context.spaceS),
-            child: Row(
-              children: <Widget>[
-                _Cover(path: track.coverPath, size: coverSize),
-                SizedBox(width: context.spaceM),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        track.title,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: isCurrent ? cs.primary : cs.onSurface,
-                          fontSize: context.fontM,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (track.artist != null)
-                        Text(
-                          track.artist!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: cs.onSurfaceVariant,
-                            fontSize: context.fontS,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                if (track.durationSeconds != null) ...<Widget>[
-                  SizedBox(width: context.spaceM),
-                  Text(
-                    clockOf(track.durationSeconds!),
-                    style: TextStyle(
-                      color: cs.onSurfaceVariant,
-                      fontFamily: AppFonts.mono,
-                      fontSize: context.fontS,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(context.cardBorderRadius),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: context.spaceS),
+        horizontalTitleGap: context.spaceM,
+        leading: _Cover(path: track.coverPath, size: coverSize),
+        title: Text(
+          track.title,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: context.fontM,
+            fontWeight: FontWeight.w500,
           ),
         ),
+        subtitle: track.artist == null
+            ? null
+            : Text(
+                track.artist!,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: context.fontS,
+                ),
+              ),
+        trailing: track.durationSeconds == null
+            ? null
+            : Text(
+                clockOf(track.durationSeconds!),
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontFamily: AppFonts.mono,
+                  fontSize: context.fontS,
+                ),
+              ),
+        onTap: () {
+          Navigator.of(context).pop();
+          unawaited(
+            ref.read(playerControllerProvider.notifier).playTrack(track),
+          );
+        },
       ),
     );
   }

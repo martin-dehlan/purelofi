@@ -213,31 +213,38 @@ void main() {
         .map((Text t) => t.data!)
         .toList();
 
-    testWidgets('play order switches between shuffle and in order', (
+    testWidgets('shuffle is a chip that turns the order on and off', (
       tester,
     ) async {
       library = FakeLibraryRepository(named(<String>['Bravo', 'Alpha']));
       await start(tester);
       await openMyMusic(tester);
 
-      expect(find.bySemanticsLabel('Play order: Shuffle'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Play order: Shuffle'));
+      FilterChip shuffle() =>
+          tester.widget<FilterChip>(find.widgetWithText(FilterChip, 'Shuffle'));
+      expect(shuffle().selected, isTrue);
+
+      await tester.tap(find.widgetWithText(FilterChip, 'Shuffle'));
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Play order: In order'), findsOneWidget);
+      expect(shuffle().selected, isFalse);
     });
 
-    testWidgets('sorting by title reorders the list', (tester) async {
+    testWidgets('the sort chip opens the orders, and title reorders', (
+      tester,
+    ) async {
       library = FakeLibraryRepository(
         named(<String>['Charlie', 'Alpha', 'Bravo']),
       );
       await start(tester);
       await openMyMusic(tester);
 
-      await tester.tap(find.bySemanticsLabel('Sort by: Recently added'));
+      await tester.tap(find.widgetWithText(ActionChip, 'Recently added'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(MenuItemButton, 'Title'));
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Sort by: Title'), findsOneWidget);
+      expect(find.widgetWithText(ActionChip, 'Title'), findsOneWidget);
       expect(shown(tester), <String>['Alpha', 'Bravo', 'Charlie']);
     });
 

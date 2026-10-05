@@ -81,8 +81,12 @@ extension PumpRouted on WidgetTester {
   }
 
   /// Pumps the real router, so deep links can be exercised end to end.
+  ///
+  /// [theme] defaults to plain Material dark; pass the app's own to see the
+  /// chrome as a listener does.
   Future<void> pumpRoutedApp({
     String initialRoute = '/',
+    ThemeData? theme,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
@@ -98,7 +102,7 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
-          theme: ThemeData.dark(useMaterial3: true),
+          theme: theme ?? ThemeData.dark(useMaterial3: true),
           routerConfig: GoRouter(
             initialLocation: initialRoute,
             routes: playerRoutes,

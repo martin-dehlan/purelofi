@@ -16,6 +16,11 @@ enum AppGlyph {
   heart,
   heartOutline,
   add,
+  shuffle,
+  sort,
+  search,
+  check,
+  dropDown,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -52,15 +57,28 @@ class _GlyphPainter extends CustomPainter {
   final AppGlyph glyph;
   final Color color;
 
+  /// Glyphs that are lines rather than shapes, drawn with a round stroke of
+  /// the same weight as the bars of the filled ones.
+  static const Set<AppGlyph> _stroked = <AppGlyph>{
+    AppGlyph.shuffle,
+    AppGlyph.search,
+    AppGlyph.check,
+  };
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 24, size.height / 24);
-    canvas.drawPath(
-      _path(glyph),
-      Paint()
-        ..color = color
-        ..isAntiAlias = true,
-    );
+    final Paint paint = Paint()
+      ..color = color
+      ..isAntiAlias = true;
+    if (_stroked.contains(glyph)) {
+      paint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+    }
+    canvas.drawPath(_path(glyph), paint);
   }
 
   @override
@@ -116,6 +134,42 @@ class _GlyphPainter extends CustomPainter {
         p
           ..addRRect(_bar(10.7, 4, 2.6, 16))
           ..addRRect(_bar(4, 10.7, 16, 2.6));
+      case AppGlyph.shuffle:
+        // Two paths that cross on their way to the right.
+        p
+          ..moveTo(4, 7)
+          ..lineTo(7.5, 7)
+          ..cubicTo(12, 7, 12, 17, 16.5, 17)
+          ..lineTo(19.5, 17)
+          ..moveTo(4, 17)
+          ..lineTo(7.5, 17)
+          ..cubicTo(12, 17, 12, 7, 16.5, 7)
+          ..lineTo(19.5, 7)
+          ..moveTo(17, 4.5)
+          ..lineTo(19.5, 7)
+          ..lineTo(17, 9.5)
+          ..moveTo(17, 14.5)
+          ..lineTo(19.5, 17)
+          ..lineTo(17, 19.5);
+      case AppGlyph.sort:
+        p
+          ..addRRect(_bar(4, 6, 16, 2.6))
+          ..addRRect(_bar(4, 10.7, 11, 2.6))
+          ..addRRect(_bar(4, 15.4, 6, 2.6));
+      case AppGlyph.search:
+        p
+          ..addOval(
+            Rect.fromCircle(center: const Offset(10.5, 10.5), radius: 6),
+          )
+          ..moveTo(15, 15)
+          ..lineTo(20, 20);
+      case AppGlyph.check:
+        p
+          ..moveTo(5, 12.5)
+          ..lineTo(10, 17.5)
+          ..lineTo(19, 7);
+      case AppGlyph.dropDown:
+        p.addPath(_triangle(7, 10, 17, 10, 12, 15), Offset.zero);
       case AppGlyph.nowPlaying:
         p
           ..addRRect(_bar(5, 11, 3, 6))

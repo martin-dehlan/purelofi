@@ -39,12 +39,10 @@ class TrackList extends ConsumerWidget {
     // of the menu off the bottom.
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: context.screenHeight * 0.45),
-      child: ListView.separated(
+      child: ListView.builder(
         shrinkWrap: true,
         padding: EdgeInsets.zero,
         itemCount: tracks.length,
-        separatorBuilder: (BuildContext context, int index) =>
-            Divider(height: 1, color: cs.outlineVariant),
         itemBuilder: (BuildContext context, int index) =>
             _TrackRow(track: tracks[index]),
       ),
@@ -52,6 +50,8 @@ class TrackList extends ConsumerWidget {
   }
 }
 
+/// One track as a Material list tile. The one playing is filled with the
+/// selected tone and carries the bars, so it is found at a glance.
 class _TrackRow extends ConsumerWidget {
   const _TrackRow({required this.track});
 
@@ -69,62 +69,45 @@ class _TrackRow extends ConsumerWidget {
         track.btsVideoUrl != null && track.btsVideoUrl!.isNotEmpty;
     final double iconSize = context.fontL;
 
-    return Semantics(
-      button: true,
+    return ListTile(
       selected: isCurrent,
-      label: track.title,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          Navigator.of(context).pop();
-          unawaited(
-            ref.read(playerControllerProvider.notifier).playTrack(track),
-          );
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: context.spaceM),
-          child: Row(
-            children: <Widget>[
-              // Space is kept for the marker on every row, so titles line up
-              // whether or not their track is the one playing.
-              SizedBox.square(
-                dimension: iconSize,
-                child: isCurrent
-                    ? AppIcon(
-                        AppGlyph.nowPlaying,
-                        size: iconSize,
-                        color: cs.primary,
-                      )
-                    : null,
-              ),
-              SizedBox(width: context.spaceM),
-              Expanded(
-                child: Text(
-                  track.title,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isCurrent ? cs.primary : cs.onSurface,
-                    fontSize: context.fontM,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              if (hasFootage) _FootageButton(track: track, size: iconSize),
-              if (track.durationSeconds != null) ...<Widget>[
-                SizedBox(width: context.spaceM),
-                Text(
-                  clockOf(track.durationSeconds!),
-                  style: TextStyle(
-                    color: cs.onSurfaceVariant,
-                    fontFamily: AppFonts.mono,
-                    fontSize: context.fontS,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(context.cardBorderRadius),
       ),
+      contentPadding: EdgeInsets.symmetric(horizontal: context.spaceS),
+      horizontalTitleGap: context.spaceM,
+      // Space is kept for the marker on every row, so titles line up
+      // whether or not their track is the one playing.
+      leading: SizedBox.square(
+        dimension: iconSize,
+        child: isCurrent
+            ? AppIcon(AppGlyph.nowPlaying, size: iconSize, color: cs.primary)
+            : null,
+      ),
+      title: Text(
+        track.title,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: context.fontM, fontWeight: FontWeight.w500),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (hasFootage) _FootageButton(track: track, size: iconSize),
+          if (track.durationSeconds != null)
+            Text(
+              clockOf(track.durationSeconds!),
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontFamily: AppFonts.mono,
+                fontSize: context.fontS,
+              ),
+            ),
+        ],
+      ),
+      onTap: () {
+        Navigator.of(context).pop();
+        unawaited(ref.read(playerControllerProvider.notifier).playTrack(track));
+      },
     );
   }
 }
@@ -138,24 +121,17 @@ class _FootageButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Semantics(
-      button: true,
-      label: 'Behind the scenes: ${track.title}',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          Navigator.of(context).pop();
-          unawaited(showBtsModal(context, ref, track));
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: context.spaceS),
-          child: AppIcon(
-            AppGlyph.camera,
-            size: size,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
+    return IconButton(
+      tooltip: 'Behind the scenes: ${track.title}',
+      icon: AppIcon(
+        AppGlyph.camera,
+        size: size,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
+      onPressed: () {
+        Navigator.of(context).pop();
+        unawaited(showBtsModal(context, ref, track));
+      },
     );
   }
 }

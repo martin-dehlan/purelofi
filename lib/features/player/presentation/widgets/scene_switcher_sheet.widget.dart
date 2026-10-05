@@ -23,7 +23,7 @@ class SceneSwitcherSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: context.spaceL),
+        padding: EdgeInsets.only(bottom: context.spaceL),
         child: scenes.when(
           data: (List<SceneEntity> scenes) => _SceneList(scenes: scenes),
           loading: LoadingState.new,
@@ -55,6 +55,7 @@ class _SceneList extends ConsumerWidget {
 
     return ListView.builder(
       shrinkWrap: true,
+      padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
       itemCount: scenes.length,
       itemBuilder: (BuildContext context, int index) {
         final SceneEntity scene = scenes[index];
@@ -75,7 +76,14 @@ class _SceneTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
+    // The same tile as a track in the menu: the room you are in is filled
+    // with the selected tone.
     return ListTile(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(context.cardBorderRadius),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: context.spaceS),
+      horizontalTitleGap: context.spaceM,
       leading: _SceneThumbnail(scene: scene),
       title: Text(
         scene.title,
@@ -104,21 +112,31 @@ class _SceneThumbnail extends StatelessWidget {
     final String? url = scene.thumbnailUrl;
     final double size = context.screenWidth * 0.12;
 
+    final BorderRadius radius = BorderRadius.circular(
+      context.screenWidth * 0.01,
+    );
+
     if (url == null) {
-      return SizedBox.square(
-        dimension: size,
-        child: ColoredBox(color: cs.surfaceContainerHighest),
+      return ClipRRect(
+        borderRadius: radius,
+        child: SizedBox.square(
+          dimension: size,
+          child: ColoredBox(color: cs.surfaceContainerHighest),
+        ),
       );
     }
 
-    return SizedBox.square(
-      dimension: size,
-      child: Image.network(
-        url,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.none,
-        errorBuilder: (_, _, _) =>
-            ColoredBox(color: cs.surfaceContainerHighest),
+    return ClipRRect(
+      borderRadius: radius,
+      child: SizedBox.square(
+        dimension: size,
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.none,
+          errorBuilder: (_, _, _) =>
+              ColoredBox(color: cs.surfaceContainerHighest),
+        ),
       ),
     );
   }
@@ -128,7 +146,6 @@ class _SceneThumbnail extends StatelessWidget {
 Future<void> showSceneSwitcherSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => const SceneSwitcherSheet(),
   );
 }

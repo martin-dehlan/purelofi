@@ -61,11 +61,13 @@ class _MyMusicState extends ConsumerState<MyMusic> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        if (all.isNotEmpty)
+        if (all.isNotEmpty) ...<Widget>[
           LibraryToolbar(
             showSearch: all.length >= LibraryToolbar.searchFrom,
             onSearch: (String query) => setState(() => _query = query),
           ),
+          SizedBox(height: context.spaceS),
+        ],
         if (all.isNotEmpty && tracks.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: context.spaceM),
@@ -93,12 +95,10 @@ class _MyMusicState extends ConsumerState<MyMusic> {
         else
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: context.screenHeight * 0.4),
-            child: ListView.separated(
+            child: ListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               itemCount: tracks.length,
-              separatorBuilder: (BuildContext context, int index) =>
-                  Divider(height: 1, color: cs.outlineVariant),
               itemBuilder: (BuildContext context, int index) =>
                   LocalTrackRow(track: tracks[index]),
             ),
@@ -111,6 +111,7 @@ class _MyMusicState extends ConsumerState<MyMusic> {
               style: TextStyle(color: cs.error, fontSize: context.fontS),
             ),
           ),
+        SizedBox(height: context.spaceS),
         _AddButton(busy: _importing, onTap: _add),
       ],
     );
@@ -127,26 +128,16 @@ class _AddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
-    return Semantics(
-      button: true,
-      label: 'Add music from this phone',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: busy ? null : () => unawaited(onTap()),
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: context.spaceM),
-          child: Row(
-            children: <Widget>[
-              AppIcon(AppGlyph.add, size: context.fontL, color: cs.primary),
-              SizedBox(width: context.spaceM),
-              Text(
-                busy ? 'Adding…' : 'Add music',
-                style: TextStyle(color: cs.primary, fontSize: context.fontM),
-              ),
-            ],
-          ),
-        ),
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(vertical: context.spaceM),
       ),
+      icon: AppIcon(AppGlyph.add, size: context.fontL, color: cs.primary),
+      label: Text(
+        busy ? 'Adding…' : 'Add music',
+        style: TextStyle(fontSize: context.fontM),
+      ),
+      onPressed: busy ? null : () => unawaited(onTap()),
     );
   }
 }

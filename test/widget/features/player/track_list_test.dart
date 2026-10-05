@@ -58,7 +58,7 @@ void main() {
   /// player bar, so the search stays inside the list.
   Finder rowOf(String title) => find.ancestor(
     of: find.descendant(of: find.byType(TrackList), matching: find.text(title)),
-    matching: find.byType(Row),
+    matching: find.byType(ListTile),
   );
 
   final Finder nowPlaying = find.byWidgetPredicate(
@@ -83,6 +83,16 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('the menu is the lists and a button, with no essay under them', (
+    tester,
+  ) async {
+    await openTrackList(tester);
+
+    expect(find.byType(SegmentedButton<TrackSource>), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Change scene'), findsOneWidget);
+    expect(find.textContaining('real guitar'), findsNothing);
   });
 
   testWidgets('a known length is shown in the mono face', (tester) async {
@@ -121,6 +131,13 @@ void main() {
       find.descendant(of: rowOf(other).first, matching: nowPlaying),
       findsNothing,
     );
+  });
+
+  testWidgets('the track playing is the selected tile', (tester) async {
+    await openTrackList(tester);
+    final String playing = fakeAudio.playedTracks.last.title;
+
+    expect(tester.widget<ListTile>(rowOf(playing).first).selected, isTrue);
   });
 
   testWidgets('only a track with footage carries the camera', (tester) async {
