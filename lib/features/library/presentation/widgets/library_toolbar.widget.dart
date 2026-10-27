@@ -8,11 +8,11 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/library.controller.dart';
 import '../../domain/library_view.dart';
 
-/// Order, sort and, for a library big enough to need it, search (#66).
+/// Sort and, for a library big enough to need it, search (#66).
 ///
-/// Material's own controls for these: a filter chip that is on or off for
-/// shuffle, a chip that opens a menu of sort orders, and a search bar. Each
-/// says what it does before it is touched.
+/// Material's own controls for these: a chip that opens a menu of sort
+/// orders, and a search bar. Each says what it does before it is touched.
+/// Shuffle lives in the transport, where it covers both sides.
 class LibraryToolbar extends ConsumerWidget {
   const LibraryToolbar({
     required this.showSearch,
@@ -41,52 +41,14 @@ class LibraryToolbar extends ConsumerWidget {
           _Search(onSearch: onSearch),
           SizedBox(height: context.spaceS),
         ],
-        // Wraps rather than overflows: large system text on a narrow phone
-        // puts the sort on its own line.
-        Wrap(
-          spacing: context.spaceS,
-          runSpacing: context.spaceXs,
-          children: <Widget>[
-            _ShuffleChip(
-              on: view.order == LibraryOrder.shuffle,
-              onChanged: (bool on) => unawaited(
-                controller.setOrder(
-                  on ? LibraryOrder.shuffle : LibraryOrder.inOrder,
-                ),
-              ),
-            ),
-            _SortChip(
-              sort: view.sort,
-              onSort: (LibrarySort sort) => unawaited(controller.setSort(sort)),
-            ),
-          ],
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: _SortChip(
+            sort: view.sort,
+            onSort: (LibrarySort sort) => unawaited(controller.setSort(sort)),
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _ShuffleChip extends StatelessWidget {
-  const _ShuffleChip({required this.on, required this.onChanged});
-
-  final bool on;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-
-    return FilterChip(
-      showCheckmark: false,
-      avatar: AppIcon(
-        AppGlyph.shuffle,
-        size: context.fontM,
-        color: on ? cs.onSecondaryContainer : cs.onSurfaceVariant,
-      ),
-      label: Text('Shuffle', style: TextStyle(fontSize: context.fontS)),
-      tooltip: on ? 'Play order: Shuffle' : 'Play order: In order',
-      selected: on,
-      onSelected: onChanged,
     );
   }
 }

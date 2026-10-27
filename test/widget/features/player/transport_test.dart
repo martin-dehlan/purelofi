@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
+import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/waveform.widget.dart';
@@ -104,15 +105,40 @@ void main() {
       await tester.pumpAndSettle();
 
       final int before = fakeAudio.playedTracks.length;
-      await tester.tap(find.bySemanticsLabel('Start over'));
+      await tester.tap(find.bySemanticsLabel('Previous track'));
       await tester.pumpAndSettle();
 
       expect(fakeAudio.seeks, <Duration>[Duration.zero]);
       expect(
         fakeAudio.playedTracks,
         hasLength(before),
-        reason: 'there is no history to step back through',
+        reason: 'nothing has played before it to step back to',
       );
+    });
+
+    testWidgets('the play order steps shuffle, repeat, in order, round', (
+      tester,
+    ) async {
+      await tester.pumpRoutedApp(overrides: overrides());
+      await tester.pumpAndSettle();
+
+      final Finder button = find.bySemanticsLabel('Play order');
+      String shown() => tester.getSemantics(button).value;
+      expect(shown(), 'Shuffle');
+
+      final List<String> seen = <String>[];
+      for (int i = 0; i < 3; i++) {
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        seen.add(shown());
+      }
+
+      expect(seen, <String>['Repeat track', 'In order', 'Shuffle']);
+      expect(fakeAudio.modes.skip(1).take(3), <PlaybackMode>[
+        PlaybackMode.repeatOne,
+        PlaybackMode.inOrder,
+        PlaybackMode.shuffle,
+      ]);
     });
 
     testWidgets('the clock follows the position', (tester) async {

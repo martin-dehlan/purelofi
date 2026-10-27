@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/player/domain/audio_player.service.dart';
+import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
 /// A stand-in for the real player: `just_audio` and `audio_service` both talk
@@ -17,6 +18,11 @@ class FakeAudioPlayerService implements AudioPlayerService {
       StreamController<Duration>.broadcast();
   final StreamController<Duration?> durationController =
       StreamController<Duration?>.broadcast();
+  final StreamController<PlaybackMode> modeRequestController =
+      StreamController<PlaybackMode>.broadcast();
+
+  /// Every mode the player was handed, latest last.
+  final List<PlaybackMode> modes = <PlaybackMode>[];
 
   final List<TrackEntity> playedTracks = <TrackEntity>[];
   int playCalls = 0;
@@ -32,6 +38,12 @@ class FakeAudioPlayerService implements AudioPlayerService {
 
   @override
   Stream<void> get nextRequests => nextRequestController.stream;
+
+  @override
+  Stream<PlaybackMode> get modeRequests => modeRequestController.stream;
+
+  @override
+  Future<void> setPlaybackMode(PlaybackMode mode) async => modes.add(mode);
 
   @override
   Stream<AppError> get errors => errorController.stream;
@@ -87,9 +99,13 @@ class FakeAudioPlayerService implements AudioPlayerService {
   /// Simulates the current track running out, or skip on the lock screen.
   void emitNextRequest() => nextRequestController.add(null);
 
+  /// Simulates shuffle or repeat changed on the lock screen.
+  void emitModeRequest(PlaybackMode mode) => modeRequestController.add(mode);
+
   Future<void> dispose() async {
     await playingController.close();
     await nextRequestController.close();
+    await modeRequestController.close();
     await errorController.close();
   }
 }

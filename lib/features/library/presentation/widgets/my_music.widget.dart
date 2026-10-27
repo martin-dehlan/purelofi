@@ -12,10 +12,13 @@ import '../../domain/library_view.dart';
 import 'library_toolbar.widget.dart';
 import 'local_track_row.widget.dart';
 
-/// The listener's own music, in the menu beside PureLofi's (#66).
+/// The listener's own music, in the library beside PureLofi's (#66).
 ///
 /// Adding copies files in from the phone; tapping one plays it and turns the
 /// stream over to the library; swiping one away removes the copy.
+///
+/// A group of slivers, so a long library scrolls as part of the sheet rather
+/// than as a list boxed inside it.
 class MyMusic extends ConsumerStatefulWidget {
   const MyMusic({super.key});
 
@@ -56,68 +59,58 @@ class _MyMusicState extends ConsumerState<MyMusic> {
       sortTracks(all, view.sort),
       _query,
     );
+    final TextStyle quiet = TextStyle(
+      color: cs.onSurfaceVariant,
+      fontSize: context.fontS,
+      height: 1.5,
+    );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        if (all.isNotEmpty) ...<Widget>[
-          LibraryToolbar(
-            showSearch: all.length >= LibraryToolbar.searchFrom,
-            onSearch: (String query) => setState(() => _query = query),
+    return SliverMainAxisGroup(
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _AddButton(busy: _importing, onTap: _add),
+              for (final RejectedImport rejected in _rejected)
+                Padding(
+                  padding: EdgeInsets.only(top: context.spaceS),
+                  child: Text(
+                    '${rejected.name}: ${rejected.reason}',
+                    style: TextStyle(color: cs.error, fontSize: context.fontS),
+                  ),
+                ),
+              SizedBox(height: context.spaceM),
+              if (all.isEmpty)
+                Text(
+                  'Your own music, played in these rooms. Files you add are '
+                  'copied into PureLofi, so they play without a connection.',
+                  style: quiet,
+                )
+              else ...<Widget>[
+                LibraryToolbar(
+                  showSearch: all.length >= LibraryToolbar.searchFrom,
+                  onSearch: (String query) => setState(() => _query = query),
+                ),
+                SizedBox(height: context.spaceS),
+                if (tracks.isEmpty)
+                  Text('Nothing called "$_query".', style: quiet),
+              ],
+            ],
           ),
-          SizedBox(height: context.spaceS),
-        ],
-        if (all.isNotEmpty && tracks.isEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: context.spaceM),
-            child: Text(
-              'Nothing called "$_query".',
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontS,
-              ),
-            ),
-          )
-        else if (all.isEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: context.spaceM),
-            child: Text(
-              'Your own music, played in these rooms. Files you add are '
-              'copied into PureLofi, so they play without a connection.',
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontS,
-                height: 1.5,
-              ),
-            ),
-          )
-        else
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: context.screenHeight * 0.4),
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: tracks.length,
-              itemBuilder: (BuildContext context, int index) =>
-                  LocalTrackRow(track: tracks[index]),
-            ),
-          ),
-        for (final RejectedImport rejected in _rejected)
-          Padding(
-            padding: EdgeInsets.only(top: context.spaceS),
-            child: Text(
-              '${rejected.name}: ${rejected.reason}',
-              style: TextStyle(color: cs.error, fontSize: context.fontS),
-            ),
-          ),
-        SizedBox(height: context.spaceS),
-        _AddButton(busy: _importing, onTap: _add),
+        ),
+        SliverList.builder(
+          itemCount: tracks.length,
+          itemBuilder: (BuildContext context, int index) =>
+              LocalTrackRow(track: tracks[index]),
+        ),
       ],
     );
   }
 }
 
+/// Adding is a quiet line at the top of the list, not a slab: the music is
+/// what the sheet is for.
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.busy, required this.onTap});
 
@@ -128,16 +121,16 @@ class _AddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: context.spaceM),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: TextButton.icon(
+        icon: AppIcon(AppGlyph.add, size: context.fontL, color: cs.primary),
+        label: Text(
+          busy ? 'Adding…' : 'Add music',
+          style: TextStyle(fontSize: context.fontM),
+        ),
+        onPressed: busy ? null : () => unawaited(onTap()),
       ),
-      icon: AppIcon(AppGlyph.add, size: context.fontL, color: cs.primary),
-      label: Text(
-        busy ? 'Adding…' : 'Add music',
-        style: TextStyle(fontSize: context.fontM),
-      ),
-      onPressed: busy ? null : () => unawaited(onTap()),
     );
   }
 }

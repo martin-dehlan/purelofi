@@ -74,30 +74,21 @@ void main() {
           InMemorySharedPreferencesAsync.empty();
     });
 
-    test('remembers order and sort', () async {
+    test('remembers the sort', () async {
       await LibraryPreferencesImpl().save(
-        const LibraryView(
-          order: LibraryOrder.inOrder,
-          sort: LibrarySort.artist,
-        ),
+        const LibraryView(sort: LibrarySort.artist),
       );
 
       expect(
         await LibraryPreferencesImpl().load(),
-        const LibraryView(
-          order: LibraryOrder.inOrder,
-          sort: LibrarySort.artist,
-        ),
+        const LibraryView(sort: LibrarySort.artist),
       );
     });
 
     test('a value it does not know falls back to the default', () async {
-      await SharedPreferencesAsync().setString('library.order', 'sideways');
+      await SharedPreferencesAsync().setString('library.sort', 'sideways');
 
-      expect(
-        (await LibraryPreferencesImpl().load()).order,
-        LibraryOrder.shuffle,
-      );
+      expect((await LibraryPreferencesImpl().load()).sort, LibrarySort.recent);
     });
   });
 }

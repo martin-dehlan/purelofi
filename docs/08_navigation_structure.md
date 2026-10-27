@@ -98,8 +98,18 @@ context.pop();
 ```
 
 Most in-app navigation is **not** routing at all — switching scenes and tracks
-mutates player state (see `docs/05`), it does not push routes. The BTS view is a
-modal bottom sheet (`showModalBottomSheet`), not a route.
+mutates player state (see `docs/05`), it does not push routes. Everything else
+is a modal bottom sheet (`showModalBottomSheet`), not a route:
+
+| Sheet | Opened from | Holds |
+|---|---|---|
+| Library | the button right of the transport | pills Up next · PureLofi · My music · Favorites; track rows with `⋯` |
+| Menu | top-right button | Change scene · Behind the scenes · Account (placeholder) · version |
+| BTS | a track's `⋯`, the menu, or the deep link | the footage |
+
+The library — the queue is its "Up next" pill — is a tall draggable sheet
+(`showMusicSheet`) that never covers the whole screen: a strip of the scene
+stays visible above it.
 
 ---
 
@@ -173,5 +183,5 @@ class PureLofiApp extends ConsumerWidget {
 - [ ] The player feature owns its `player.routes.dart`
 - [ ] **No** auth `redirect`, **no** `ShellRoute`, **no** `NavigationBar`
 - [ ] Scene/track switching mutates state — it does not push routes
-- [ ] BTS is a modal bottom sheet, not a route
+- [ ] BTS, library and menu are modal bottom sheets, not routes
 - [ ] Deep link scheme is `purelofi` (not the old app's scheme)
