@@ -12,7 +12,6 @@ enum AppGlyph {
   menu,
   scene,
   camera,
-  nowPlaying,
   heart,
   heartOutline,
   add,
@@ -209,11 +208,6 @@ class _GlyphPainter extends CustomPainter {
           ..close();
       case AppGlyph.remove:
         p.addRRect(_bar(4, 10.7, 16, 2.6));
-      case AppGlyph.nowPlaying:
-        p
-          ..addRRect(_bar(5, 11, 3, 6))
-          ..addRRect(_bar(10.5, 7, 3, 10))
-          ..addRRect(_bar(16, 9, 3, 8));
     }
     return p;
   }

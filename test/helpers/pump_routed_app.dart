@@ -46,6 +46,16 @@ List<Override> _fakeLibrary(
   ];
 }
 
+/// Reduced motion, as a listener can ask for in the system settings.
+///
+/// The playing track's bars bounce for as long as it plays, and an endless
+/// animation never lets `pumpAndSettle` return. Tests that are about the
+/// motion pump an app of their own.
+Widget _stillMotion(BuildContext context, Widget? child) => MediaQuery(
+  data: MediaQuery.of(context).copyWith(disableAnimations: true),
+  child: child!,
+);
+
 extension PumpRouted on WidgetTester {
   /// Pumps [child] inside a themed `MaterialApp` and a `ProviderScope` with
   /// [overrides] applied.
@@ -75,6 +85,7 @@ extension PumpRouted on WidgetTester {
         retry: retry ?? (_, _) => null,
         child: MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
+          builder: _stillMotion,
           home: child,
         ),
       ),
@@ -104,6 +115,7 @@ extension PumpRouted on WidgetTester {
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
           theme: theme ?? ThemeData.dark(useMaterial3: true),
+          builder: _stillMotion,
           routerConfig: GoRouter(
             initialLocation: initialRoute,
             routes: playerRoutes,

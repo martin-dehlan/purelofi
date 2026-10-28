@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../../../common/widgets/app_icon.widget.dart';
 import '../../domain/track.entity.dart';
-import 'waveform.widget.dart';
+import 'now_playing_bars.widget.dart';
 
 /// A track's round cover at the start of its row.
 ///
-/// The listener's own files show the cover from their tags. PureLofi's
-/// tracks have no artwork — the scene is the picture — so they show a slice
-/// of their own waveform: the same bars as the player draws for them, so a
-/// track looks like itself everywhere. The one playing is marked on top.
+/// The listener's own files show the cover from their tags. Anything
+/// without artwork — PureLofi's tracks, where the scene is the picture, and
+/// files with no cover tagged — shows a record. Not a waveform: bars are
+/// what marks the track that is playing, and a cover drawn the same way
+/// would make every row look like it was. The one playing is marked on top.
 class TrackCover extends StatelessWidget {
   const TrackCover({
     required this.track,
@@ -27,9 +27,13 @@ class TrackCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Widget bars = ColoredBox(
-      color: cs.surfaceContainerHighest,
-      child: CustomPaint(painter: _BarsPainter(track.id, cs.onSurfaceVariant)),
+    final Widget record = CustomPaint(
+      painter: _RecordPainter(
+        disc: cs.surfaceContainerHighest,
+        grooves: cs.onSurfaceVariant.withValues(alpha: 0.25),
+        label: cs.primary.withValues(alpha: 0.8),
+        hole: cs.surface,
+      ),
     );
     final String? path = track.coverPath;
 
@@ -40,24 +44,20 @@ class TrackCover extends StatelessWidget {
           fit: StackFit.expand,
           children: <Widget>[
             if (path == null)
-              bars
+              record
             else
               Image.file(
                 File(path),
                 fit: BoxFit.cover,
                 cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
                     .round(),
-                errorBuilder: (_, _, _) => bars,
+                errorBuilder: (_, _, _) => record,
               ),
             if (isCurrent)
               ColoredBox(
                 color: cs.scrim.withValues(alpha: 0.6),
                 child: Center(
-                  child: AppIcon(
-                    AppGlyph.nowPlaying,
-                    size: size * 0.55,
-                    color: cs.primary,
-                  ),
+                  child: NowPlayingBars(size: size * 0.55, color: cs.primary),
                 ),
               ),
           ],
@@ -67,40 +67,45 @@ class TrackCover extends StatelessWidget {
   }
 }
 
-/// Five bars from the waveform, spread across the cover.
-class _BarsPainter extends CustomPainter {
-  _BarsPainter(this.seed, this.color);
+/// A record seen from above: the disc, a few grooves, the label and the
+/// hole. Every PureLofi track gets the same one — they have no artwork, and
+/// a made-up picture per track would be decoration pretending to be content.
+class _RecordPainter extends CustomPainter {
+  _RecordPainter({
+    required this.disc,
+    required this.grooves,
+    required this.label,
+    required this.hole,
+  });
 
-  final String seed;
-  final Color color;
-
-  static const int _shown = 5;
+  final Color disc;
+  final Color grooves;
+  final Color label;
+  final Color hole;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final List<double> bars = Waveform.barsFor(seed);
-    final Paint paint = Paint()..color = color;
-    // Inside the middle of the circle, so the outer bars are not clipped.
-    final double slot = size.width * 0.56 / (_shown * 2 - 1);
-    for (int i = 0; i < _shown; i++) {
-      final double bar = bars[(i * bars.length / _shown).floor()];
-      final double height = size.height * 0.5 * bar;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            size.width * 0.22 + slot * i * 2,
-            (size.height - height) / 2,
-            slot,
-            height,
-          ),
-          Radius.circular(slot / 2),
-        ),
-        paint,
-      );
+    final Offset centre = size.center(Offset.zero);
+    final double radius = size.shortestSide / 2;
+
+    canvas.drawCircle(centre, radius, Paint()..color = disc);
+
+    final Paint groove = Paint()
+      ..color = grooves
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = radius * 0.03;
+    for (final double ring in <double>[0.82, 0.68, 0.54]) {
+      canvas.drawCircle(centre, radius * ring, groove);
     }
+
+    canvas.drawCircle(centre, radius * 0.34, Paint()..color = label);
+    canvas.drawCircle(centre, radius * 0.07, Paint()..color = hole);
   }
 
   @override
-  bool shouldRepaint(_BarsPainter old) =>
-      old.color != color || old.seed != seed;
+  bool shouldRepaint(_RecordPainter old) =>
+      old.disc != disc ||
+      old.grooves != grooves ||
+      old.label != label ||
+      old.hole != hole;
 }
