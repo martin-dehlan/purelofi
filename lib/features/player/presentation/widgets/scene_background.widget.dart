@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/widgets/empty_state.widget.dart';
 import '../../../../common/widgets/error_state.widget.dart';
-import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
 import 'scene_layers.widget.dart';
 import 'scene_video.widget.dart';
+import 'startup_screen.widget.dart';
 
 /// The fullscreen looping scene behind everything else.
 ///
@@ -25,7 +25,8 @@ class SceneBackground extends ConsumerWidget {
     return SizedBox.expand(
       child: scenes.when(
         data: (_) => const _ActiveScene(),
-        loading: LoadingState.new,
+        // Nothing to count until the list is in: the bar walks.
+        loading: StartupScreen.new,
         error: (Object error, _) => ErrorState(
           error: error,
           onRetry: () => ref.invalidate(sceneListControllerProvider),

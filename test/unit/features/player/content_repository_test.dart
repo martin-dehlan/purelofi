@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -184,6 +186,43 @@ void main() {
       ).thenThrow(Exception('SocketException: failed host lookup'));
 
       await expectLater(repository.getTracks(), throwsA(isA<NetworkError>()));
+    });
+
+    test('gives up on a server that never answers', () async {
+      final ContentRepositoryImpl impatient = ContentRepositoryImpl(
+        api: mockApi,
+        trackDao: TrackDao(database),
+        sceneDao: SceneDao(database),
+        patience: const Duration(milliseconds: 20),
+      );
+      when(
+        () => mockApi.fetchScenes(),
+      ).thenAnswer((_) => Completer<List<SceneModel>>().future);
+
+      await expectLater(impatient.getScenes(), throwsA(isA<NetworkError>()));
+    });
+
+    test('with a cache, opens the room without waiting long', () async {
+      when(
+        () => mockApi.fetchTracks(),
+      ).thenAnswer((_) async => <TrackModel>[makeTrackModel('track-1')]);
+      await repository.getTracks();
+
+      final ContentRepositoryImpl impatient = ContentRepositoryImpl(
+        api: mockApi,
+        trackDao: TrackDao(database),
+        sceneDao: SceneDao(database),
+        // Long enough that the test would time out on it.
+        patience: const Duration(hours: 1),
+        patienceWithCache: const Duration(milliseconds: 20),
+      );
+      when(
+        () => mockApi.fetchTracks(),
+      ).thenAnswer((_) => Completer<List<TrackModel>>().future);
+
+      final List<TrackEntity> tracks = await impatient.getTracks();
+
+      expect(tracks.single.id, 'track-1');
     });
 
     test('forgets what the server stopped listing', () async {

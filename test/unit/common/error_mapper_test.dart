@@ -69,7 +69,7 @@ void main() {
     test('falls back to a default message per case', () {
       expect(
         const AppError.network().userMessage,
-        'No internet connection. Check your network.',
+        'Can’t reach PureLofi right now. Check your connection and try again.',
       );
       expect(
         const AppError.notFound(resource: 'Track').userMessage,
