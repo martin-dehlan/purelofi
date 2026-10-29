@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -50,6 +52,14 @@ CachedFileDao cachedFileDao(Ref ref) =>
 /// cache as "stream it", which is exactly the MVP behaviour.
 @Riverpod(keepAlive: true)
 MediaCache? mediaCache(Ref ref) => null;
+
+/// A scene's cover on this device: downloaded the first time anything asks,
+/// then read from disk — so the scene list draws its pictures at once, even
+/// offline. `null` when there is no cache or the download failed; the caller
+/// then falls back to the network.
+@Riverpod(keepAlive: true)
+Future<File?> sceneCover(Ref ref, String url) async =>
+    ref.watch(mediaCacheProvider)?.store(url);
 
 @Riverpod(keepAlive: true)
 SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));

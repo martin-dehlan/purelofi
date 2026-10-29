@@ -48,6 +48,9 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   bool _pausedByInterruption = false;
 
   Uri? _artUri;
+
+  /// The scene's name, shown as the album.
+  String? _room;
   PlaybackMode _mode = PlaybackMode.shuffle;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
@@ -80,14 +83,17 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> setArtwork(Uri? artUri) async {
+  Future<void> setArtwork(Uri? artUri, {String? room}) async {
     _artUri = artUri;
+    _room = room;
 
     // A track is already playing: give it the new picture now rather than
     // waiting for the next one, or switching scenes leaves a lock screen
     // showing the room the listener just left.
     final MediaItem? current = mediaItem.valueOrNull;
-    if (current != null) mediaItem.add(current.copyWith(artUri: artUri));
+    if (current != null) {
+      mediaItem.add(current.copyWith(artUri: artUri, album: room));
+    }
   }
 
   @override
@@ -98,6 +104,7 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
         title: track.title,
         // A listener's own file is not ours to sign: their tags or nothing.
         artist: track.source == TrackSource.local ? track.artist : 'PureLofi',
+        album: _room,
         artUri: _artUri,
         duration: track.durationSeconds == null
             ? null

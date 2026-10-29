@@ -64,7 +64,13 @@ class FakeAudioPlayerService implements AudioPlayerService {
   Uri? artUri;
 
   @override
-  Future<void> setArtwork(Uri? uri) async => artUri = uri;
+  Future<void> setArtwork(Uri? uri, {String? room}) async {
+    artUri = uri;
+    this.room = room;
+  }
+
+  /// The scene name last handed over with the artwork.
+  String? room;
 
   @override
   Future<void> playTrack(TrackEntity track) async {

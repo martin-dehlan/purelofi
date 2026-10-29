@@ -88,7 +88,7 @@ class PlayerController extends _$PlayerController {
     ref.listen<SceneEntity?>(
       activeSceneControllerProvider,
       (SceneEntity? _, SceneEntity? scene) =>
-          unawaited(_showArtwork(scene?.thumbnailUrl)),
+          unawaited(_showArtwork(scene?.thumbnailUrl, room: scene?.title)),
       fireImmediately: true,
     );
 
@@ -342,16 +342,18 @@ class PlayerController extends _$PlayerController {
   /// a downloader of its own. Ours already has the file — and a cover that
   /// only appears when there is a network would be missing exactly when the
   /// offline cache is doing its job.
-  Future<void> _showArtwork(String? url) async {
+  Future<void> _showArtwork(String? url, {String? room}) async {
     final AudioPlayerService audio = ref.read(audioPlayerServiceProvider);
-    if (url == null || url.isEmpty) return audio.setArtwork(null);
+    if (url == null || url.isEmpty) return audio.setArtwork(null, room: room);
 
-    final File? file = await ref.read(mediaCacheProvider)?.store(url);
+    // The same file the scene list draws from: one download for both.
+    final File? file = await ref.read(sceneCoverProvider(url).future);
 
     // No cache, or the download failed: hand over the URL and let the
     // platform try. A missing cover is not worth an error.
     return audio.setArtwork(
       file == null ? Uri.tryParse(url) : Uri.file(file.path),
+      room: room,
     );
   }
 

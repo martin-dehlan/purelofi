@@ -86,4 +86,30 @@ void main() {
     expect(item?.artist, 'PureLofi');
     expect(cache.stored, <String>['https://example.com/a.mp3']);
   });
+
+  group('a scene switch mid-track', () {
+    // The lock screen names the room the listener is in, and follows it.
+    test('names the room as the album, with the new cover', () async {
+      await service.setArtwork(
+        Uri.file('/cache/autumn.png'),
+        room: 'Autumn Bookshop',
+      );
+      await service.playTrack(local());
+      expect(service.mediaItem.value?.album, 'Autumn Bookshop');
+
+      await service.setArtwork(Uri.file('/cache/snow.png'), room: 'Snow Cabin');
+
+      final MediaItem? item = service.mediaItem.value;
+      expect(item?.title, 'Kitchen Demo');
+      expect(item?.album, 'Snow Cabin');
+      expect(item?.artUri, Uri.file('/cache/snow.png'));
+    });
+
+    test('a new track keeps the room it is in', () async {
+      await service.setArtwork(Uri.file('/cache/snow.png'), room: 'Snow Cabin');
+      await service.playTrack(local());
+
+      expect(service.mediaItem.value?.album, 'Snow Cabin');
+    });
+  });
 }
