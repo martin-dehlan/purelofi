@@ -85,4 +85,50 @@ void main() {
       );
     });
   });
+
+  group('auth', () {
+    AppError map(AuthException error) => ErrorMapper.fromException(error);
+
+    test('known codes become plain sentences', () {
+      expect(
+        map(const AuthException('x', code: 'otp_expired')).userMessage,
+        'That code has expired. Send a new one.',
+      );
+      expect(
+        map(
+          const AuthException('x', code: 'over_email_send_rate_limit'),
+        ).userMessage,
+        'Too many tries. Wait a minute, then try again.',
+      );
+      expect(
+        map(
+          const AuthException('x', code: 'email_address_invalid'),
+        ).userMessage,
+        'That email address does not look right.',
+      );
+    });
+
+    test('a bad code without a code name still reads as a bad code', () {
+      expect(
+        map(const AuthException('Token has expired or is invalid')).userMessage,
+        'That code did not work. Check it, or send a new one.',
+      );
+    });
+
+    test('anything else never shows the server text', () {
+      final AppError result = map(
+        const AuthException('internal: provider secret mismatch'),
+      );
+
+      expect(result, isA<AuthError>());
+      expect(result.userMessage, 'Signing in did not work. Please try again.');
+    });
+
+    test('a dropped connection is still a network error', () {
+      expect(
+        map(const AuthException('SocketException: failed host lookup')),
+        isA<NetworkError>(),
+      );
+    });
+  });
 }

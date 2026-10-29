@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
+import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
 
+import 'fake_auth.repository.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
@@ -26,6 +28,15 @@ Override _fakeFavorites(FakeFavoritesRepository? repository) {
   addTearDown(fake.dispose);
 
   return favoritesRepositoryProvider.overrideWithValue(fake);
+}
+
+/// Accounts in memory. Signed out unless [repository] says otherwise:
+/// accounts are optional, so a test that is not about them never needs one.
+Override _fakeAuth(FakeAuthRepository? repository) {
+  final FakeAuthRepository fake = repository ?? FakeAuthRepository();
+  addTearDown(fake.dispose);
+
+  return authRepositoryProvider.overrideWithValue(fake);
 }
 
 /// The listener's library and the file picker, in memory, for the same
@@ -73,6 +84,7 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakeAuthRepository? auth,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -80,6 +92,7 @@ extension PumpRouted on WidgetTester {
         overrides: <Override>[
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
+          _fakeAuth(auth),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
@@ -103,6 +116,7 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakeAuthRepository? auth,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -110,6 +124,7 @@ extension PumpRouted on WidgetTester {
         overrides: <Override>[
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
+          _fakeAuth(auth),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,

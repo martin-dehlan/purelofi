@@ -4,7 +4,8 @@ import '../../../common/routes/app_routes.dart';
 import 'screens/player.screen.dart';
 
 /// The player owns its routes. There is no auth guard and no shell: the app
-/// is one screen with a modal (see `docs/08`).
+/// is one screen with a modal (see `docs/08`). Signing in is optional, so
+/// nothing is ever redirected for it.
 final List<RouteBase> playerRoutes = <RouteBase>[
   GoRoute(
     path: AppRoutes.player,
@@ -14,6 +15,10 @@ final List<RouteBase> playerRoutes = <RouteBase>[
         path: AppRoutes.trackPath,
         builder: (_, GoRouterState state) =>
             PlayerScreen(deepLinkTrackId: state.pathParameters['trackId']),
+      ),
+      GoRoute(
+        path: AppRoutes.authCallbackPath,
+        builder: (_, _) => const PlayerScreen(),
       ),
     ],
   ),

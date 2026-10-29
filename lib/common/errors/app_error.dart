@@ -18,6 +18,9 @@ sealed class AppError with _$AppError implements Exception {
 
   const factory AppError.playback({required String message}) = PlaybackError;
 
+  /// Signing in failed. [message] is already a sentence for the listener.
+  const factory AppError.auth({required String message}) = AuthError;
+
   const factory AppError.unknown({
     required Object cause,
     StackTrace? stackTrace,
@@ -34,6 +37,7 @@ extension AppErrorX on AppError {
     ServerError(:final String? message, :final int? statusCode) =>
       message ?? 'Server error (${statusCode ?? '?'}). Try again.',
     PlaybackError(:final String message) => 'Playback error: $message',
+    AuthError(:final String message) => message,
     UnknownError() => 'Something went wrong. Please try again.',
   };
 }
