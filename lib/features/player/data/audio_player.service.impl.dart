@@ -9,6 +9,7 @@ import '../../../common/errors/app_error.dart';
 import '../domain/audio_interruption.dart';
 import '../domain/audio_interruption.source.dart';
 import '../domain/audio_player.service.dart';
+import '../domain/playback_mode.dart';
 import '../domain/track.entity.dart';
 
 /// `just_audio` playback wrapped in an `audio_service` handler.
@@ -47,8 +48,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   bool _pausedByInterruption = false;
 
   Uri? _artUri;
+  PlaybackMode _mode = PlaybackMode.shuffle;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
+  final StreamController<PlaybackMode> _modeRequests =
+      StreamController<PlaybackMode>.broadcast();
   final StreamController<AppError> _errors =
       StreamController<AppError>.broadcast();
   final List<StreamSubscription<Object?>> _subscriptions =
@@ -59,6 +63,9 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
   @override
   Stream<void> get nextRequests => _nextRequests.stream;
+
+  @override
+  Stream<PlaybackMode> get modeRequests => _modeRequests.stream;
 
   @override
   Stream<AppError> get errors => _errors.stream;
@@ -185,12 +192,74 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   @override
   Future<void> skipToNext() async => _nextRequests.add(null);
 
+  /// Repeat one is `just_audio`'s own loop: gapless, and a looping track
+  /// never completes, so nothing asks for the next one. Skip still does.
+  @override
+  Future<void> setPlaybackMode(PlaybackMode mode) async {
+    _mode = mode;
+    await _guard(
+      () => _player.setLoopMode(mode.loops ? LoopMode.one : LoopMode.off),
+    );
+    _broadcastState(_player.playbackEvent);
+  }
+
+  /// From a watch, a car or the iOS command centre, which think of shuffle
+  /// and repeat as two switches. Turning one on is that mode; turning off
+  /// the one that is on leaves the stream in order.
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    if (shuffleMode != AudioServiceShuffleMode.none) {
+      return _requestMode(PlaybackMode.shuffle);
+    }
+    if (_mode.shuffles) _requestMode(PlaybackMode.inOrder);
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    if (repeatMode != AudioServiceRepeatMode.none) {
+      return _requestMode(PlaybackMode.repeatOne);
+    }
+    if (_mode.loops) _requestMode(PlaybackMode.inOrder);
+  }
+
+  /// The notification's own mode button, which steps on like the app's.
+  @override
+  Future<dynamic> customAction(
+    String name, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    if (name == _modeAction) _requestMode(_mode.following);
+  }
+
+  void _requestMode(PlaybackMode mode) {
+    if (!_modeRequests.isClosed) _modeRequests.add(mode);
+  }
+
+  static const String _modeAction = 'mode';
+
+  /// Android draws a custom control from a drawable and nothing else, so the
+  /// icon is the state, as on the app's button.
+  MediaControl get _modeControl => MediaControl.custom(
+    androidIcon: switch (_mode) {
+      PlaybackMode.shuffle => 'drawable/ic_media_shuffle',
+      PlaybackMode.repeatOne => 'drawable/ic_media_repeat_one',
+      PlaybackMode.inOrder => 'drawable/ic_media_in_order',
+    },
+    label: switch (_mode) {
+      PlaybackMode.shuffle => 'Play order: Shuffle',
+      PlaybackMode.repeatOne => 'Play order: Repeat track',
+      PlaybackMode.inOrder => 'Play order: In order',
+    },
+    name: _modeAction,
+  );
+
   Future<void> dispose() async {
     for (final StreamSubscription<Object?> subscription in _subscriptions) {
       await subscription.cancel();
     }
     await _player.dispose();
     await _nextRequests.close();
+    await _modeRequests.close();
     await _errors.close();
   }
 
@@ -200,12 +269,25 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
     playbackState.add(
       playbackState.value.copyWith(
+        // In the app's order: play order, play, next. The compact
+        // notification keeps to play and next.
         controls: <MediaControl>[
+          _modeControl,
           if (playing) MediaControl.pause else MediaControl.play,
           MediaControl.skipToNext,
         ],
-        systemActions: const <MediaAction>{MediaAction.seek},
-        androidCompactActionIndices: const <int>[0, 1],
+        systemActions: const <MediaAction>{
+          MediaAction.seek,
+          MediaAction.setShuffleMode,
+          MediaAction.setRepeatMode,
+        },
+        androidCompactActionIndices: const <int>[1, 2],
+        shuffleMode: _mode.shuffles
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
+        repeatMode: _mode.loops
+            ? AudioServiceRepeatMode.one
+            : AudioServiceRepeatMode.none,
         processingState: switch (_player.processingState) {
           ProcessingState.idle => AudioProcessingState.idle,
           ProcessingState.loading => AudioProcessingState.loading,

@@ -7,81 +7,72 @@ import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_version.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import '../../../library/presentation/widgets/my_music.widget.dart';
-import '../../controller/playback_source.controller.dart';
+import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
+import 'bts_modal.widget.dart';
 import 'scene_switcher_sheet.widget.dart';
-import 'track_list.widget.dart';
 
-/// The menu: the tracks first, then the room, then who made the music.
+/// The menu top right: everything that is not the music.
 ///
-/// The track list is what people look for in a player, so it leads (#67).
-/// Behind-the-scenes footage is reached from its track's row, not from an
-/// entry of its own. Favourites are out of the menu until the catalogue is
-/// big enough for choosing among tracks to matter; the code for them stays.
+/// The music has its own places since the library and the queue arrived —
+/// under the transport, where a music app keeps them. What is left here is
+/// the room, the proof that the playing is real, and the account. Accounts
+/// come with Phase 2; the entry is there already, greyed and saying so, so
+/// the menu does not change shape when they land.
 ///
-/// Beside PureLofi's list sits the listener's own (#66). A tab only shows a
-/// list; the stream changes side when a track from the other one is played.
-/// The menu opens on whichever side is playing.
-class SettingsSheet extends ConsumerStatefulWidget {
+/// Built from Material's own list tiles, so it reads and behaves the way a
+/// phone's menus do.
+class SettingsSheet extends ConsumerWidget {
   const SettingsSheet({super.key});
 
   @override
-  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
-}
-
-class _SettingsSheetState extends ConsumerState<SettingsSheet> {
-  late TrackSource _tab = ref.read(playbackSourceControllerProvider);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final TrackEntity? track = ref.watch(
+      playerControllerProvider.select((state) => state.currentTrack),
+    );
+    final bool hasFootage =
+        track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty;
 
     return SafeArea(
-      // A sheet that outgrows its space must scroll, not overflow: a short
-      // screen or a landscape phone cannot fit the list and the rest at once.
       child: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.horizontalPadding,
-            vertical: context.spaceL,
-          ),
+          padding: EdgeInsets.only(bottom: context.spaceM),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              _SourceTabs(
-                selected: _tab,
-                onSelect: (TrackSource tab) => setState(() => _tab = tab),
-              ),
-              SizedBox(height: context.spaceS),
-              if (_tab == TrackSource.catalogue)
-                const TrackList()
-              else
-                const MyMusic(),
-              SizedBox(height: context.spaceM),
               _Entry(
                 glyph: AppGlyph.scene,
-                label: 'Change scene',
+                title: 'Change scene',
                 onTap: () {
                   Navigator.of(context).pop();
                   unawaited(showSceneSwitcherSheet(context));
                 },
               ),
-              SizedBox(height: context.spaceM),
-              Text(
-                'Every track here was played on a real guitar or bass and '
-                'recorded in a room, not generated. The same recordings go up '
-                'on the YouTube channel.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
-                  height: 1.5,
-                ),
+              _Entry(
+                glyph: AppGlyph.camera,
+                title: 'Behind the scenes',
+                subtitle: hasFootage
+                    ? 'Watch "${track.title}" being played'
+                    : 'No footage for this track',
+                onTap: hasFootage
+                    ? () {
+                        Navigator.of(context).pop();
+                        unawaited(showBtsModal(context, ref, track));
+                      }
+                    : null,
+              ),
+              const _Entry(
+                glyph: AppGlyph.account,
+                title: 'Account',
+                subtitle: 'Coming soon',
+                onTap: null,
               ),
               SizedBox(height: context.spaceM),
               Text(
                 'PureLofi $appVersion',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                   fontFamily: AppFonts.wordmark,
@@ -96,118 +87,51 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   }
 }
 
-class _SourceTabs extends StatelessWidget {
-  const _SourceTabs({required this.selected, required this.onSelect});
-
-  final TrackSource selected;
-  final ValueChanged<TrackSource> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-
-    Widget tab(TrackSource source, String label) {
-      final bool on = source == selected;
-
-      return Semantics(
-        button: true,
-        selected: on,
-        label: label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onSelect(source),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: context.spaceS),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: cs.primary.withValues(alpha: on ? 1 : 0),
-                  width: context.screenWidth * 0.006,
-                ),
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: on ? cs.onSurface : cs.onSurfaceVariant,
-                fontSize: context.fontM,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
-      ),
-      child: Row(
-        children: <Widget>[
-          // PureLofi first: the recordings are what the app is for.
-          tab(TrackSource.catalogue, 'PureLofi'),
-          SizedBox(width: context.spaceL),
-          tab(TrackSource.local, 'My music'),
-        ],
-      ),
-    );
-  }
-}
-
+/// One line of the menu. [onTap] `null` greys it out.
 class _Entry extends StatelessWidget {
-  const _Entry({required this.glyph, required this.label, required this.onTap});
+  const _Entry({
+    required this.glyph,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+  });
 
   final AppGlyph glyph;
-  final String label;
-  final VoidCallback onTap;
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool enabled = onTap != null;
 
-    return Semantics(
-      button: true,
-      label: label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: context.spaceM),
-          child: Row(
-            children: <Widget>[
-              AppIcon(glyph, size: context.fontL),
-              // The same gap as a track row, so this label lines up with the
-              // titles above it.
-              SizedBox(width: context.spaceM),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: context.fontM,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ListTile(
+      enabled: enabled,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: context.horizontalPadding,
       ),
+      leading: AppIcon(
+        glyph,
+        size: context.fontL,
+        color: enabled
+            ? cs.onSurfaceVariant
+            : cs.onSurfaceVariant.withValues(alpha: 0.38),
+      ),
+      title: Text(title, style: TextStyle(fontSize: context.fontM)),
+      subtitle: subtitle == null
+          ? null
+          : Text(subtitle!, style: TextStyle(fontSize: context.fontS)),
+      onTap: onTap,
     );
   }
 }
 
 /// Opens the menu as a bottom sheet.
-///
-/// Scroll-controlled so it may grow past Flutter's default of 9/16 of the
-/// screen: a full track list plus the rest of the menu does not fit in that.
-/// The list caps itself, so the sheet still never covers the whole scene.
 Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
+    showDragHandle: true,
     builder: (BuildContext context) => const SettingsSheet(),
   );
 }

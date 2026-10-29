@@ -3,15 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/favorites.controller.dart';
 
-/// The heart that marks a track as a favourite.
-///
-/// Not shown anywhere since #67: with a handful of tracks there is nothing to
-/// choose between. Kept, with its sheet and repository, for when the
-/// catalogue is big enough — it goes back beside the title, not into the
-/// transport, so the row of controls stays at three (`docs/09`).
+/// The heart that marks a track as a favourite, beside the title of the one
+/// playing. Marked tracks come up more often in shuffle and have their own
+/// chip in the library.
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({required this.trackId, required this.size, super.key});
 
@@ -29,24 +27,36 @@ class FavoriteButton extends ConsumerWidget {
       ),
     );
 
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return Semantics(
       button: true,
       toggled: isFavorite,
       label: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+      excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => unawaited(
           ref.read(favoritesControllerProvider.notifier).toggle(trackId),
         ),
-        child: Padding(
-          padding: EdgeInsets.all(size * 0.4),
-          child: AppIcon(
-            isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
-            // [size] is a font size. A glyph leaves room above and below its
-            // cap height; the icon fills its box edge to edge, so matching
-            // the numbers would make the heart look bigger than the text it
-            // sits beside.
-            size: size * 0.85,
+        // The target is a thumb's width whatever the heart's size: a heart
+        // the size of the text beside it is too small to hit.
+        child: ConstrainedBox(
+          constraints: BoxConstraints.tightFor(
+            width: context.screenWidth * 0.11,
+            height: context.screenWidth * 0.11,
+          ),
+          child: Center(
+            child: AppIcon(
+              isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
+              // A glyph leaves room above and below its cap height; the icon
+              // fills its box edge to edge, so the heart is drawn a little
+              // larger than [size] to sit level with the text beside it.
+              size: size * 1.1,
+              // Marked is the accent, filled; unmarked a plain outline. At
+              // this size the two must differ by more than the hole.
+              color: isFavorite ? cs.primary : cs.onSurfaceVariant,
+            ),
           ),
         ),
       ),

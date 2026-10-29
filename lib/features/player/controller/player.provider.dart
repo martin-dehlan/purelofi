@@ -10,10 +10,12 @@ import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
 import '../data/favorites.repository.impl.dart';
+import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
 import '../domain/favorites.repository.dart';
+import '../domain/playback_preferences.service.dart';
 import '../domain/track.entity.dart';
 import '../domain/scene.entity.dart';
 
@@ -62,6 +64,11 @@ ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
   trackDao: ref.watch(trackDaoProvider),
   sceneDao: ref.watch(sceneDaoProvider),
 );
+
+/// Where shuffle and repeat are remembered. Overridden in tests with one in
+/// memory.
+@Riverpod(keepAlive: true)
+PlaybackPreferences playbackPreferences(Ref ref) => PlaybackPreferencesImpl();
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);

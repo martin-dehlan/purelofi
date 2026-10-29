@@ -43,21 +43,25 @@ class LibraryController extends _$LibraryController {
 
     await ref.read(libraryRepositoryProvider).delete(id);
 
-    if (isCurrent) await ref.read(playerControllerProvider.notifier).playNext();
+    final PlayerController playback = ref.read(
+      playerControllerProvider.notifier,
+    )..forget(id);
+    if (isCurrent) await playback.playNext();
   }
 }
 
-/// Order and sort for the library, remembered across launches (#66).
+/// Sort for the library, remembered across launches (#66).
 @Riverpod(keepAlive: true)
 class LibraryViewController extends _$LibraryViewController {
   @override
   Future<LibraryView> build() => ref.read(libraryPreferencesProvider).load();
 
-  Future<void> setOrder(LibraryOrder order) =>
-      _update((LibraryView view) => view.copyWith(order: order));
-
-  Future<void> setSort(LibrarySort sort) =>
-      _update((LibraryView view) => view.copyWith(sort: sort));
+  /// The sort is also the order the stream plays in, so what comes next is
+  /// drawn again to match it.
+  Future<void> setSort(LibrarySort sort) async {
+    await _update((LibraryView view) => view.copyWith(sort: sort));
+    await ref.read(playerControllerProvider.notifier).replan();
+  }
 
   Future<void> _update(LibraryView Function(LibraryView) change) async {
     final LibraryView next = change(state.value ?? const LibraryView());

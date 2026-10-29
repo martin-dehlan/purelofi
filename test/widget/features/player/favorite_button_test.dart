@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +7,6 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/favorite_button.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/favorites_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_favorites.repository.dart';
@@ -49,20 +46,13 @@ void main() {
       )
       .glyph;
 
-  /// The button on its own: since #67 it is not shown in the player.
+  /// The button on its own.
   Future<void> pumpHeart(WidgetTester tester) async {
     await tester.pumpProviderApp(
       child: const Scaffold(body: FavoriteButton(trackId: 'a', size: 20)),
       overrides: overrides(),
       favorites: favorites,
     );
-    await tester.pumpAndSettle();
-  }
-
-  /// The favourites sheet has no way in from the menu any more; opened the
-  /// way the menu used to.
-  Future<void> openFavorites(WidgetTester tester) async {
-    unawaited(showFavoritesSheet(tester.element(find.byType(Scaffold).first)));
     await tester.pumpAndSettle();
   }
 
@@ -86,71 +76,44 @@ void main() {
     expect(heart(tester), AppGlyph.heart);
   });
 
-  group('out of the interface (#67)', () {
-    testWidgets('the player shows no heart', (tester) async {
+  group('in the player', () {
+    Future<void> start(WidgetTester tester) async {
       await tester.pumpRoutedApp(overrides: overrides(), favorites: favorites);
       await tester.pumpAndSettle();
       await tester.pump();
+    }
 
-      expect(find.byType(FavoriteButton), findsNothing);
+    testWidgets('sits beside the title of PureLofi\'s track', (tester) async {
+      await start(tester);
+
+      expect(find.byType(FavoriteButton), findsOneWidget);
+      expect(find.bySemanticsLabel('Add to favorites'), findsOneWidget);
     });
 
-    testWidgets('the menu has no favourites entry', (tester) async {
-      favorites = FakeFavoritesRepository(<String>{'a'});
+    testWidgets('a mark there puts the track under Favorites', (tester) async {
+      await start(tester);
 
-      await tester.pumpRoutedApp(overrides: overrides(), favorites: favorites);
+      await tester.tap(find.byType(FavoriteButton));
       await tester.pumpAndSettle();
-      await tester.pump();
-      await openMenu(tester);
+      await openLibrary(tester);
+      await tapPill(tester, 'Favorites');
 
-      expect(find.textContaining('Favorites'), findsNothing);
+      expect(find.widgetWithText(ListTile, 'Dusk Tape'), findsOneWidget);
     });
 
-    testWidgets('the transport still has exactly three buttons', (
+    testWidgets('the transport row is five buttons and no heart', (
       tester,
     ) async {
       // docs/09: the chrome stays out of the way.
-      await tester.pumpRoutedApp(overrides: overrides(), favorites: favorites);
-      await tester.pumpAndSettle();
-      await tester.pump();
+      await start(tester);
 
       expect(
-        find.bySemanticsLabel(RegExp('Start over|Play|Pause|Next track')),
-        findsNWidgets(3),
-      );
-    });
-  });
-
-  group('the favourites sheet, kept for later', () {
-    testWidgets('says so when nothing is marked', (tester) async {
-      await tester.pumpRoutedApp(overrides: overrides(), favorites: favorites);
-      await tester.pumpAndSettle();
-      await tester.pump();
-
-      await openFavorites(tester);
-
-      expect(find.byType(FavoritesSheet), findsOneWidget);
-      expect(find.textContaining('Nothing marked yet'), findsOneWidget);
-    });
-
-    testWidgets('playing one from the list starts it', (tester) async {
-      favorites = FakeFavoritesRepository(<String>{'a'});
-
-      await tester.pumpRoutedApp(overrides: overrides(), favorites: favorites);
-      await tester.pumpAndSettle();
-      await tester.pump();
-      final int before = fakeAudio.playedTracks.length;
-
-      await openFavorites(tester);
-      await tester.tap(find.text('Dusk Tape').last);
-      await tester.pumpAndSettle();
-
-      expect(fakeAudio.playedTracks.length, greaterThan(before));
-      expect(fakeAudio.playedTracks.last.id, 'a');
-      expect(
-        find.byType(FavoritesSheet),
-        findsNothing,
-        reason: 'picking a track closes the list',
+        find.bySemanticsLabel(
+          RegExp(
+            '^(Play order|Previous track|Play|Pause|Next track|Library)\$',
+          ),
+        ),
+        findsNWidgets(5),
       );
     });
   });
