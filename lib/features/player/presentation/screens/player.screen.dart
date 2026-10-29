@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../controller/controls_visibility.controller.dart';
+import '../../controller/scene.controller.dart';
 import '../../controller/scene_touch.controller.dart';
+import '../../controller/startup.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
@@ -69,15 +71,29 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _handleDeepLink();
 
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool controlsVisible = ref.watch(
-      controlsVisibilityControllerProvider,
-    );
+    // The start screen stands alone: a transport over a loading bar looks
+    // ready and is not. Only a drawn room waits on sprites; a video or an
+    // error has nothing further to wait for once the list is in.
+    final bool starting =
+        !ref.watch(startupControllerProvider) &&
+        (ref.watch(sceneListControllerProvider).isLoading ||
+            (ref.watch(activeSceneControllerProvider)?.isLayered ?? false));
+    // The transport's countdown ran while the start screen was up; give it
+    // a fresh one, so the room arrives with its controls on.
+    ref.listen<bool>(startupControllerProvider, (bool? was, bool done) {
+      if (done && was != true) {
+        ref.read(controlsVisibilityControllerProvider.notifier).reveal();
+      }
+    });
+    final bool controlsVisible =
+        !starting && ref.watch(controlsVisibilityControllerProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
+          if (starting) return;
           // A tap that woke the cat is not a request for the transport.
           if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
 

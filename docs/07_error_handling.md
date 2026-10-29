@@ -43,7 +43,7 @@ extension AppErrorX on AppError {
   // Freezed 3 removed `when`/`map` — match on the subclasses instead.
   String get userMessage => switch (this) {
     NetworkError(:final message) =>
-      message ?? 'No internet connection. Check your network.',
+      message ?? 'Can’t reach PureLofi right now. Check your connection and try again.',
     NotFoundError(:final resource) => '$resource not found.',
     ServerError(:final message, :final statusCode) =>
       message ?? 'Server error (${statusCode ?? '?'}). Try again.',

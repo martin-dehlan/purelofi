@@ -6,15 +6,19 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/controller/scene.controller.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 
+import '../../../helpers/fake_media_cache.dart';
 import '../../../helpers/mock_repositories.dart';
 
 void main() {
   late MockContentRepository mockRepo;
   late ProviderContainer container;
 
-  ProviderContainer makeContainer() {
+  ProviderContainer makeContainer({FakeMediaCache? cache}) {
     final ProviderContainer container = ProviderContainer(
-      overrides: [contentRepositoryProvider.overrideWithValue(mockRepo)],
+      overrides: [
+        contentRepositoryProvider.overrideWithValue(mockRepo),
+        if (cache != null) mediaCacheProvider.overrideWithValue(cache),
+      ],
       // Riverpod 3 retries failed providers on a backoff; off here so the
       // error assertions are deterministic.
       retry: (_, _) => null,
@@ -52,6 +56,38 @@ void main() {
       );
 
       expect(result, scenes);
+    });
+
+    test('puts every cover on the disk as soon as the list is in', () async {
+      final FakeMediaCache cache = FakeMediaCache();
+      when(() => mockRepo.getScenes()).thenAnswer(
+        (_) async => <SceneEntity>[
+          makeScene('a', thumbnailUrl: 'https://example.com/a.png'),
+          makeScene('b'),
+          makeScene('c', thumbnailUrl: 'https://example.com/c.png'),
+        ],
+      );
+      container = makeContainer(cache: cache);
+
+      await container.read(sceneListControllerProvider.future);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cache.stored, <String>[
+        'https://example.com/a.png',
+        'https://example.com/c.png',
+      ]);
+    });
+
+    test('a cover is fetched once, however often it is asked for', () async {
+      final FakeMediaCache cache = FakeMediaCache();
+      when(() => mockRepo.getScenes()).thenAnswer((_) async => <SceneEntity>[]);
+      container = makeContainer(cache: cache);
+      const String url = 'https://example.com/a.png';
+
+      await container.read(sceneCoverProvider(url).future);
+      await container.read(sceneCoverProvider(url).future);
+
+      expect(cache.stored, <String>[url]);
     });
 
     test('terminates instead of hanging in loading', () async {

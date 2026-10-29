@@ -267,6 +267,7 @@ void main() {
       () async {
         final SceneEntity second = makeScene(
           'scene-b',
+          title: 'Snow Cabin',
           thumbnailUrl: 'https://example.com/b.png',
         );
         when(() => mockRepo.getScenes()).thenAnswer(
@@ -285,6 +286,7 @@ void main() {
         await pump();
 
         expect(fakeAudio.artUri, Uri.parse('https://example.com/b.png'));
+        expect(fakeAudio.room, 'Snow Cabin');
       },
     );
 

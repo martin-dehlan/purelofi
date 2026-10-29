@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/common/widgets/error_state.widget.dart';
-import 'package:purelofi/common/widgets/loading_state.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_background.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/startup_screen.widget.dart';
 
 import '../../../helpers/mock_repositories.dart';
 import '../../../helpers/pump_routed_app.dart';
@@ -32,7 +32,7 @@ void main() {
     sceneVideoBuilderProvider.overrideWithValue(stubVideo),
   ];
 
-  testWidgets('shows the loading state while scenes load', (tester) async {
+  testWidgets('shows the start screen while scenes load', (tester) async {
     final Completer<List<SceneEntity>> completer =
         Completer<List<SceneEntity>>();
     when(() => mockRepo.getScenes()).thenAnswer((_) => completer.future);
@@ -42,7 +42,8 @@ void main() {
       overrides: overrides(),
     );
 
-    expect(find.byType(LoadingState), findsOneWidget);
+    expect(find.byType(StartupScreen), findsOneWidget);
+    expect(find.text('PureLofi'), findsOneWidget);
 
     completer.complete(<SceneEntity>[makeScene('scene-1')]);
     await tester.pumpAndSettle();
@@ -59,7 +60,9 @@ void main() {
 
     expect(find.byType(ErrorState), findsOneWidget);
     expect(
-      find.text('No internet connection. Check your network.'),
+      find.text(
+        'Can’t reach PureLofi right now. Check your connection and try again.',
+      ),
       findsOneWidget,
     );
   });
@@ -125,7 +128,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(LoadingState), findsNothing);
+    expect(find.byType(StartupScreen), findsNothing);
     expect(find.textContaining('playing'), findsNothing);
   });
 }

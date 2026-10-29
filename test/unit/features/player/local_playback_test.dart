@@ -86,4 +86,77 @@ void main() {
     expect(item?.artist, 'PureLofi');
     expect(cache.stored, <String>['https://example.com/a.mp3']);
   });
+
+  group('a scene switch mid-track', () {
+    // The lock screen names the room the listener is in, and follows it.
+    test('names the room as the album, with the new cover', () async {
+      await service.setArtwork(
+        Uri.file('/cache/autumn.png'),
+        room: 'Autumn Bookshop',
+      );
+      await service.playTrack(local());
+      expect(service.mediaItem.value?.album, 'Autumn Bookshop');
+
+      await service.setArtwork(Uri.file('/cache/snow.png'), room: 'Snow Cabin');
+
+      final MediaItem? item = service.mediaItem.value;
+      expect(item?.title, 'Kitchen Demo');
+      expect(item?.album, 'Snow Cabin');
+      expect(item?.artUri, Uri.file('/cache/snow.png'));
+    });
+
+    test('a new track keeps the room it is in', () async {
+      await service.setArtwork(Uri.file('/cache/snow.png'), room: 'Snow Cabin');
+      await service.playTrack(local());
+
+      expect(service.mediaItem.value?.album, 'Snow Cabin');
+    });
+  });
+
+  group('on Android', () {
+    // MIUI draws a title's cover once and never again (#77): the same track
+    // in another room has to be another title there.
+    late AudioPlayerServiceImpl android;
+
+    setUp(() {
+      android = AudioPlayerServiceImpl(
+        player: player,
+        cache: cache,
+        roomInTitle: true,
+      );
+    });
+
+    test('the room rides along in the title', () async {
+      await android.setArtwork(
+        Uri.file('/cache/autumn.png'),
+        room: 'Autumn Bookshop',
+      );
+      await android.playTrack(local());
+      expect(android.mediaItem.value?.title, 'Kitchen Demo · Autumn Bookshop');
+
+      await android.setArtwork(Uri.file('/cache/snow.png'), room: 'Snow Cabin');
+      expect(android.mediaItem.value?.title, 'Kitchen Demo · Snow Cabin');
+    });
+
+    test('switching back is the first title again, not a pile-up', () async {
+      await android.setArtwork(
+        Uri.file('/cache/a.png'),
+        room: 'Autumn Bookshop',
+      );
+      await android.playTrack(local());
+      await android.setArtwork(Uri.file('/cache/b.png'), room: 'Snow Cabin');
+      await android.setArtwork(
+        Uri.file('/cache/a.png'),
+        room: 'Autumn Bookshop',
+      );
+
+      expect(android.mediaItem.value?.title, 'Kitchen Demo · Autumn Bookshop');
+    });
+
+    test('with no room yet, the title is the track alone', () async {
+      await android.playTrack(local());
+
+      expect(android.mediaItem.value?.title, 'Kitchen Demo');
+    });
+  });
 }

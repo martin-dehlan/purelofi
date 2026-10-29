@@ -35,7 +35,9 @@ abstract class AudioPlayerService {
   /// Set from the scene, because that is what the listener is actually
   /// looking at. Without it both platforms draw a black rectangle where the
   /// cover belongs.
-  Future<void> setArtwork(Uri? artUri);
+  ///
+  /// [room] is the scene's name, shown beside the track as its album.
+  Future<void> setArtwork(Uri? artUri, {String? room});
 
   /// Loops the current track in [PlaybackMode.repeatOne], and shows the mode
   /// wherever the platform draws media controls.
