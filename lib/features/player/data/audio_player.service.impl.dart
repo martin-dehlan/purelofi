@@ -23,8 +23,10 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     AudioPlayer? player,
     MediaCache? cache,
     AudioInterruptionSource? interruptions,
+    bool? roomInTitle,
   }) : _player = player ?? AudioPlayer(),
-       _cache = cache {
+       _cache = cache,
+       _roomInTitle = roomInTitle ?? Platform.isAndroid {
     if (interruptions != null) _listenForInterruptions(interruptions);
 
     _subscriptions.addAll(<StreamSubscription<Object?>>[
@@ -51,6 +53,26 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
   /// The scene's name, shown as the album.
   String? _room;
+
+  /// The playing track's own title, before any room is added to it.
+  String? _trackTitle;
+
+  /// Whether the room also goes into the title, which it does on Android.
+  ///
+  /// MIUI keeps the cover it first drew for a title and never draws another
+  /// for it — not on a new picture, a new album, a new media id or even a
+  /// freshly posted notification (#77). The app always opens in the same
+  /// room, so every track got that room's cover for good. As "Travel Lofi ·
+  /// Rainy Room" the track in each room is a title of its own, and each one
+  /// keeps the right picture, switching back included.
+  final bool _roomInTitle;
+
+  String _titleFor(String title) {
+    final String? room = _room;
+
+    return _roomInTitle && room != null ? '$title · $room' : title;
+  }
+
   PlaybackMode _mode = PlaybackMode.shuffle;
   final StreamController<void> _nextRequests =
       StreamController<void>.broadcast();
@@ -91,17 +113,21 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     // waiting for the next one, or switching scenes leaves a lock screen
     // showing the room the listener just left.
     final MediaItem? current = mediaItem.valueOrNull;
-    if (current != null) {
-      mediaItem.add(current.copyWith(artUri: artUri, album: room));
+    final String? title = _trackTitle;
+    if (current != null && title != null) {
+      mediaItem.add(
+        current.copyWith(title: _titleFor(title), artUri: artUri, album: room),
+      );
     }
   }
 
   @override
   Future<void> playTrack(TrackEntity track) async {
+    _trackTitle = track.title;
     mediaItem.add(
       MediaItem(
         id: track.id,
-        title: track.title,
+        title: _titleFor(track.title),
         // A listener's own file is not ours to sign: their tags or nothing.
         artist: track.source == TrackSource.local ? track.artist : 'PureLofi',
         album: _room,
