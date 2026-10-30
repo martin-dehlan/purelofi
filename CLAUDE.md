@@ -31,8 +31,8 @@ in Supabase; the same tracks feed a companion YouTube channel.
 | PostHog analytics (4 events) | |
 
 Offline caching (Drift — `docs/04`) is built, content cache and file cache
-both, and favourite tracks with it. They ship as **0.2.0** and **0.3.0** on
-the next store uploads (`docs/11`).
+both, and favourite tracks with it. Nothing has reached a store yet: the
+first upload is **0.0.1+1** and carries all of it (`docs/11`).
 
 **Still not a dependency:** `purchases_flutter`.
 

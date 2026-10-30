@@ -13,12 +13,13 @@ Pattern: `MAJOR.MINOR.PATCH+BUILD` in `pubspec.yaml`.
 | Bump | When |
 |------|------|
 | MAJOR | Breaking changes. First public store release = `1.0.0`. |
-| MINOR | New feature batch (offline sprint = `0.2.0`, favorites = `0.3.0`, etc). |
-| PATCH | Bug fixes within a version, no new features. |
+| MINOR | New feature batch once testers have the app. |
+| PATCH | Bug fixes, and every upload before the first feature batch. |
 | BUILD | `+1` per store upload (TestFlight / Play Internal). Always increment. |
 
 Bump version only when the feature batch is **shipped to a store**, not at the
-start of work. MVP starts at `0.1.0+1`.
+start of work. The first store upload (TestFlight / Play Internal) is
+`0.0.1+1`.
 
 ---
 
@@ -97,6 +98,6 @@ Before `git push`:
   background (lock-screen controls), random track selection, scene switcher, BTS
   modal, PostHog wired (`app_opened`, `track_played`, `bts_opened`,
   `scene_switched`).
-- Bump to `0.1.0+1` only on the first TestFlight / Play Internal upload.
-- Phase 2 batches (later): offline caching (`0.2.0`), favorites (`0.3.0`),
-  RevenueCat paywall (→ `1.0.0`).
+- First TestFlight / Play Internal upload: `0.0.1+1` — player, offline
+  cache, favourites, accounts and Pro together. Uploads after it count the
+  patch and the build up (`0.0.2+2`, …); `1.0.0` is the public release.
