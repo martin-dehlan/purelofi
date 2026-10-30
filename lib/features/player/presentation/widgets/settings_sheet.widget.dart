@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/app_fonts.dart';
+import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/app_version.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../auth/controller/auth.controller.dart';
 import '../../../auth/domain/account.entity.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/domain/pro_plan.entity.dart';
+import '../../../pro/domain/pro_status.entity.dart';
+import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'bts_modal.widget.dart';
@@ -34,6 +39,11 @@ class SettingsSheet extends ConsumerWidget {
       playerControllerProvider.select((state) => state.currentTrack),
     );
     final Account? account = ref.watch(authControllerProvider).value;
+    final ProController proController = ref.read(
+      proControllerProvider.notifier,
+    );
+    final ProStatus pro =
+        ref.watch(proControllerProvider).value ?? ProStatus.free;
     final bool hasFootage =
         track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty;
 
@@ -66,6 +76,29 @@ class SettingsSheet extends ConsumerWidget {
                       }
                     : null,
               ),
+              // Only where Pro can be bought; a build without RevenueCat's
+              // keys has nothing to offer here (#16).
+              if (proController.isAvailable)
+                _Entry(
+                  glyph: pro.isPro ? AppGlyph.check : AppGlyph.lock,
+                  title: 'PureLofi Pro',
+                  subtitle: pro.isPro
+                      ? switch (pro.plan) {
+                          PlanPeriod.yearly => 'Pro · yearly',
+                          PlanPeriod.monthly => 'Pro · monthly',
+                          null => 'Pro',
+                        }
+                      : 'Unlock every room',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    final String? manage = pro.manageUrl;
+                    if (pro.isPro && manage != null) {
+                      unawaited(AppLinks.open(Uri.parse(manage)));
+                    } else if (!pro.isPro) {
+                      unawaited(showPaywallSheet(context, source: 'menu'));
+                    }
+                  },
+                ),
               _Entry(
                 glyph: AppGlyph.account,
                 title: 'Account',

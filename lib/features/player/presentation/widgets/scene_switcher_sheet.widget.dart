@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../common/widgets/empty_state.widget.dart';
 import '../../../../common/widgets/error_state.widget.dart';
 import '../../../../common/widgets/skeleton.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
@@ -129,6 +133,9 @@ class _SceneTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    // A Pro room stays in the list, so a listener sees what Pro has; it
+    // opens the paywall instead of the room (#16).
+    final bool locked = ref.watch(lockedScenesProvider).contains(scene.id);
 
     // The same tile as a track in the menu: the room you are in is filled
     // with the selected tone.
@@ -142,14 +149,34 @@ class _SceneTile extends ConsumerWidget {
       title: Text(
         scene.title,
         style: TextStyle(
-          color: isActive ? cs.primary : cs.onSurface,
+          color: isActive
+              ? cs.primary
+              : (locked ? cs.onSurfaceVariant : cs.onSurface),
           fontSize: context.fontM,
         ),
       ),
+      trailing: locked
+          ? Semantics(
+              label: 'Pro',
+              child: AppIcon(
+                AppGlyph.lock,
+                size: context.fontM,
+                color: cs.onSurfaceVariant,
+              ),
+            )
+          : null,
       selected: isActive,
       onTap: () {
-        ref.read(activeSceneControllerProvider.notifier).switchTo(scene);
-        Navigator.of(context).pop();
+        final NavigatorState navigator = Navigator.of(context);
+        final BuildContext root = navigator.context;
+        navigator.pop();
+        if (ref.read(activeSceneControllerProvider.notifier).switchTo(scene)) {
+          return;
+        }
+        ref.read(proControllerProvider.notifier).proSceneTapped(scene.id);
+        unawaited(
+          showPaywallSheet(root, source: 'scene_switcher', scene: scene),
+        );
       },
     );
   }
