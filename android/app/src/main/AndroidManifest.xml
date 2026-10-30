@@ -12,6 +12,10 @@
         android:label="PureLofi"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- PostHog is set up from Dart with the key in .env. -->
+        <meta-data
+            android:name="com.posthog.posthog.AUTO_INIT"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- audio_service looks the notification controls up by name, which resource
-     shrinking cannot see. -->
+<!-- audio_service looks the notification icon and controls up by name, which
+     resource shrinking cannot see. Without the icon a release build drops the
+     notification. -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_media_*" />
+    tools:keep="@drawable/ic_notification,@drawable/ic_media_*" />
