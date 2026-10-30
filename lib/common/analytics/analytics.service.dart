@@ -55,6 +55,9 @@ abstract final class AnalyticsEvents {
   static const String purchaseStarted = 'purchase_started';
   static const String purchaseCompleted = 'purchase_completed';
   static const String purchaseCancelled = 'purchase_cancelled';
+
+  /// The store is waiting on someone; RevenueCat reports how it ends.
+  static const String purchasePending = 'purchase_pending';
   static const String purchaseFailed = 'purchase_failed';
   static const String restoreTapped = 'restore_tapped';
   static const String restoreCompleted = 'restore_completed';

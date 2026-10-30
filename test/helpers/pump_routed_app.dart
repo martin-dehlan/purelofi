@@ -10,6 +10,7 @@ import 'package:purelofi/features/player/presentation/player.routes.dart';
 
 import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
+import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
 import 'fake_display_preferences.dart';
@@ -17,6 +18,7 @@ import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
 import 'fake_playback_preferences.dart';
+import 'fake_pro.repository.dart';
 import 'fake_track_picker.dart';
 
 /// Favourites in memory, so no widget test opens a database.
@@ -38,6 +40,16 @@ Override _fakeAuth(FakeAuthRepository? repository) {
   addTearDown(fake.dispose);
 
   return authRepositoryProvider.overrideWithValue(fake);
+}
+
+/// Pro in memory. Not for sale unless [repository] says otherwise, which is
+/// how a build without RevenueCat's keys behaves: nothing is locked.
+Override _fakePro(FakeProRepository? repository) {
+  final FakeProRepository fake =
+      repository ?? FakeProRepository(available: false);
+  addTearDown(fake.dispose);
+
+  return proRepositoryProvider.overrideWithValue(fake);
 }
 
 /// The listener's library and the file picker, in memory, for the same
@@ -87,6 +99,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -95,6 +108,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
@@ -119,6 +133,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -127,6 +142,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
