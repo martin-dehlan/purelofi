@@ -109,6 +109,7 @@ is a modal bottom sheet (`showModalBottomSheet`), not a route:
 |---|---|---|
 | Library | the button right of the transport | pills Up next · PureLofi · My music · Favorites; track rows with `⋯` |
 | Menu | top-right button | Change scene · Behind the scenes · Account · version |
+| Pro (paywall) | a locked scene in the switcher · Menu → PureLofi Pro | The two plans as the store prices them, one button, restore, terms/privacy. Opens the tapped room once bought (#16). |
 | Account | Menu → Account | Signed out: Apple (iOS) · Google · email code. Signed in: who, sign out, delete account. Optional — gates nothing (#38). |
 | BTS | a track's `⋯`, the menu, or the deep link | the footage |
 

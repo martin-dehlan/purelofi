@@ -23,7 +23,7 @@ in Supabase; the same tracks feed a companion YouTube channel.
 
 | In MVP | Deferred to Phase 2 |
 |---|---|
-| Fullscreen looping scene video | RevenueCat paywall |
+| Fullscreen looping scene video | RevenueCat paywall — built for 1.0.0 (#16) |
 | Continuous audio stream (`just_audio` + `audio_service`) | More scenes / user accounts |
 | Random track selection, background/lock-screen controls | |
 | Scene switcher | |
@@ -34,7 +34,9 @@ Offline caching (Drift — `docs/04`) is built, content cache and file cache
 both, and favourite tracks with it. They ship as **0.2.0** and **0.3.0** on
 the next store uploads (`docs/11`).
 
-**Still not a dependency:** `purchases_flutter`.
+**PureLofi Pro (#16)** — `purchases_flutter`, monthly and yearly. The first
+two scenes (by `sort_order`) are free; Pro opens the rest. Without
+RevenueCat's public keys in `.env`, Pro is off and every scene is free.
 
 ## The rules (docs/)
 

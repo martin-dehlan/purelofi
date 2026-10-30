@@ -22,6 +22,12 @@ abstract final class Env {
   static const String googleWebClientIdEnv = 'GOOGLE_WEB_CLIENT_ID';
   static const String googleIosClientIdEnv = 'GOOGLE_IOS_CLIENT_ID';
 
+  /// RevenueCat's public SDK keys, one per store (#16). Public by design —
+  /// never the secret API key. Without them Pro is switched off and every
+  /// scene stays free.
+  static const String revenueCatAppleKeyEnv = 'REVENUECAT_APPLE_KEY';
+  static const String revenueCatGoogleKeyEnv = 'REVENUECAT_GOOGLE_KEY';
+
   /// Keys that must never reach a build.
   ///
   /// The service role key bypasses row-level security entirely, and the

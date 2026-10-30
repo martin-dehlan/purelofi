@@ -26,6 +26,9 @@ enum AppGlyph {
   more,
   account,
   remove,
+
+  /// A Pro scene not open yet (#16).
+  lock,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -208,6 +211,21 @@ class _GlyphPainter extends CustomPainter {
           ..close();
       case AppGlyph.remove:
         p.addRRect(_bar(4, 10.7, 16, 2.6));
+      case AppGlyph.lock:
+        // The shackle is a ring with the body over its lower half.
+        final Path shackle = Path.combine(
+          PathOperation.difference,
+          Path()..addRRect(_bar(7, 2.5, 10, 13)),
+          Path()..addRRect(_bar(9.4, 4.9, 5.2, 10)),
+        );
+        p
+          ..addPath(shackle, Offset.zero)
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              const Rect.fromLTWH(4.5, 10, 15, 11.5),
+              const Radius.circular(2.5),
+            ),
+          );
     }
     return p;
   }

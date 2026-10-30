@@ -78,14 +78,12 @@ class AuthController extends _$AuthController {
     unawaited(_analytics.capture(AnalyticsEvents.emailCodeSent));
   }
 
-  Future<void> verifyEmailCode({
-    required String email,
-    required String code,
-  }) => _counted(
-    SignInMethod.email,
-    () => _auth.verifyEmailCode(email: email, code: code),
-    started: false,
-  );
+  Future<void> verifyEmailCode({required String email, required String code}) =>
+      _counted(
+        SignInMethod.email,
+        () => _auth.verifyEmailCode(email: email, code: code),
+        started: false,
+      );
 
   Future<void> signOut() async {
     await _auth.signOut();
