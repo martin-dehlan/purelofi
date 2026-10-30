@@ -28,7 +28,7 @@ in Supabase; the same tracks feed a companion YouTube channel.
 | Random track selection, background/lock-screen controls | |
 | Scene switcher | |
 | BTS ("this is real, not AI") modal | |
-| PostHog analytics (4 events) | |
+| PostHog analytics (usage, sign-in and Pro funnel — #82) | |
 
 Offline caching (Drift — `docs/04`) is built, content cache and file cache
 both, and favourite tracks with it. They ship as **0.2.0** and **0.3.0** on
