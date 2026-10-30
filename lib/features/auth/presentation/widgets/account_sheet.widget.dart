@@ -6,7 +6,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../controller/auth.controller.dart';
 import '../../domain/account.entity.dart';
 import 'delete_account_dialog.dart';
-import 'email_code_form.widget.dart';
+import 'email_password_form.widget.dart';
 import 'sign_in_options.widget.dart';
 import 'signed_in_account.widget.dart';
 
@@ -81,7 +81,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
         onDelete: _delete,
       );
     } else if (_email) {
-      body = EmailCodeForm(onBack: () => setState(() => _email = false));
+      body = EmailPasswordForm(onBack: () => setState(() => _email = false));
     } else {
       body = SignInOptions(
         showApple: auth.canUseApple,
@@ -98,7 +98,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
 
     return SafeArea(
       child: SingleChildScrollView(
-        // The keyboard comes up for the email and the code; the sheet rises
+        // The keyboard comes up for the email, password and code; the sheet rises
         // with it rather than hiding the field.
         padding: EdgeInsets.fromLTRB(
           context.horizontalPadding,

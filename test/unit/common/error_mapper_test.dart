@@ -108,6 +108,25 @@ void main() {
       );
     });
 
+    test('password codes become plain sentences', () {
+      expect(
+        map(const AuthException('x', code: 'invalid_credentials')).userMessage,
+        'Wrong email or password.',
+      );
+      expect(
+        map(const AuthException('x', code: 'weak_password')).userMessage,
+        'That password is too easy to guess. Pick a longer one.',
+      );
+      expect(
+        map(const AuthException('x', code: 'user_already_exists')).userMessage,
+        'There is already an account with this email. Sign in instead.',
+      );
+      expect(
+        map(const AuthException('x', code: 'same_password')).userMessage,
+        'That is your current password. Pick a new one.',
+      );
+    });
+
     test('a bad code without a code name still reads as a bad code', () {
       expect(
         map(const AuthException('Token has expired or is invalid')).userMessage,

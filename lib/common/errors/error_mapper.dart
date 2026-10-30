@@ -33,6 +33,13 @@ abstract final class ErrorMapper {
 
     return AppError.auth(
       message: switch (error.code) {
+        'invalid_credentials' => 'Wrong email or password.',
+        'weak_password' =>
+          'That password is too easy to guess. Pick a longer one.',
+        'user_already_exists' || 'email_exists' =>
+          'There is already an account with this email. Sign in instead.',
+        'same_password' => 'That is your current password. Pick a new one.',
+        'signup_disabled' => 'New accounts are switched off right now.',
         'otp_expired' => 'That code has expired. Send a new one.',
         'otp_disabled' ||
         'email_provider_disabled' => 'Email sign-in is not switched on yet.',
