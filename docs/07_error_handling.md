@@ -1,6 +1,6 @@
 # Error Handling Rules
 
-**TL;DR:** All errors funnel through `AppError` (Freezed union). The repository catches exceptions and maps to `AppError`. Controllers use `AsyncValue.guard`. UI uses `.when()` with `ErrorState`. Network is the main failure path (streaming); there is no auth in the MVP.
+**TL;DR:** All errors funnel through `AppError` (Freezed union). The repository catches exceptions and maps to `AppError`. Controllers use `AsyncValue.guard`. UI uses `.when()` with `ErrorState`. Network is the main failure path (streaming); sign-in (#38) is the second, and it is optional.
 
 ---
 
@@ -48,14 +48,18 @@ extension AppErrorX on AppError {
     ServerError(:final message, :final statusCode) =>
       message ?? 'Server error (${statusCode ?? '?'}). Try again.',
     PlaybackError(:final message) => 'Playback error: $message',
+    AuthError(:final message) => message,
     UnknownError() => 'Something went wrong. Please try again.',
   };
 }
 ```
 
 > Dropped from the wine-app lineage: `unauthorized`, `validation`, `database`.
-> No auth, no forms, no local DB in the MVP. Added `playback` for
-> `just_audio` / `video_player` failures (a real, streaming-specific case).
+> Added `playback` for `just_audio` / `video_player` failures (a real,
+> streaming-specific case), and `auth` for sign-in (#38): `ErrorMapper` turns
+> Supabase's `AuthException` codes into one plain sentence each
+> (`otp_expired`, rate limits, a bad code) and never shows the server's text.
+> A listener closing Apple's or Google's own sheet is not an error at all.
 
 ---
 

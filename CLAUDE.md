@@ -13,7 +13,8 @@ A fullscreen looping pixel-art video (the *scene*) sits behind a continuous
 audio stream of **real** guitar/bass tracks (not AI-generated). Content lives
 in Supabase; the same tracks feed a companion YouTube channel.
 
-- **No login.** Public content consumption — nothing user-owned to protect.
+- **Login is optional.** Public content; an account is never needed to listen,
+  and nothing is gated behind one (#38).
 - **Streaming, server-first.** Supabase is the source of truth. Audio/video
   stream from Supabase Storage.
 - Domain: `purelofi.app` · Dart package name: `purelofi`
@@ -45,8 +46,8 @@ the next store uploads (`docs/11`).
 | `04_drift_database_rules.md` | Yes — active since 0.2.0 |
 | `05_riverpod_patterns.md` | Yes |
 | `06_code_generation.md` | Yes (Freezed + Riverpod + Drift) |
-| `07_error_handling.md` | Yes (network is the main error path; no auth) |
-| `08_navigation_structure.md` | Yes — single screen + modal, **no auth guard, no bottom nav** |
+| `07_error_handling.md` | Yes (network is the main error path; optional sign-in is the second) |
+| `08_navigation_structure.md` | Yes — single screen + modal, **no auth guard, no bottom nav** (sign-in is optional and gates nothing) |
 | `09_design_principles.md` | Yes — anti-AI-slop; pixel vibe comes from assets, not styling |
 | `10_testing_rules.md` | Yes |
 | `11_versioning_commits.md` | Yes |

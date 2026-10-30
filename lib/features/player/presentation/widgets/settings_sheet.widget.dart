@@ -7,6 +7,9 @@ import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_version.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../auth/controller/auth.controller.dart';
+import '../../../auth/domain/account.entity.dart';
+import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'bts_modal.widget.dart';
@@ -16,9 +19,8 @@ import 'scene_switcher_sheet.widget.dart';
 ///
 /// The music has its own places since the library and the queue arrived —
 /// under the transport, where a music app keeps them. What is left here is
-/// the room, the proof that the playing is real, and the account. Accounts
-/// come with Phase 2; the entry is there already, greyed and saying so, so
-/// the menu does not change shape when they land.
+/// the room, the proof that the playing is real, and the account — which is
+/// optional, and says so.
 ///
 /// Built from Material's own list tiles, so it reads and behaves the way a
 /// phone's menus do.
@@ -31,6 +33,7 @@ class SettingsSheet extends ConsumerWidget {
     final TrackEntity? track = ref.watch(
       playerControllerProvider.select((state) => state.currentTrack),
     );
+    final Account? account = ref.watch(authControllerProvider).value;
     final bool hasFootage =
         track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty;
 
@@ -63,11 +66,16 @@ class SettingsSheet extends ConsumerWidget {
                       }
                     : null,
               ),
-              const _Entry(
+              _Entry(
                 glyph: AppGlyph.account,
                 title: 'Account',
-                subtitle: 'Coming soon',
-                onTap: null,
+                subtitle: account == null
+                    ? 'Optional — sign in if you like'
+                    : account.email ?? account.name ?? 'Signed in',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  unawaited(showAccountSheet(context));
+                },
               ),
               SizedBox(height: context.spaceM),
               Text(

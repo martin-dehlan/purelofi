@@ -8,4 +8,9 @@ abstract final class AppRoutes {
   static const String trackPath = 'track/:trackId';
 
   static String track(String trackId) => '/track/$trackId';
+
+  /// Where the browser sign-in fallback lands: `purelofi://app/auth-callback`.
+  /// supabase_flutter reads the session out of the link itself; the route
+  /// only has to show the room again (#38).
+  static const String authCallbackPath = 'auth-callback';
 }
