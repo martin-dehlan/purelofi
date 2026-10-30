@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/auth/domain/account.entity.dart';
 import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
+import 'package:purelofi/features/auth/presentation/widgets/auth_button.widget.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../helpers/fake_auth.repository.dart';
@@ -86,80 +87,131 @@ void main() {
   });
 
   group('email', () {
-    Future<void> toEmail(WidgetTester tester) async {
-      await open(tester, FakeAuthRepository());
+    final Finder email = find.widgetWithText(TextField, 'Email');
+    final Finder password = find.widgetWithText(TextField, 'Password');
+    final Finder code = find.widgetWithText(TextField, 'Code');
+
+    Finder button(String label) => find.widgetWithText(AuthButton, label);
+
+    Future<void> toEmail(
+      WidgetTester tester, [
+      FakeAuthRepository? repo,
+    ]) async {
+      await open(tester, repo ?? FakeAuthRepository());
       await tester.tap(find.text('Continue with email'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('sends a code only for an address that looks right', (
-      tester,
-    ) async {
+    Future<void> fill(WidgetTester tester, Finder field, String text) async {
+      await tester.enterText(field, text);
+      await tester.pump();
+    }
+
+    testWidgets('signs in with an address and a password', (tester) async {
       await toEmail(tester);
 
-      await tester.enterText(find.byType(TextField), 'not-an-address');
-      await tester.pump();
-      await tester.tap(find.text('Send code'));
+      await fill(tester, email, 'not-an-address');
+      await fill(tester, password, 'secret123');
+      await tester.tap(button('Sign in'));
       await tester.pump();
       expect(auth.calls, isEmpty);
 
-      await tester.enterText(find.byType(TextField), ' me@example.com ');
-      await tester.pump();
-      await tester.tap(find.text('Send code'));
+      await fill(tester, email, ' me@example.com ');
+      await tester.tap(button('Sign in'));
       await tester.pumpAndSettle();
 
-      expect(auth.calls, <String>['send me@example.com']);
-      expect(find.text('We sent a code to me@example.com.'), findsOneWidget);
-    });
-
-    testWidgets('the sixth digit signs in', (tester) async {
-      await toEmail(tester);
-      await tester.enterText(find.byType(TextField), 'me@example.com');
-      await tester.pump();
-      await tester.tap(find.text('Send code'));
-      await tester.pumpAndSettle();
-
-      await tester.enterText(find.byType(TextField), '123456');
-      await tester.pumpAndSettle();
-
-      expect(auth.calls.last, 'verify me@example.com 123456');
+      expect(auth.calls, <String>['sign in me@example.com secret123']);
       expect(find.text('Signed in with email'), findsOneWidget);
     });
 
-    testWidgets('a new code waits out the minute', (tester) async {
+    testWidgets('a wrong password says so and stays', (tester) async {
       await toEmail(tester);
-      await tester.enterText(find.byType(TextField), 'me@example.com');
-      await tester.pump();
-      await tester.tap(find.text('Send code'));
+      await fill(tester, email, 'me@example.com');
+      await fill(tester, password, 'wrong');
+
+      auth.failWith = const AppError.auth(message: 'Wrong email or password.');
+      await tester.tap(button('Sign in'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Resend in 60s'), findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 61));
-
-      expect(find.text('Send a new code'), findsOneWidget);
+      expect(find.text('Wrong email or password.'), findsOneWidget);
+      expect(button('Sign in'), findsOneWidget);
     });
 
-    testWidgets('a wrong code says so and stays', (tester) async {
+    testWidgets('a new account needs the length, then the code', (
+      tester,
+    ) async {
       await toEmail(tester);
-      await tester.enterText(find.byType(TextField), 'me@example.com');
+      await tester.tap(find.text('Create an account'));
+      await tester.pumpAndSettle();
+
+      await fill(tester, email, 'me@example.com');
+      await fill(tester, password, 'short');
+      expect(find.text('At least 8 characters'), findsOneWidget);
+      await tester.tap(button('Create account'));
       await tester.pump();
-      await tester.tap(find.text('Send code'));
+      expect(auth.calls, isEmpty);
+
+      await fill(tester, password, 'long enough');
+      await tester.tap(button('Create account'));
       await tester.pumpAndSettle();
 
-      auth.failWith = const AppError.auth(
-        message: 'That code did not work. Check it, or send a new one.',
-      );
-      await tester.enterText(find.byType(TextField), '000000');
+      expect(auth.calls, <String>['create me@example.com long enough']);
+      expect(find.text('We sent a code to me@example.com.'), findsOneWidget);
+      expect(find.text('Resend in 60s'), findsOneWidget);
+
+      // The sixth digit is the submit.
+      await fill(tester, code, '123456');
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('That code did not work. Check it, or send a new one.'),
-        findsOneWidget,
-      );
-      expect(find.text('Sign in'), findsOneWidget);
-      // Let the resend countdown finish so no timer outlives the test.
+      expect(auth.calls.last, 'confirm me@example.com 123456');
+      expect(find.text('Signed in with email'), findsOneWidget);
+    });
+
+    testWidgets('an unconfirmed address goes on to the code', (tester) async {
+      await toEmail(tester, FakeAuthRepository()..unconfirmed = true);
+      await fill(tester, email, 'me@example.com');
+      await fill(tester, password, 'secret123');
+      await tester.tap(button('Sign in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('We sent a code to me@example.com.'), findsOneWidget);
+
       await tester.pump(const Duration(seconds: 61));
+      await tester.tap(find.text('Send a new code'));
+      await tester.pumpAndSettle();
+      expect(auth.calls.last, 'resend me@example.com');
+
+      // "Different email" goes back where the code was asked for.
+      await tester.tap(find.text('Different email'));
+      await tester.pumpAndSettle();
+      expect(button('Sign in'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 61));
+    });
+
+    testWidgets('a forgotten password resets with a code', (tester) async {
+      await toEmail(tester);
+      await tester.tap(find.text('Forgot password?'));
+      await tester.pumpAndSettle();
+
+      expect(password, findsNothing);
+      await fill(tester, email, 'me@example.com');
+      await tester.tap(button('Send reset code'));
+      await tester.pumpAndSettle();
+      expect(auth.calls, <String>['forgot me@example.com']);
+
+      await fill(tester, code, '654321');
+      // A reset still needs the new password: the code alone does nothing.
+      expect(auth.calls, hasLength(1));
+      await fill(
+        tester,
+        find.widgetWithText(TextField, 'New password'),
+        'new secret',
+      );
+      await tester.tap(button('Set password'));
+      await tester.pumpAndSettle();
+
+      expect(auth.calls.last, 'reset me@example.com 654321 new secret');
+      expect(find.text('Signed in with email'), findsOneWidget);
     });
   });
 

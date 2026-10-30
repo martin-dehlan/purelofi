@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/auth/data/auth.repository.impl.dart';
 import 'package:purelofi/features/auth/domain/account.entity.dart';
+import 'package:purelofi/features/auth/domain/auth.repository.dart';
 import 'package:purelofi/features/auth/domain/identity.service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,6 +38,7 @@ User _user({
   String provider = 'email',
   String? email,
   Map<String, dynamic>? metadata,
+  List<UserIdentity>? identities,
 }) => User(
   id: 'u1',
   appMetadata: <String, dynamic>{'provider': provider},
@@ -44,6 +46,7 @@ User _user({
   aud: 'authenticated',
   email: email,
   createdAt: '2026-10-29T00:00:00Z',
+  identities: identities,
 );
 
 void main() {
@@ -175,17 +178,7 @@ void main() {
   });
 
   group('email', () {
-    test('sends the code to the trimmed address', () async {
-      when(
-        () => auth.signInWithOtp(email: any(named: 'email')),
-      ).thenAnswer((_) async {});
-
-      await repository().sendEmailCode('  me@example.com ');
-
-      verify(() => auth.signInWithOtp(email: 'me@example.com')).called(1);
-    });
-
-    test('checks the code as an email code', () async {
+    void answerCodes() {
       when(
         () => auth.verifyOTP(
           email: any(named: 'email'),
@@ -193,8 +186,130 @@ void main() {
           type: any(named: 'type'),
         ),
       ).thenAnswer((_) async => AuthResponse());
+    }
 
-      await repository().verifyEmailCode(
+    void answerResend() {
+      when(
+        () => auth.resend(
+          type: any(named: 'type'),
+          email: any(named: 'email'),
+        ),
+      ).thenAnswer((_) async => ResendResponse());
+    }
+
+    Matcher saying(String message) => throwsA(
+      isA<AuthError>().having((AuthError e) => e.message, 'message', message),
+    );
+
+    test('signs in with the trimmed address and the password', () async {
+      when(
+        () => auth.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => AuthResponse());
+
+      final EmailSignIn result = await repository().signInWithPassword(
+        email: '  me@example.com ',
+        password: ' secret pw',
+      );
+
+      expect(result, EmailSignIn.signedIn);
+      verify(
+        () => auth.signInWithPassword(
+          email: 'me@example.com',
+          password: ' secret pw',
+        ),
+      ).called(1);
+    });
+
+    test('a wrong password says so in plain words', () async {
+      when(
+        () => auth.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(
+        const AuthException(
+          'Invalid login credentials',
+          code: 'invalid_credentials',
+        ),
+      );
+
+      await expectLater(
+        repository().signInWithPassword(email: 'me@example.com', password: 'x'),
+        saying('Wrong email or password.'),
+      );
+    });
+
+    test('an unconfirmed address gets a fresh code, not an error', () async {
+      when(
+        () => auth.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(
+        const AuthException('Email not confirmed', code: 'email_not_confirmed'),
+      );
+      answerResend();
+
+      final EmailSignIn result = await repository().signInWithPassword(
+        email: 'me@example.com',
+        password: 'secret123',
+      );
+
+      expect(result, EmailSignIn.needsCode);
+      verify(
+        () => auth.resend(type: OtpType.signup, email: 'me@example.com'),
+      ).called(1);
+    });
+
+    test('a new account waits for its code', () async {
+      when(
+        () => auth.signUp(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer(
+        (_) async => AuthResponse(user: _user(email: 'me@example.com')),
+      );
+
+      final EmailSignIn result = await repository().createAccount(
+        email: ' me@example.com',
+        password: 'secret123',
+      );
+
+      expect(result, EmailSignIn.needsCode);
+      verify(
+        () => auth.signUp(email: 'me@example.com', password: 'secret123'),
+      ).called(1);
+    });
+
+    test('an address that already has an account says so', () async {
+      // Supabase's stand-in for a taken address: a user with no identities.
+      when(
+        () => auth.signUp(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            AuthResponse(user: _user(identities: const <UserIdentity>[])),
+      );
+
+      await expectLater(
+        repository().createAccount(
+          email: 'me@example.com',
+          password: 'secret123',
+        ),
+        saying('There is already an account with this email. Sign in instead.'),
+      );
+    });
+
+    test('confirms the address with a signup code', () async {
+      answerCodes();
+
+      await repository().confirmEmail(
         email: 'me@example.com',
         code: ' 123456 ',
       );
@@ -203,9 +318,50 @@ void main() {
         () => auth.verifyOTP(
           email: 'me@example.com',
           token: '123456',
-          type: OtpType.email,
+          type: OtpType.signup,
         ),
       ).called(1);
+    });
+
+    test('resends the confirmation code', () async {
+      answerResend();
+
+      await repository().resendConfirmation(' me@example.com');
+
+      verify(
+        () => auth.resend(type: OtpType.signup, email: 'me@example.com'),
+      ).called(1);
+    });
+
+    test('a reset signs in with the code, then sets the password', () async {
+      when(() => auth.resetPasswordForEmail(any())).thenAnswer((_) async {});
+      answerCodes();
+
+      final AuthRepositoryImpl repo = repository();
+      await repo.sendPasswordReset(' me@example.com');
+      await repo.resetPassword(
+        email: 'me@example.com',
+        code: '654321',
+        newPassword: 'new secret',
+      );
+
+      verify(() => auth.resetPasswordForEmail('me@example.com')).called(1);
+      verifyInOrder(<void Function()>[
+        () => auth.verifyOTP(
+          email: 'me@example.com',
+          token: '654321',
+          type: OtpType.recovery,
+        ),
+        () => auth.updateUser(
+          any(
+            that: isA<UserAttributes>().having(
+              (UserAttributes a) => a.password,
+              'password',
+              'new secret',
+            ),
+          ),
+        ),
+      ]);
     });
 
     test('an expired code says so in plain words', () async {
@@ -220,14 +376,8 @@ void main() {
       );
 
       await expectLater(
-        repository().verifyEmailCode(email: 'me@example.com', code: '1'),
-        throwsA(
-          isA<AuthError>().having(
-            (AuthError e) => e.message,
-            'message',
-            'That code has expired. Send a new one.',
-          ),
-        ),
+        repository().confirmEmail(email: 'me@example.com', code: '1'),
+        saying('That code has expired. Send a new one.'),
       );
     });
   });

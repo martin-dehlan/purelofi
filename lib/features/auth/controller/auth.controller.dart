@@ -37,10 +37,30 @@ class AuthController extends _$AuthController {
   /// `false` when the listener closed Google's sheet.
   Future<bool> signInWithGoogle() => _auth.signInWithGoogle();
 
-  Future<void> sendEmailCode(String email) => _auth.sendEmailCode(email);
+  Future<EmailSignIn> signInWithPassword({
+    required String email,
+    required String password,
+  }) => _auth.signInWithPassword(email: email, password: password);
 
-  Future<void> verifyEmailCode({required String email, required String code}) =>
-      _auth.verifyEmailCode(email: email, code: code);
+  Future<EmailSignIn> createAccount({
+    required String email,
+    required String password,
+  }) => _auth.createAccount(email: email, password: password);
+
+  Future<void> confirmEmail({required String email, required String code}) =>
+      _auth.confirmEmail(email: email, code: code);
+
+  Future<void> resendConfirmation(String email) =>
+      _auth.resendConfirmation(email);
+
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordReset(email);
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => _auth.resetPassword(email: email, code: code, newPassword: newPassword);
 
   Future<void> signOut() => _auth.signOut();
 

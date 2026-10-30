@@ -109,7 +109,7 @@ is a modal bottom sheet (`showModalBottomSheet`), not a route:
 |---|---|---|
 | Library | the button right of the transport | pills Up next · PureLofi · My music · Favorites; track rows with `⋯` |
 | Menu | top-right button | Change scene · Behind the scenes · Account · version |
-| Account | Menu → Account | Signed out: Apple (iOS) · Google · email code. Signed in: who, sign out, delete account. Optional — gates nothing (#38). |
+| Account | Menu → Account | Signed out: Apple (iOS) · Google · email + password (confirm and reset by six-digit code). Signed in: who, sign out, delete account. Optional — gates nothing (#38). |
 | BTS | a track's `⋯`, the menu, or the deep link | the footage |
 
 The library — the queue is its "Up next" pill — is a tall draggable sheet
