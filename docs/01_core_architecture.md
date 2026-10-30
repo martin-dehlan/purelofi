@@ -22,9 +22,11 @@ Golden Rules:
 >
 > **Accounts (#38)** are optional. The account itself is the first thing
 > that belongs to a listener rather than to PureLofi; it lives in Supabase
-> Auth and is deleted from inside the app (`delete_account()`). Anything
-> tied to it later (favorites, #78) needs its own RLS policies scoped to
-> `auth.uid()`. Nothing in the app may require one.
+> Auth and is deleted from inside the app (`delete_account()`). Favorites
+> follow it (#78): `user_favorites`, with RLS scoped to `auth.uid()` for
+> select, insert and delete. Drift stays what the UI reads; a sync round
+> pushes pending marks first, then pulls the account's list. Nothing in the
+> app may require an account.
 >
 > **The exception is the listener's own music (#66).** Files they import
 > live only on the device, in `local_tracks` and `library/`, and are never

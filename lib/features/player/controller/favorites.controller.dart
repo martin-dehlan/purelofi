@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/track.entity.dart';
+import 'favorites_sync.controller.dart';
 import 'player.provider.dart';
 import 'track.controller.dart';
 
@@ -17,9 +18,11 @@ class FavoritesController extends _$FavoritesController {
   Stream<Set<String>> build() =>
       ref.watch(favoritesRepositoryProvider).watchFavoriteIds();
 
-  /// Marks or unmarks [trackId]. The stream carries the new state back.
+  /// Marks or unmarks [trackId]. The stream carries the new state back, and
+  /// a signed-in listener's account hears about it shortly after (#78).
   Future<void> toggle(String trackId) async {
     await ref.read(favoritesRepositoryProvider).toggle(trackId);
+    ref.read(favoritesSyncControllerProvider.notifier).soon();
   }
 }
 
