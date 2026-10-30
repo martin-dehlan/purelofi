@@ -1,4 +1,4 @@
-package com.purelofi.purelofi
+package app.purelofi
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
