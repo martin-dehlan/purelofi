@@ -27,7 +27,8 @@ from PIL import Image
 SCALE = 3
 
 
-def build(folder):
+def composite(folder):
+    """The scene as one still: every layer's first frame, in draw order."""
     scene = json.load(open(os.path.join(folder, 'scene.json')))
     layers = scene['layers']
     width = scene['canvas']['width']
@@ -47,6 +48,12 @@ def build(folder):
             _tile(canvas, first, offset_x, offset_y)
         else:
             canvas.alpha_composite(first, (offset_x, offset_y))
+    return scene, canvas
+
+
+def build(folder):
+    scene, canvas = composite(folder)
+    width, height = canvas.size
 
     size = min(width, height)
     default = [(width - size) // 2, (height - size) // 2, size]
