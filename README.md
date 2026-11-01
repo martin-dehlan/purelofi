@@ -3,9 +3,9 @@
 A minimalist pixel-art lo-fi music player for Android and iOS.
 
 A fullscreen looping pixel-art video — the *scene* — sits behind a continuous
-audio stream of **real** guitar and bass tracks. Not AI-generated: every track
-is played by a human, and a behind-the-scenes clip in the app proves it. The
-same tracks feed the companion YouTube channel.
+audio stream of **real** lo-fi music by different musicians. None of it is
+AI-generated, and a behind-the-scenes clip in the app shows a track being
+made. The same tracks feed the companion YouTube channel.
 
 - No login. Public content, nothing to sign up for.
 - Streaming, server-first: Supabase is the source of truth.
