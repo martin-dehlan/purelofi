@@ -7,20 +7,23 @@ import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_version.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../../common/widgets/legal_links.widget.dart';
 import '../../../auth/controller/auth.controller.dart';
 import '../../../auth/domain/account.entity.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'bts_modal.widget.dart';
+import 'now_playing_header.widget.dart';
 import 'scene_switcher_sheet.widget.dart';
 
 /// The menu top right: everything that is not the music.
 ///
 /// The music has its own places since the library and the queue arrived —
 /// under the transport, where a music app keeps them. What is left here is
-/// the room, the proof that the playing is real, and the account — which is
-/// optional, and says so.
+/// what is playing and where, the room, the proof that the playing is real,
+/// the profile — which is optional, and says so — and, at the bottom, the
+/// links to the legal pages on purelofi.app (#95).
 ///
 /// Built from Material's own list tiles, so it reads and behaves the way a
 /// phone's menus do.
@@ -45,6 +48,7 @@ class SettingsSheet extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              const NowPlayingHeader(),
               _Entry(
                 glyph: AppGlyph.scene,
                 title: 'Change scene',
@@ -68,9 +72,9 @@ class SettingsSheet extends ConsumerWidget {
               ),
               _Entry(
                 glyph: AppGlyph.account,
-                title: 'Account',
+                title: account == null ? 'Sign in' : 'Profile',
                 subtitle: account == null
-                    ? 'Optional — sign in if you like'
+                    ? 'Optional. The music never needs it.'
                     : account.email ?? account.name ?? 'Signed in',
                 onTap: () {
                   Navigator.of(context).pop();
@@ -78,6 +82,7 @@ class SettingsSheet extends ConsumerWidget {
                 },
               ),
               SizedBox(height: context.spaceM),
+              const LegalLinks(),
               Text(
                 'PureLofi $appVersion',
                 textAlign: TextAlign.center,
@@ -140,6 +145,9 @@ Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    // As tall as what is in it: the default caps a sheet at 9/16 of the
+    // screen, which on a small phone hid the last rows behind a scroll.
+    isScrollControlled: true,
     builder: (BuildContext context) => const SettingsSheet(),
   );
 }

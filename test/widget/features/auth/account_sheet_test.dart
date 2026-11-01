@@ -179,6 +179,24 @@ void main() {
       expect(find.text('Signed in with Apple'), findsOneWidget);
     });
 
+    testWidgets('the profile shows an initial and since when', (tester) async {
+      await open(
+        tester,
+        FakeAuthRepository(
+          signedIn: account.copyWith(memberSince: DateTime(2026, 10, 30, 12)),
+        ),
+      );
+
+      expect(find.text('M'), findsOneWidget);
+      expect(find.text('Member since October 2026'), findsOneWidget);
+    });
+
+    testWidgets('no date known, no member line', (tester) async {
+      await open(tester, FakeAuthRepository(signedIn: account));
+
+      expect(find.textContaining('Member since'), findsNothing);
+    });
+
     testWidgets('signs out', (tester) async {
       await open(tester, FakeAuthRepository(signedIn: account));
 
