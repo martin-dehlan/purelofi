@@ -6,7 +6,6 @@
   var ctx = canvas.getContext("2d");
   var ride = document.getElementById("ride");
   var phoneEl = document.getElementById("phone");
-  var barEl = document.getElementById("bar");
   var barClock = document.getElementById("barClock");
   var wave = document.getElementById("barWave").getContext("2d");
   var momentEls = Array.prototype.slice.call(document.querySelectorAll("#moments li"));
@@ -117,11 +116,14 @@
       var im = images[l.src];
       if (!ready(im)) return;
       var f = 0;
-      if (l.ev) {
-        if (active.key !== slug + ":" + l.ev) return;
-        f = Math.floor(((t - active.start) / l.d) * l.f);
-        if (f >= l.f) return;
-      } else if (l.f > 1 && l.d && !reduce) f = Math.floor((t / l.d) * l.f) % l.f;
+      // as the app's scheduler does it: a layer that waits for a cue loops
+      // its idle frames (the sleeping cat) or rests on its first, and plays
+      // the frames after them once when its moment comes
+      var fps = l.d ? l.f / l.d : 0, idle = l.idle || 0;
+      if (l.ev && active.key === slug + ":" + l.ev) f = Math.min(l.f - 1, idle + Math.floor((t - active.start) * fps));
+      else if (reduce || !fps) f = 0;
+      else if (idle > 1) f = Math.floor(t * fps) % idle;
+      else if (!l.ev && l.f > 1) f = Math.floor(t * fps) % l.f;
       if (l.tile) {
         for (var x = 0; x < 320; x += l.w) {
           if (l.w === l.h) for (var y = 0; y < sc.h; y += l.h) frame(c, im, l.f, f, x, y);
@@ -199,7 +201,8 @@
       var key = list[n % list.length]; n += 1;
       var l = SCENES[STOPS[i].room].layers.filter(function (x) { return x.ev === key; })[0];
       active = { key: STOPS[i].room + ":" + key, start: performance.now() / 1000, l: l, name: key };
-      timer = setTimeout(function () { active.key = null; timer = setTimeout(fire, 2500 + Math.random() * 2500); }, l.d * 1000 + 300);
+      var playFor = (l.f - (l.idle || 0)) / (l.f / l.d);
+      timer = setTimeout(function () { active.key = null; timer = setTimeout(fire, 2500 + Math.random() * 2500); }, playFor * 1000 + 300);
     }
     timer = setTimeout(fire, 1100);
   }
@@ -246,14 +249,11 @@
     if (ctx.roundRect) ctx.roundRect(px, py, PW, PH, 44); else ctx.rect(px, py, PW, PH);
     ctx.clip();
     ctx.drawImage(roomA, px, py);
-    // the app's bar comes up over the studio and the train, on its scrim
-    var barW = [1, 2].reduce(function (s, j) { return s + (j === i ? 1 - k : j === i + 1 ? k : 0); }, 0);
-    var barO = step4(clamp((barW - 0.5) * 2, 0, 1));
-    if (barO > 0) { ctx.globalAlpha = barO * 0.3; ctx.fillStyle = "#000"; ctx.fillRect(px, py, PW, PH); ctx.globalAlpha = 1; }
+    // the app's bar over every room, on its scrim
+    ctx.globalAlpha = 0.3; ctx.fillStyle = "#000"; ctx.fillRect(px, py, PW, PH); ctx.globalAlpha = 1;
     ctx.restore();
     phoneEl.style.transform = "translate(" + px + "px," + py + "px)";
-    barEl.style.opacity = barO;
-    if (barO > 0) drawBar(t);
+    drawBar(t);
 
     // copy: the outgoing room leaves before the next one speaks
     stopEls.forEach(function (el, j) {

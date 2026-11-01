@@ -19,7 +19,7 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .phone{position:absolute;left:0;top:0;border-radius:44px;box-shadow:0 0 0 10px #1D1228,0 0 0 11px var(--rim),0 40px 90px -20px rgba(3,3,8,.75);pointer-events:none}
 @font-face{font-family:'DM Mono';src:url(a/DMMono-Regular.ttf) format('truetype');font-display:swap}
 /* the app's own bottom bar, as PlayerControls draws it: clock, title, waveform, transport */
-.bar{position:absolute;left:0;right:0;bottom:0;padding:11px 16px 23px;opacity:0;--on:#E7E1DE;--onv:#CBC5C2}
+.bar{position:absolute;left:0;right:0;bottom:0;padding:11px 16px 23px;--on:#E7E1DE;--onv:#CBC5C2}
 .bar-line{display:flex;align-items:center;gap:11px;font-size:13px;line-height:1.2}
 .bar-clock{font-family:'DM Mono',ui-monospace,monospace;color:var(--onv)}
 .bar-title{flex:1;color:var(--on)}
