@@ -19,4 +19,4 @@ One page and three legal pages, plain HTML, no build step.
 Deploy the folder with the Vercel CLI (framework: Other) and point
 `purelofi.app` at it.
 
-Fonts: Karla and Pixelify Sans, both under the SIL Open Font License (`a/OFL-*.txt`).
+Fonts: Karla, DM Mono and Pixelify Sans, all under the SIL Open Font License (`a/OFL-*.txt`).
