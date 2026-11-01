@@ -44,6 +44,8 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 
 .stores{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
 .store{display:inline-flex;align-items:center;gap:10px;min-height:54px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:700;font-size:17px;line-height:1.1}
+.store span{display:flex;flex-direction:column}
+.store small{font-weight:500;font-size:11px;opacity:.7}
 .store svg{width:22px;height:22px;flex:none;fill:currentColor}
 .store-a{background:var(--lamp);color:var(--ink);transition:background .2s,color .2s}
 .store-a:hover{background:var(--paper);color:var(--ink)}
