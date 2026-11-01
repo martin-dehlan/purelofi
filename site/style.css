@@ -17,15 +17,22 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 #world{position:absolute;inset:0;image-rendering:pixelated}
 
 .phone{position:absolute;left:0;top:0;border-radius:44px;box-shadow:0 0 0 10px #1D1228,0 0 0 11px var(--rim),0 40px 90px -20px rgba(3,3,8,.75);pointer-events:none}
-.lock{position:absolute;inset:0;border-radius:44px;display:flex;flex-direction:column;align-items:center;padding:48px 14px 18px;opacity:0}
-.np{margin-top:auto;width:100%;padding:14px 16px 12px;border-radius:24px;background:#130C1F;box-shadow:inset 0 0 0 1px #281932}
-.np-head{display:flex;gap:12px;align-items:center}
-.np-art{width:44px;height:44px;border-radius:8px;background:#20384A url(a/night_train_cover.png) center/cover no-repeat}
-.np-meta{display:flex;flex-direction:column;font-size:15px;line-height:1.25}
-.np-meta span{font-size:13px;color:var(--mist)}
-.np-bar{margin-top:14px;height:4px;border-radius:2px;background:#3D2544}
-.np-bar span{display:block;width:38%;height:100%;border-radius:2px;background:var(--paper)}
-.np-ctrl{display:flex;justify-content:space-around;align-items:center;margin-top:12px}
+@font-face{font-family:'DM Mono';src:url(a/DMMono-Regular.ttf) format('truetype');font-display:swap}
+/* the app's own bottom bar, as PlayerControls draws it: clock, title, waveform, transport */
+.bar{position:absolute;left:0;right:0;bottom:0;padding:11px 16px 23px;opacity:0;--on:#E7E1DE;--onv:#CBC5C2}
+.bar-line{display:flex;align-items:center;gap:11px;font-size:13px;line-height:1.2}
+.bar-clock{font-family:'DM Mono',ui-monospace,monospace;color:var(--onv)}
+.bar-title{flex:1;color:var(--on)}
+.bar-wave{display:block;width:100%;height:34px;margin-top:6px}
+.bar-ctrl{display:flex;align-items:center;justify-content:center;gap:11px;margin-top:11px;color:var(--on)}
+.bar-ctrl svg{fill:currentColor}
+.g-heart{width:13px;height:13px;fill:none!important;stroke:var(--onv);stroke-width:2.4;stroke-linejoin:round}
+.g-mode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 0;margin-right:auto;color:var(--lamp)}
+.g-mode i{width:3px;height:3px;border-radius:50%;background:currentColor}
+.g-line{width:18px;height:18px;fill:none!important;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.g-step{width:22px;height:22px;padding:6px;box-sizing:content-box}
+.g-play{width:42px;height:42px;padding:6px;box-sizing:content-box}
+.g-side{width:18px;height:18px;margin-left:auto;fill:var(--onv)!important}
 
 .wordmark{position:absolute;left:max(28px,env(safe-area-inset-left,0px));top:max(22px,env(safe-area-inset-top,0px));font-family:var(--display);font-size:24px;color:var(--paper);text-decoration:none;z-index:2}
 
@@ -36,7 +43,9 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .stop p{margin:0;font-size:clamp(17px,1.3vw,20px);line-height:1.55;color:var(--paper);opacity:.82;max-width:34ch}
 
 .stores{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-.store{display:inline-flex;flex-direction:column;justify-content:center;min-height:54px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:700;font-size:17px;line-height:1.1}
+.store{display:inline-flex;align-items:center;gap:10px;min-height:54px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:700;font-size:17px;line-height:1.1}
+.store span{display:flex;flex-direction:column}
+.store svg{width:22px;height:22px;flex:none;fill:currentColor}
 .store small{font-weight:500;font-size:11px;opacity:.7}
 .store-a{background:var(--lamp);color:var(--ink)}
 .store-b{color:var(--paper);box-shadow:inset 0 0 0 1.5px rgba(255,242,232,.35)}
@@ -50,17 +59,21 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .credits dd{margin:0}
 .credits dd:last-of-type{color:var(--lamp)}
 
-.thumbs{list-style:none;display:grid;grid-template-columns:repeat(7,56px);gap:10px;margin:32px 0 0;padding:0;font-size:12px;color:var(--mist)}
+.thumbs{list-style:none;display:grid;grid-template-columns:repeat(4,56px);gap:16px 10px;margin:32px 0 0;padding:0;font-size:12px;color:var(--mist)}
 .thumbs li{display:flex;flex-direction:column;gap:8px;padding-top:86px;font-size:11px;position:relative;white-space:nowrap}
+/* the next room, still to come: an empty frame */
+.thumbs .more::before{content:"+";position:absolute;left:0;top:0;width:56px;height:76px;box-sizing:border-box;border:1.5px dashed rgba(146,181,187,.45);border-radius:2px;display:grid;place-items:center;font-family:var(--display);font-size:22px;color:rgba(146,181,187,.6)}
 
 .plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:28px 0 0;padding-top:20px;box-shadow:inset 0 1px 0 rgba(255,242,232,.18);max-width:420px}
 .plans dt{font-size:15px;color:var(--mist);margin-bottom:6px}
 .plans dd{margin:0;font-size:15px;line-height:1.4}
 .plans strong{display:block;font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;color:var(--paper)}
 .stop p.small{margin-top:16px;font-size:14px;opacity:.65}
-.callout{position:absolute;left:0;top:0;display:flex;flex-direction:row-reverse;align-items:center;gap:10px;opacity:0;transition:opacity .35s;pointer-events:none}
-.callout-line{display:block;height:2px;background:var(--lamp-hi)}
-.callout-text{font-size:16px;font-weight:600;color:var(--lamp-hi);white-space:nowrap}
+/* the bookshop's moments: the one happening in the phone lights up */
+.moments{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:12px;font-size:15px;color:var(--mist)}
+.moments li{display:flex;align-items:center;gap:12px;opacity:.55;transition:opacity .4s,color .4s}
+.moments li::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.moments li.on{opacity:1;color:var(--lamp-hi)}
 
 .foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 32px;padding:36px max(28px,env(safe-area-inset-right,0px)) 36px max(28px,env(safe-area-inset-left,0px));background:var(--ink)}
 .foot-mark{font-family:var(--display);font-size:20px}
@@ -76,9 +89,10 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
   .stores{margin-top:18px}
   .store{min-height:46px;padding:0 16px;font-size:15px}
   .credits{margin-top:16px;font-size:15px;gap:6px 20px}
-  .thumbs{grid-template-columns:repeat(7,40px);gap:6px;margin-top:16px}
+  .thumbs{grid-template-columns:repeat(8,40px);gap:6px;margin-top:16px}
   .thumbs li{padding-top:56px;font-size:0}
-  .callout-text{font-size:14px}
+  .thumbs .more::before{width:40px;height:52px;font-size:16px}
+  .moments{margin-top:14px;gap:8px;font-size:14px}
   .plans{margin-top:14px;padding-top:12px;gap:16px}
   .plans strong{font-size:22px}
   .stop p.small{display:none}

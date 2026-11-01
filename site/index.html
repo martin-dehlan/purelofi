@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" href="a/favicon.png">
 <link rel="apple-touch-icon" href="a/apple-touch-icon.png">
 <meta name="theme-color" content="#0D1A2E">
-<meta name="description" content="A lo-fi player for iPhone and Android. Every track is made by people, and each one plays in a pixel room that moves with the music.">
+<meta name="description" content="A lo-fi player for iPhone and Android. Every track is made by people and each one plays in a pixel room that moves with the music.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,50 +20,54 @@
 <div class="stage">
 <canvas id="world" aria-hidden="true"></canvas>
 <div class="phone" id="phone" aria-hidden="true">
-<div class="lock" id="lock">
-<div class="np">
-<div class="np-head"><span class="np-art" role="img" aria-label="Night Train"></span><span class="np-meta"><strong>Travel Lofi</strong><span>Night Train</span></span></div>
-<div class="np-bar"><span></span></div>
-<div class="np-ctrl">
-<svg width="22" height="16" viewBox="0 0 22 16"><path d="M2 2h2v12H2zM12 2h2v12h-2v-2h-2v-2H8V6h2V4h2zM20 2h2v12h-2v-2h-2v-2h-2V6h2V4h2z" fill="currentColor"/></svg>
-<svg width="18" height="20" viewBox="0 0 18 20"><path d="M3 2h4v16H3zM11 2h4v16h-4z" fill="currentColor"/></svg>
-<svg width="22" height="16" viewBox="0 0 22 16"><path d="M18 2h2v12h-2zM8 2h2v2h2v2h2v4h-2v2h-2v2H8zM0 2h2v2h2v2h2v4H4v2H2v2H0z" fill="currentColor"/></svg>
+<div class="bar" id="bar">
+<div class="bar-line"><span class="bar-clock" id="barClock">0:00</span><span class="bar-title">Travel Lofi</span><svg class="g-heart" viewBox="0 0 24 24"><path d="M12 20.5C12 20.5 3 15 3 9C3 6 5.2 4 7.8 4C9.6 4 11.1 5 12 6.5C12.9 5 14.4 4 16.2 4C18.8 4 21 6 21 9C21 15 12 20.5 12 20.5Z" transform="translate(1.44 1.5) scale(.88)"/></svg></div>
+<canvas class="bar-wave" id="barWave" width="288" height="34"></canvas>
+<div class="bar-ctrl">
+<span class="g-mode"><svg class="g-line" viewBox="0 0 24 24"><path d="M4 7H7.5C12 7 12 17 16.5 17H19.5M4 17H7.5C12 17 12 7 16.5 7H19.5M17 4.5L19.5 7L17 9.5M17 14.5L19.5 17L17 19.5"/></svg><i></i></span>
+<svg class="g-step" viewBox="0 0 24 24"><path d="M17 5.5L6 12L17 18.5Z"/></svg>
+<svg class="g-play" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.1"/><rect x="14" y="5" width="4" height="14" rx="1.1"/></svg>
+<svg class="g-step" viewBox="0 0 24 24"><path d="M7 5.5L18 12L7 18.5Z"/></svg>
+<svg class="g-side" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="2.6" rx="1.1"/><rect x="4" y="10.2" width="16" height="2.6" rx="1.1"/><rect x="4" y="15.4" width="8" height="2.6" rx="1.1"/><path d="M15 14L20.5 17.2L15 20.4Z"/></svg>
 </div>
 </div>
 </div>
-</div>
-<div class="callout" id="callout" aria-hidden="true"><span class="callout-line"></span><span class="callout-text" id="calloutText"></span></div>
 
 <a class="wordmark" href="#ride">PureLofi</a>
 
 <article class="stop s-rain" data-room="rainy_room">
 <h1>Real music.<br>Pixel rooms.</h1>
-<p>A lo-fi player for iPhone and Android. Put a room on, leave it running while you work, and let it rain.</p>
+<p>A lo-fi player for iPhone and Android. Put a room on, leave it running while you work and let it rain.</p>
 <div class="stores">
-<span class="store store-a"><small>Coming soon to the</small>App Store</span>
-<span class="store store-b"><small>Coming soon to</small>Google Play</span>
+<a class="store store-a" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span><small>Download on the</small>App Store</span></a>
+<a class="store store-b" href="https://play.google.com/store/apps/details?id=app.purelofi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg><span><small>Get it on</small>Google Play</span></a>
 </div>
 <p class="cue" aria-hidden="true">Scroll to change rooms</p>
 </article>
 
 <article class="stop s-studio" data-room="home_studio">
 <h2>Made by people.</h2>
-<p>Every track in the app comes from a lo-fi musician. We bring their music in, and none of it is made by AI.</p>
+<p>We pick every track by hand, from lo-fi artists we love listening to. Nothing in the app is made by AI.</p>
 </article>
 
 <article class="stop s-train" data-room="night_train">
-<h2>Keeps playing with the screen off.</h2>
-<p>Lock your phone or switch to another app and the music keeps going. Rooms you have opened before work without a connection, too.</p>
+<h2>It just keeps going.</h2>
+<p>One track runs into the next for as long as you leave it on. Good for a long night or a long trip.</p>
 </article>
 
 <article class="stop s-shop" data-room="autumn_bookshop">
-<h2>The rooms move.</h2>
-<p>Every now and then the cat wakes up or someone walks past the window. None of it is timed to the music.</p>
+<h2>Look closer.</h2>
+<p>Every room is full of small things. Leave one on and they happen in their own time.</p>
+<ul class="moments" id="moments">
+<li data-ev="cat">The cat wakes up</li>
+<li data-ev="passerby">Someone walks past</li>
+<li data-ev="gust">The wind takes a few leaves</li>
+</ul>
 </article>
 
 <article class="stop s-snow" data-room="snow_cabin">
-<h2>Seven rooms.</h2>
-<p>A rainy flat, a cabin in the snow, a laundromat at night and four more. Switch whenever you like.</p>
+<h2>Pick your room.</h2>
+<p>A rainy flat, a cabin in the snow, a laundromat at night and more. Switch whenever you like. New rooms keep coming.</p>
 <ul class="thumbs" id="thumbs">
 <li data-room="rainy_room">Rainy Room</li>
 <li data-room="autumn_bookshop">Bookshop</li>
@@ -72,20 +76,22 @@
 <li data-room="home_studio">Studio</li>
 <li data-room="snow_cabin">Cabin</li>
 <li data-room="rooftop_dusk">Rooftop</li>
+<li class="more">More soon</li>
 </ul>
 </article>
 
 <article class="stop s-roof" data-room="rooftop_dusk">
-<h2>Pick a room.<br>Press play.</h2>
-<p>The app is free and you don't need an account. Two rooms are always free. Pro unlocks the other five.</p>
+<h2>Keep it human.</h2>
+<p>The app is free and you don't need an account. Two rooms are always free. If you like what we do, Pro opens every room and keeps lo-fi made by people going.</p>
 <dl class="plans">
 <div><dt>Monthly</dt><dd><strong>$4.99</strong> a month</dd></div>
 <div><dt>Yearly</dt><dd><strong>$29.99</strong> a year, try it free for 7 days</dd></div>
 </dl>
 <p class="small">Cancel any time in your App Store or Google Play settings.</p>
+<p class="small">Plays on with your phone locked. Rooms you have opened before work offline.</p>
 <div class="stores">
-<span class="store store-a"><small>Coming soon to the</small>App Store</span>
-<span class="store store-b"><small>Coming soon to</small>Google Play</span>
+<a class="store store-a" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span><small>Download on the</small>App Store</span></a>
+<a class="store store-b" href="https://play.google.com/store/apps/details?id=app.purelofi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg><span><small>Get it on</small>Google Play</span></a>
 </div>
 </article>
 </div>

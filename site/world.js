@@ -6,21 +6,18 @@
   var ctx = canvas.getContext("2d");
   var ride = document.getElementById("ride");
   var phoneEl = document.getElementById("phone");
-  var lockEl = document.getElementById("lock");
-  var callout = document.getElementById("callout");
-  var calloutText = document.getElementById("calloutText");
-  var calloutLine = callout.querySelector(".callout-line");
+  var barEl = document.getElementById("bar");
+  var barClock = document.getElementById("barClock");
+  var wave = document.getElementById("barWave").getContext("2d");
+  var momentEls = Array.prototype.slice.call(document.querySelectorAll("#moments li"));
   var stopEls = Array.prototype.slice.call(document.querySelectorAll(".stop"));
-  var thumbEls = Array.prototype.slice.call(document.querySelectorAll("#thumbs li"));
+  var thumbEls = Array.prototype.slice.call(document.querySelectorAll("#thumbs li[data-room]"));
 
   // ---- images ----
   var images = {};
   function img(src) { if (!images[src]) { var i = new Image(); i.src = src; images[src] = i; } return images[src]; }
   function ready(i) { return i && i.complete && i.naturalWidth > 0; }
   Object.keys(SCENES).forEach(function (k) { SCENES[k].layers.forEach(function (l) { img(l.src); }); });
-  var RAINFAR = img("a/laundromat__L03_rainfar_6f.png"), RAINNEAR = img("a/laundromat__L04_rainnear_5f.png");
-  var SNOWFAR = img("a/snow_cabin__L03_snowfar_46f.png"), SNOWNEAR = img("a/snow_cabin__L04_snownear_31f.png");
-  var LEAVESFAR = img("a/autumn_bookshop__L02_leavesfar_53f.png"), LEAVESNEAR = img("a/autumn_bookshop__L03_leavesnear_47f.png");
   var HILLS = img("a/night_train__L02_hills_64f.png"), POLES = img("a/night_train__L04_poles_16f.png");
   var BIRDS = img("a/ev__rooftop_dusk__L15_birds_91f.png");
 
@@ -43,25 +40,53 @@
     { room: "snow_cabin", bg: "#16293C", side: 0.28, focus: 450, weather: snow, events: ["sparks", "clump"] },
     { room: "rooftop_dusk", bg: "#30384F", side: 0.7, focus: 420, weather: birds, events: ["dog", "plane"] }
   ];
-  var CALLOUTS = {
-    cat: "The cat wakes up.",
-    passerby: "Someone walks past.",
-    gust: "A gust takes a few leaves."
-  };
   var THUMB = {
     rainy_room: [110, 230], autumn_bookshop: [16, 400], laundromat: [70, 470], night_train: [170, 380],
-    home_studio: [104, 420], snow_cabin: [8, 470], rooftop_dusk: [210, 450]
+    home_studio: [104, 420], snow_cabin: [16, 522], rooftop_dusk: [180, 240]
   };
 
   // ---- weather that fills the page ----
-  function tiles(im, frames, fps, t, size, ox, oy) {
-    if (!ready(im)) return;
-    var f = Math.floor(t * fps), w = im.naturalWidth / frames, h = im.naturalHeight;
-    for (var y = (oy || 0) % h - h; y < H; y += h) for (var x = (ox || 0) % w - w; x < W; x += w) frame(ctx, im, frames, f, x, y);
+  // rain: single drops, each with its own place, speed and length, so no
+  // tile or loop shows; quiet next to the room's own rain inside the phone
+  function hash(n) { n = Math.sin(n * 127.1) * 43758.5453; return n - Math.floor(n); }
+  function rain(t) {
+    var n = Math.round(W * H / 7000), base = ctx.globalAlpha;
+    for (var i = 0; i < n; i++) {
+      var near = i % 4 === 0, len = near ? 6 + Math.floor(hash(i + 3) * 4) : 3 + Math.floor(hash(i + 3) * 3);
+      var v = (near ? 150 : 90) * (0.85 + hash(i + 7) * 0.3);
+      var y = (hash(i) * (H + 40) + t * v) % (H + 40) - 20;
+      var x = Math.round((hash(i + 11) * (W + 40) - y * 0.12 + W + 40) % (W + 40)) - 20;
+      ctx.globalAlpha = base * (near ? 0.35 : 0.2);
+      ctx.fillStyle = near ? "#7B9AA2" : "#4E6471";
+      ctx.fillRect(x, Math.round(y), 1, len);
+    }
+    ctx.globalAlpha = base;
   }
-  function rain(t) { tiles(RAINFAR, 6, 12, t); tiles(RAINNEAR, 5, 12, t, 0, 37, 11); }
-  function snow(t) { tiles(SNOWFAR, 46, 12, t); tiles(SNOWNEAR, 31, 12, t, 0, 50, 20); }
-  function leaves(t) { tiles(LEAVESFAR, 53, 4, t); tiles(LEAVESNEAR, 47, 8, t, 0, 60, 30); }
+  // snow and leaves the same way, drifting as they fall: each piece sways
+  // on its own period, and leaves tumble between a wide and a tall shape
+  function drift(t, o) {
+    var n = Math.round(W * H / o.per), base = ctx.globalAlpha;
+    for (var i = 0; i < n; i++) {
+      var near = i % 3 === 0, v = (near ? o.fast : o.slow) * (0.8 + hash(i + 7) * 0.4);
+      var y = (hash(i) * (H + 40) + t * v) % (H + 40) - 20;
+      var sway = Math.sin(t / (2 + hash(i + 5) * 3) * Math.PI * 2 + i) * (near ? o.sway : o.sway / 2);
+      var x = Math.round((hash(i + 11) * (W + 40) + t * o.wind + sway) % (W + 40)) - 20;
+      var c = o.colors[near ? 1 : 0];
+      ctx.globalAlpha = base * (near ? o.alpha[1] : o.alpha[0]);
+      ctx.fillStyle = c[Math.floor(hash(i + 13) * c.length)];
+      var s = near ? o.size[1] : o.size[0], wide = o.tumble && Math.floor(t * (1 + hash(i + 17)) + i) % 2;
+      ctx.fillRect(x, Math.round(y), wide ? s + 1 : s, wide ? s : s + (o.tumble ? 1 : 0));
+    }
+    ctx.globalAlpha = base;
+  }
+  function snow(t) {
+    drift(t, { per: 6000, slow: 16, fast: 30, sway: 8, wind: 4, size: [1, 2], alpha: [0.35, 0.6],
+      colors: [["#7B9AA2", "#92B5BB"], ["#B6E2E3", "#FFF2E8"]] });
+  }
+  function leaves(t) {
+    drift(t, { per: 30000, slow: 22, fast: 38, sway: 18, wind: 14, size: [2, 3], alpha: [0.45, 0.8], tumble: true,
+      colors: [["#8A4A2A", "#C06A33", "#A64954"], ["#D17055", "#F0A05D", "#DB7D48"]] });
+  }
   // outside the train: hills and poles slide past along the bottom of the page
   function journey(t) {
     if (!ready(HILLS) || !ready(POLES)) return;
@@ -118,6 +143,25 @@
       masks[level] = ca.createPattern(m, "repeat");
     }
     return masks[level];
+  }
+
+  // ---- the bar: Waveform's 57 bars, played solid and the rest dashed ----
+  var TRACK = 151, BARS = [];
+  for (var n = 0; n < 57; n++) {
+    var swell = 0.55 + 0.45 * Math.sin(n / 57 * Math.PI * 3);
+    BARS.push(clamp(0.15 + 0.85 * (swell * 0.6 + hash(n + 40) * 0.4), 0.15, 1));
+  }
+  function drawBar(t) {
+    var sec = (40 + t) % TRACK, played = Math.round(57 * sec / TRACK);
+    barClock.textContent = Math.floor(sec / 60) + ":" + ("0" + Math.floor(sec % 60)).slice(-2);
+    var cw = wave.canvas.width, ch = wave.canvas.height, slot = cw / 57, bw = Math.round(clamp(slot * 0.5, 1, 4)), mid = ch / 2;
+    wave.clearRect(0, 0, cw, ch);
+    for (var j = 0; j < 57; j++) {
+      var x = Math.round(j * slot + (slot - bw) / 2), full = Math.round(BARS[j] * mid);
+      if (j < played) { wave.fillStyle = "#E7E1DE"; wave.fillRect(x, mid - full, bw, full * 2); continue; }
+      wave.fillStyle = "rgba(203,197,194,.45)";
+      for (var y = mid - full; y < mid + full; y += 4) wave.fillRect(x, y, bw, Math.min(2, mid + full - y));
+    }
   }
 
   // ---- layout ----
@@ -202,12 +246,14 @@
     if (ctx.roundRect) ctx.roundRect(px, py, PW, PH, 44); else ctx.rect(px, py, PW, PH);
     ctx.clip();
     ctx.drawImage(roomA, px, py);
-    // the train room goes dark behind the lock screen
-    var trainW = here === 2 ? (here === i ? 1 - k : k) : 0;
-    if (trainW > 0) { ctx.globalAlpha = step4(trainW) * 0.55; ctx.fillStyle = "#030308"; ctx.fillRect(px, py, PW, PH); ctx.globalAlpha = 1; }
+    // the app's bar comes up over the studio and the train, on its scrim
+    var barW = [1, 2].reduce(function (s, j) { return s + (j === i ? 1 - k : j === i + 1 ? k : 0); }, 0);
+    var barO = step4(clamp((barW - 0.5) * 2, 0, 1));
+    if (barO > 0) { ctx.globalAlpha = barO * 0.3; ctx.fillStyle = "#000"; ctx.fillRect(px, py, PW, PH); ctx.globalAlpha = 1; }
     ctx.restore();
     phoneEl.style.transform = "translate(" + px + "px," + py + "px)";
-    lockEl.style.opacity = step4(clamp((trainW - 0.5) * 2, 0, 1));
+    barEl.style.opacity = barO;
+    if (barO > 0) drawBar(t);
 
     // copy: the outgoing room leaves before the next one speaks
     stopEls.forEach(function (el, j) {
@@ -231,17 +277,9 @@
       ctx.globalAlpha = 1;
     }
 
-    // a note pointing at whatever just happened in the bookshop
-    var shopW = here === 3 ? (here === i ? 1 - k : k) : 0;
-    if (!mobile && shopW > 0.8 && active.key && CALLOUTS[active.name]) {
-      var l = active.l, y0 = cropY(STOPS[3], PH);
-      var tx = px + l.x + l.w / 2, ty = py + l.y - y0 + l.h / 2;
-      calloutText.textContent = CALLOUTS[active.name];
-      var len = Math.max(24, tx - px + 36);
-      calloutLine.style.width = len + "px";
-      callout.style.transform = "translate(" + Math.round(tx - len - calloutText.offsetWidth - 10) + "px," + Math.round(ty - 10) + "px)";
-      callout.style.opacity = 1;
-    } else callout.style.opacity = 0;
+    // in the bookshop, the moment happening in the phone lights up beside it
+    var lit = here === 3 && active.key ? active.name : null;
+    momentEls.forEach(function (li) { li.classList.toggle("on", li.dataset.ev === lit); });
 
     requestAnimationFrame(draw);
   }
