@@ -13,7 +13,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
-import '../widgets/settings_button.widget.dart';
+import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
@@ -129,7 +129,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ignoring: !controlsVisible,
                 child: const Align(
                   alignment: Alignment.topRight,
-                  child: SafeArea(child: SettingsButton()),
+                  child: SafeArea(child: MenuButton()),
                 ),
               ),
             ),

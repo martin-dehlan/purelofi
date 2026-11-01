@@ -119,22 +119,17 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: context.spaceXs),
-              Text(
-                'Optional. The music never needs it.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
-                ),
-              ),
               SizedBox(height: context.spaceL),
             ],
             body,
             if (_error != null) ...<Widget>[
               SizedBox(height: context.spaceM),
-              Text(
-                _error!,
-                style: TextStyle(color: cs.error, fontSize: context.fontS),
+              Center(
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.error, fontSize: context.fontS),
+                ),
               ),
             ],
           ],

@@ -26,6 +26,10 @@ enum AppGlyph {
   more,
   account,
   remove,
+  timer,
+  settings,
+  share,
+  mail,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -71,6 +75,10 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.search,
     AppGlyph.check,
     AppGlyph.heartOutline,
+    AppGlyph.timer,
+    AppGlyph.settings,
+    AppGlyph.share,
+    AppGlyph.mail,
   };
 
   @override
@@ -208,6 +216,47 @@ class _GlyphPainter extends CustomPainter {
           ..close();
       case AppGlyph.remove:
         p.addRRect(_bar(4, 10.7, 16, 2.6));
+      case AppGlyph.timer:
+        // A stopwatch: a face, one hand, the button on top.
+        p
+          ..addOval(Rect.fromCircle(center: const Offset(12, 13.5), radius: 7))
+          ..moveTo(12, 13.5)
+          ..lineTo(12, 10)
+          ..moveTo(10, 3.5)
+          ..lineTo(14, 3.5);
+      case AppGlyph.settings:
+        // Two sliders, set differently.
+        p
+          ..moveTo(4, 8)
+          ..lineTo(6.5, 8)
+          ..addOval(Rect.fromCircle(center: const Offset(9, 8), radius: 2.5))
+          ..moveTo(11.5, 8)
+          ..lineTo(20, 8)
+          ..moveTo(4, 16)
+          ..lineTo(12.5, 16)
+          ..addOval(Rect.fromCircle(center: const Offset(15, 16), radius: 2.5))
+          ..moveTo(17.5, 16)
+          ..lineTo(20, 16);
+      case AppGlyph.share:
+        // An arrow leaving an open box.
+        p
+          ..moveTo(12, 14)
+          ..lineTo(12, 3.5)
+          ..moveTo(8.5, 7)
+          ..lineTo(12, 3.5)
+          ..lineTo(15.5, 7)
+          ..moveTo(8.5, 10.5)
+          ..lineTo(5.5, 10.5)
+          ..lineTo(5.5, 20)
+          ..lineTo(18.5, 20)
+          ..lineTo(18.5, 10.5)
+          ..lineTo(15.5, 10.5);
+      case AppGlyph.mail:
+        p
+          ..addRRect(_bar(3.5, 5.5, 17, 13, radius: 2))
+          ..moveTo(4.5, 7.5)
+          ..lineTo(12, 13)
+          ..lineTo(19.5, 7.5);
     }
     return p;
   }

@@ -11,11 +11,13 @@ import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
+import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
+import '../domain/display_preferences.service.dart';
 import '../domain/favorites.repository.dart';
 import '../domain/playback_preferences.service.dart';
 import '../domain/track.entity.dart';
@@ -79,6 +81,10 @@ ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
 /// memory.
 @Riverpod(keepAlive: true)
 PlaybackPreferences playbackPreferences(Ref ref) => PlaybackPreferencesImpl();
+
+/// Where the player's look is kept: for now, whether the controls hide.
+@Riverpod(keepAlive: true)
+DisplayPreferences displayPreferences(Ref ref) => DisplayPreferencesImpl();
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);

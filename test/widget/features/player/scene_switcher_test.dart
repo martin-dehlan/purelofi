@@ -53,7 +53,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Change scene');
+    await tapMenuEntry(tester, 'Change room');
   }
 
   testWidgets('shows rows in the shape of the list while it loads', (
@@ -189,4 +189,7 @@ class _GatedCache implements MediaCache {
 
   @override
   Future<void> evict() async {}
+
+  @override
+  Future<void> clear() async {}
 }

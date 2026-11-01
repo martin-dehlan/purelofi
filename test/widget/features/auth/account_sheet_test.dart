@@ -21,11 +21,10 @@ void main() {
   }
 
   group('signed out', () {
-    testWidgets('offers the ways in, and says it is optional', (tester) async {
+    testWidgets('offers the ways in', (tester) async {
       await open(tester, FakeAuthRepository(apple: true));
 
       expect(find.text('Sign in'), findsOneWidget);
-      expect(find.text('Optional. The music never needs it.'), findsOneWidget);
       expect(find.byType(SignInWithAppleButton), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
       expect(find.text('Continue with email'), findsOneWidget);

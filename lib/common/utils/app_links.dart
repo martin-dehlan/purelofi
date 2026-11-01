@@ -9,6 +9,16 @@ abstract final class AppLinks {
   static final Uri privacy = Uri.parse('https://purelofi.app/privacy');
   static final Uri imprint = Uri.parse('https://purelofi.app/imprint');
 
+  /// The site, for sharing the app with someone.
+  static final Uri home = Uri.parse('https://purelofi.app');
+
+  /// A mail to us, with the subject filled in.
+  static final Uri feedback = Uri(
+    scheme: 'mailto',
+    path: 'contact@purelofi.app',
+    query: 'subject=PureLofi feedback',
+  );
+
   /// Opens [uri] outside the app. A link that will not open is not worth an
   /// error: the listener is still exactly where they were.
   static Future<void> open(Uri uri) async {

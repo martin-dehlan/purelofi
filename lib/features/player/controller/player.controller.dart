@@ -447,5 +447,10 @@ class PlayerController extends _$PlayerController {
     }
   }
 
+  /// Stops the music where it is, for the sleep timer.
+  Future<void> pause() async {
+    if (state.isPlaying) await ref.read(audioPlayerServiceProvider).pause();
+  }
+
   final Random _random = Random();
 }

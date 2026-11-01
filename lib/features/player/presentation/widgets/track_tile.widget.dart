@@ -10,7 +10,6 @@ import '../../../library/presentation/widgets/remove_track_dialog.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
-import 'bts_modal.widget.dart';
 import 'track_cover.widget.dart';
 
 /// One track, the way a music app draws one: a round cover, the title, who
@@ -101,7 +100,7 @@ class TrackTile extends ConsumerWidget {
   }
 }
 
-/// The `⋯`: queue it, mark it, watch it being played, or take it out.
+/// The `⋯`: queue it, mark it, or take it out.
 class _TrackMenu extends ConsumerWidget {
   const _TrackMenu({required this.track});
 
@@ -118,8 +117,6 @@ class _TrackMenu extends ConsumerWidget {
             favorites.hasValue && favorites.value!.contains(track.id),
       ),
     );
-    final bool hasFootage =
-        track.btsVideoUrl != null && track.btsVideoUrl!.isNotEmpty;
     final TextStyle label = TextStyle(fontSize: context.fontM);
     final double icon = context.fontL;
 
@@ -142,11 +139,6 @@ class _TrackMenu extends ConsumerWidget {
               ref.read(favoritesControllerProvider.notifier).toggle(track.id),
             ),
           ),
-        if (hasFootage)
-          item(AppGlyph.camera, 'Behind the scenes', () {
-            Navigator.of(context).pop();
-            unawaited(showBtsModal(context, ref, track));
-          }),
         if (!isCatalogue)
           item(AppGlyph.remove, 'Remove from PureLofi', () async {
             if (!await confirmRemoveTrack(context, track)) return;

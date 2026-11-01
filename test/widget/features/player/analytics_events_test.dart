@@ -59,24 +59,6 @@ void main() {
     expect(analytics.events.first.$2, <String, Object>{'track_id': 'track-1'});
   });
 
-  testWidgets('opening the footage reports bts_opened with the track id', (
-    tester,
-  ) async {
-    await tester.pumpRoutedApp(overrides: overrides());
-    await tester.pumpAndSettle();
-
-    await openMenu(tester);
-    await openFootage(tester);
-
-    expect(analytics.eventNames, contains('bts_opened'));
-    expect(
-      analytics.events
-          .firstWhere(((String, Map<String, Object>) e) => e.$1 == 'bts_opened')
-          .$2,
-      <String, Object>{'track_id': 'track-1'},
-    );
-  });
-
   testWidgets('switching scenes reports scene_switched with the scene id', (
     tester,
   ) async {
@@ -84,7 +66,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Change scene');
+    await tapMenuEntry(tester, 'Change room');
     await tester.tap(find.text('Night Bus'));
     await tester.pumpAndSettle();
 
@@ -102,7 +84,9 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await openFootage(tester);
+    await tapMenuEntry(tester, 'Change room');
+    await tester.tap(find.text('Night Bus'));
+    await tester.pumpAndSettle();
 
     for (final (String, Map<String, Object>) event in analytics.events) {
       expect(

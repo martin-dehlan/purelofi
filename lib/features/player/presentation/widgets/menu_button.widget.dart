@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import 'settings_sheet.widget.dart';
+import 'menu_sheet.widget.dart';
 
 /// The one button that is not about playback, top right of the scene.
-class SettingsButton extends StatelessWidget {
-  const SettingsButton({super.key});
+class MenuButton extends StatelessWidget {
+  const MenuButton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class SettingsButton extends StatelessWidget {
       label: 'Menu',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => unawaited(showSettingsSheet(context)),
+        onTap: () => unawaited(showMenuSheet(context)),
         child: Padding(
           padding: EdgeInsets.all(context.spaceM),
           child: AppIcon(AppGlyph.menu, size: context.screenWidth * 0.07),

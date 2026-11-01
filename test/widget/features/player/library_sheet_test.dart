@@ -108,17 +108,10 @@ void main() {
     expect(find.text('Next in queue'), findsOneWidget);
   });
 
-  testWidgets('a track with footage offers it', (tester) async {
+  testWidgets('the track menu no longer offers footage', (tester) async {
     await start(tester);
 
     await openMore(tester, 'Slow Bass');
-    expect(find.text('Behind the scenes'), findsOneWidget);
-  });
-
-  testWidgets('a track without footage does not', (tester) async {
-    await start(tester);
-
-    await openMore(tester, 'Dusk Tape');
     expect(find.text('Play next'), findsOneWidget);
     expect(find.text('Behind the scenes'), findsNothing);
   });

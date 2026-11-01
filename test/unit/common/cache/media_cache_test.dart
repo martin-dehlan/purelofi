@@ -225,4 +225,21 @@ void main() {
       expect(await cache.sizeInBytes(), 200);
     });
   });
+
+  group('clear', () {
+    test('throws away every file and row', () async {
+      final FileMediaCache cache = cacheWith(
+        client: serving(size: 100),
+        maxBytes: 1000,
+      );
+
+      await cache.store('https://x/one.mp3');
+      await cache.store('https://x/two.mp3');
+      await cache.clear();
+
+      expect(await cache.sizeInBytes(), 0);
+      expect(await cache.fileFor('https://x/one.mp3'), isNull);
+      expect(directory.listSync(), isEmpty);
+    });
+  });
 }

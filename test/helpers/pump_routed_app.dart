@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
@@ -12,6 +12,7 @@ import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
 
 import 'fake_auth.repository.dart';
+import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
@@ -54,6 +55,7 @@ List<Override> _fakeLibrary(
     trackPickerProvider.overrideWithValue(picker ?? FakeTrackPicker()),
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
+    displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
   ];
 }
 
@@ -144,7 +146,7 @@ extension PumpRouted on WidgetTester {
 /// Opens the menu top right and waits for the sheet: the scene, the
 /// footage, the account.
 Future<void> openMenu(WidgetTester tester) async {
-  await tester.tap(find.byType(SettingsButton));
+  await tester.tap(find.byType(MenuButton));
   await tester.pumpAndSettle();
 }
 
@@ -176,13 +178,4 @@ Future<void> tapPill(WidgetTester tester, String label) async {
 Future<void> openQueue(WidgetTester tester) async {
   await openLibrary(tester);
   await tapPill(tester, 'Up next');
-}
-
-/// The menu's entry for the playing track's behind-the-scenes clip.
-final Finder footageEntry = find.widgetWithText(ListTile, 'Behind the scenes');
-
-/// Opens the footage from the open menu.
-Future<void> openFootage(WidgetTester tester) async {
-  await tester.tap(footageEntry);
-  await tester.pumpAndSettle();
 }
