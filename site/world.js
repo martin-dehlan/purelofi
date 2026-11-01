@@ -127,7 +127,15 @@
     canvas.style.width = W + "px"; canvas.style.height = H + "px";
     ctx.imageSmoothingEnabled = false;
     mobile = W < 760;
-    PH = mobile ? Math.min(568, Math.round(H * 0.46)) : Math.min(568, H - 150);
+    PH = Math.min(568, H - 150);
+    if (mobile) {
+      // On a phone the copy sits under the phone: make the phone end above
+      // the tallest block of copy, so no room's text runs over the picture.
+      var tallest = 0;
+      stopEls.forEach(function (el) { tallest = Math.max(tallest, el.offsetHeight); });
+      var top = Math.max(64, Math.round(H * 0.08));
+      PH = clamp(H - tallest - 24 - 28 - top, 220, 568);
+    }
     roomA.width = roomB.width = PW; roomA.height = roomB.height = PH;
     phoneEl.style.width = PW + "px"; phoneEl.style.height = PH + "px";
     stopEls.forEach(function (el, i) {
@@ -241,5 +249,7 @@
   addEventListener("scroll", readScroll, { passive: true });
   addEventListener("resize", function () { layout(); readScroll(); });
   layout(); readScroll();
+  // the copy's height depends on the fonts, which may still be on their way
+  if (document.fonts) document.fonts.ready.then(function () { layout(); readScroll(); });
   requestAnimationFrame(draw);
 })();
