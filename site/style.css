@@ -62,7 +62,7 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .credits dd:last-of-type{color:var(--lamp)}
 
 /* a heart in whole pixels, in the lamp's colour */
-.pixel-heart{display:inline-block;width:21px;height:18px;margin-left:4px;vertical-align:-2px;fill:var(--lamp);shape-rendering:crispEdges}
+.pixel-heart{display:inline-block;width:14px;height:12px;margin-left:4px;vertical-align:0;fill:var(--lamp);shape-rendering:crispEdges}
 
 .thumbs{list-style:none;display:grid;grid-template-columns:repeat(4,56px);gap:16px 10px;margin:32px 0 0;padding:0;font-size:12px;color:var(--mist)}
 .thumbs li{display:flex;flex-direction:column;gap:8px;padding-top:86px;font-size:11px;position:relative;white-space:nowrap}
