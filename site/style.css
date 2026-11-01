@@ -68,9 +68,8 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .thumbs .more::before{content:"+";position:absolute;left:0;top:0;width:56px;height:76px;box-sizing:border-box;border:1.5px dashed rgba(146,181,187,.45);border-radius:2px;display:grid;place-items:center;font-family:var(--display);font-size:22px;color:rgba(146,181,187,.6)}
 
 .plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:28px 0 0;padding-top:20px;box-shadow:inset 0 1px 0 rgba(255,242,232,.18);max-width:420px}
-.plans dt{font-size:15px;color:var(--mist);margin-bottom:6px}
-.plans dd{margin:0;font-size:15px;line-height:1.4}
-.plans strong{display:block;font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;color:var(--paper)}
+.plans dt{font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.01em;color:var(--paper);font-variant-numeric:tabular-nums}
+.plans dd{margin:6px 0 0;font-size:15px;color:var(--mist)}
 /* the bookshop's moments: the one happening in the phone lights up */
 .moments{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:12px;font-size:15px;color:var(--mist)}
 .moments li{display:flex;align-items:center;gap:12px;opacity:.55;transition:opacity .4s,color .4s}
@@ -96,7 +95,7 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
   .thumbs .more::before{width:40px;height:52px;font-size:16px}
   .moments{margin-top:14px;gap:8px;font-size:14px}
   .plans{margin-top:14px;padding-top:12px;gap:16px}
-  .plans strong{font-size:22px}
+  .plans dt{font-size:22px}
   .s-roof h2{display:none}
   .cue{display:none}
 }
