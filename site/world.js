@@ -44,9 +44,9 @@
     { room: "rooftop_dusk", bg: "#30384F", side: 0.7, focus: 420, weather: birds, events: ["dog", "plane"] }
   ];
   var CALLOUTS = {
-    cat: "The shop cat wakes up now and then.",
-    passerby: "Someone walks past the window.",
-    gust: "The wind takes a few leaves."
+    cat: "The cat wakes up.",
+    passerby: "Someone walks past.",
+    gust: "A gust takes a few leaves."
   };
   var THUMB = {
     rainy_room: [110, 230], autumn_bookshop: [16, 400], laundromat: [70, 470], night_train: [170, 380],
