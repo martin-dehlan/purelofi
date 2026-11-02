@@ -33,21 +33,6 @@ class SleepTimerSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.horizontalPadding,
-                0,
-                context.horizontalPadding,
-                context.spaceM,
-              ),
-              child: Text(
-                'Sleep timer',
-                style: TextStyle(
-                  fontSize: context.fontL,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
             MenuGroup(
               children: <Widget>[
                 for (final int length in minutes)

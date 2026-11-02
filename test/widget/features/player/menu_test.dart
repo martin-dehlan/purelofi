@@ -7,6 +7,7 @@ import 'package:purelofi/features/player/presentation/widgets/menu_button.widget
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/sleep_timer_sheet.widget.dart';
 
@@ -47,6 +48,29 @@ void main() {
     await tester.pumpAndSettle();
     await openMenu(tester);
   }
+
+  testWidgets('the room, the timer and the settings open inside the menu', (
+    tester,
+  ) async {
+    await start(tester);
+
+    await tapMenuEntry(tester, 'Settings');
+    // In the menu's sheet, not one of its own on top.
+    expect(
+      find.descendant(
+        of: find.byType(MenuSheet),
+        matching: find.byType(SettingsSheet),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Share PureLofi'), findsNothing);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsSheet), findsNothing);
+    expect(find.text('Share PureLofi'), findsOneWidget);
+  });
 
   group('sleep timer', () {
     testWidgets('is off until set, then says when it stops', (tester) async {

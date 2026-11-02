@@ -145,21 +145,6 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.horizontalPadding,
-                0,
-                context.horizontalPadding,
-                context.spaceM,
-              ),
-              child: Text(
-                'Settings',
-                style: TextStyle(
-                  fontSize: context.fontL,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
             MenuGroup(
               children: <Widget>[
                 MenuRow(

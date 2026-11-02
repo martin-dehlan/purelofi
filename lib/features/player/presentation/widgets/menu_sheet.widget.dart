@@ -35,8 +35,10 @@ import 'sleep_timer_sheet.widget.dart';
 /// settings, then telling someone about the app or telling us about it.
 /// At the bottom, the links to the legal pages on purelofi.app (#95).
 ///
-/// Laid out in groups on cards, the way a phone's own settings are.
-class MenuSheet extends ConsumerWidget {
+/// Laid out in groups on cards, the way a phone's own settings are. The
+/// room, the sleep timer and the settings open inside it, sliding in with
+/// a way back, rather than as sheets of their own.
+class MenuSheet extends ConsumerStatefulWidget {
   const MenuSheet({super.key, this.onShare = _share});
 
   /// Opens the share sheet; tests pass their own.
@@ -52,7 +54,139 @@ class MenuSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MenuSheet> createState() => _MenuSheetState();
+
+  /// "23:40" or "11:40 PM", the way the phone tells the time.
+  static String _timeOfDay(BuildContext context, DateTime at) =>
+      MaterialLocalizations.of(context).formatTimeOfDay(
+        TimeOfDay.fromDateTime(at),
+        alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+      );
+}
+
+/// What opens inside the menu.
+enum _MenuPage { room, sleepTimer, settings }
+
+class _MenuSheetState extends ConsumerState<MenuSheet> {
+  _MenuPage? _page;
+
+  /// Which way the last change went, so the page slides the right way.
+  bool _forward = true;
+
+  void _open(_MenuPage page) => setState(() {
+    _forward = true;
+    _page = page;
+  });
+
+  void _back() => setState(() {
+    _forward = false;
+    _page = null;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final _MenuPage? page = _page;
+
+    return PopScope(
+      canPop: page == null,
+      onPopInvokedWithResult: (bool didPop, Object? _) {
+        if (!didPop) _back();
+      },
+      // The sheet grows and shrinks to what is in it; the pages slide.
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.bottomCenter,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            final bool incoming = child.key == ValueKey<_MenuPage?>(page);
+            final double from = (incoming == _forward) ? 0.3 : -0.3;
+
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: Offset(from, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          layoutBuilder: (Widget? current, List<Widget> previous) => Stack(
+            alignment: Alignment.bottomCenter,
+            children: <Widget>[...previous, ?current],
+          ),
+          child: KeyedSubtree(
+            key: ValueKey<_MenuPage?>(page),
+            child: page == null ? _main(context) : _sub(context, page),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// One of the pages inside the menu: its name with a way back, then it.
+  /// Swiped to the right, it goes back too.
+  Widget _sub(BuildContext context, _MenuPage page) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onHorizontalDragEnd: (DragEndDetails details) {
+        if ((details.primaryVelocity ?? 0) > 300) _back();
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              context.spaceXs,
+              0,
+              context.horizontalPadding,
+              context.spaceS,
+            ),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: _back,
+                  icon: AppIcon(
+                    AppGlyph.back,
+                    size: context.fontL,
+                    color: cs.onSurface,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    switch (page) {
+                      _MenuPage.room => 'Change room',
+                      _MenuPage.sleepTimer => 'Sleep timer',
+                      _MenuPage.settings => 'Settings',
+                    },
+                    style: TextStyle(
+                      fontSize: context.fontL,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: switch (page) {
+              _MenuPage.room => const SceneSwitcherSheet(),
+              _MenuPage.sleepTimer => const SleepTimerSheet(),
+              _MenuPage.settings => const SettingsSheet(),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _main(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final Account? account = ref.watch(authControllerProvider).value;
     final SceneEntity? scene = ref.watch(activeSceneControllerProvider);
@@ -115,20 +249,20 @@ class MenuSheet extends ConsumerWidget {
                     glyph: AppGlyph.scene,
                     title: 'Change room',
                     subtitle: scene?.title,
-                    onTap: then(() => showSceneSwitcherSheet(context)),
+                    onTap: () => _open(_MenuPage.room),
                   ),
                   MenuRow(
                     glyph: AppGlyph.timer,
                     title: 'Sleep timer',
                     subtitle: stopsAt == null
                         ? 'Off'
-                        : 'Stops at ${_timeOfDay(context, stopsAt)}',
-                    onTap: then(() => showSleepTimerSheet(context)),
+                        : 'Stops at ${MenuSheet._timeOfDay(context, stopsAt)}',
+                    onTap: () => _open(_MenuPage.sleepTimer),
                   ),
                   MenuRow(
                     glyph: AppGlyph.settings,
                     title: 'Settings',
-                    onTap: then(() => showSettingsSheet(context)),
+                    onTap: () => _open(_MenuPage.settings),
                   ),
                 ],
               ),
@@ -138,7 +272,7 @@ class MenuSheet extends ConsumerWidget {
                   MenuRow(
                     glyph: AppGlyph.share,
                     title: 'Share PureLofi',
-                    onTap: () => unawaited(onShare()),
+                    onTap: () => unawaited(widget.onShare()),
                   ),
                   MenuRow(
                     glyph: AppGlyph.mail,
@@ -165,13 +299,6 @@ class MenuSheet extends ConsumerWidget {
       ),
     );
   }
-
-  /// "23:40" or "11:40 PM", the way the phone tells the time.
-  static String _timeOfDay(BuildContext context, DateTime at) =>
-      MaterialLocalizations.of(context).formatTimeOfDay(
-        TimeOfDay.fromDateTime(at),
-        alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-      );
 }
 
 /// Opens the menu as a bottom sheet.
