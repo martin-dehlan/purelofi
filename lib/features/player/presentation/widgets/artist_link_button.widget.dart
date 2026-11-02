@@ -10,8 +10,8 @@ import '../../domain/artist_link.dart';
 import 'artist_link_marks.dart';
 
 /// One of an artist's channels, as a round button with the platform's mark
-/// (#109): a row of them under the name, the way artist pages show where
-/// else to follow someone. Its own site is a globe.
+/// (#109), one of a row in the floating bar at the foot of their page. Its
+/// own site is a globe.
 class ArtistLinkButton extends StatelessWidget {
   const ArtistLinkButton({required this.url, super.key});
 
@@ -24,10 +24,9 @@ class ArtistLinkButton extends StatelessWidget {
     final String? mark = artistLinkMarks[label];
     final double size = context.fontL;
 
-    return IconButton.filledTonal(
+    return IconButton(
       tooltip: label,
       onPressed: () => unawaited(AppLinks.open(Uri.parse(url))),
-      style: IconButton.styleFrom(backgroundColor: cs.surfaceContainerHigh),
       padding: EdgeInsets.all(context.spaceS),
       icon: mark == null
           ? AppIcon(AppGlyph.globe, size: size, color: cs.onSurface)

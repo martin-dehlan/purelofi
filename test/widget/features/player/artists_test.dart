@@ -9,6 +9,7 @@ import 'package:purelofi/features/player/domain/artist.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/screens/player.screen.dart';
+import 'package:purelofi/features/player/presentation/widgets/artist_links_bar.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/artist_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
 
@@ -120,15 +121,9 @@ void main() {
     await openAda(tester);
 
     final Finder page = find.byType(ArtistSheet);
-    // Bio and channels in About, at the foot of the page.
-    await tester.scrollUntilVisible(
-      find.text('About'),
-      300,
-      scrollable: find
-          .descendant(of: page, matching: find.byType(Scrollable))
-          .first,
-    );
-    expect(find.text('Late nights, warm tape.'), findsOneWidget);
+    // The channels float at the foot of the page; no bio anywhere.
+    expect(find.byType(ArtistLinksBar), findsOneWidget);
+    expect(find.text('Late nights, warm tape.'), findsNothing);
     // Every channel, by the name of the place.
     expect(find.byTooltip('YouTube'), findsOneWidget);
     expect(find.byTooltip('Website'), findsOneWidget);

@@ -8,7 +8,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
-import 'artist_about.widget.dart';
+import 'artist_links_bar.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -85,7 +85,9 @@ class ArtistSheet extends ConsumerWidget {
       );
     }
 
-    return CustomScrollView(
+    final List<String> links = artist.links;
+
+    final Widget page = CustomScrollView(
       controller: controller,
       slivers: <Widget>[
         SliverPadding(
@@ -182,15 +184,30 @@ class ArtistSheet extends ConsumerWidget {
             },
           ),
         ),
-        // Bio and channels at the foot, under the music, as music apps do.
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            context.horizontalPadding,
-            context.spaceL,
-            context.horizontalPadding,
-            context.spaceXl,
+        // Room under the last track for the bar floating over it.
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: links.isEmpty
+                ? context.spaceXl
+                : context.screenHeight * 0.12,
           ),
-          sliver: SliverToBoxAdapter(child: ArtistAbout(artist: artist)),
+        ),
+      ],
+    );
+    if (links.isEmpty) return page;
+
+    return Stack(
+      children: <Widget>[
+        page,
+        // The channels, small and raised, centred at the foot of the page.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: context.spaceL,
+          child: SafeArea(
+            top: false,
+            child: Center(child: ArtistLinksBar(links: links)),
+          ),
         ),
       ],
     );
