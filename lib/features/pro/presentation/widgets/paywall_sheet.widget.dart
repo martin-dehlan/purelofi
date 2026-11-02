@@ -5,6 +5,8 @@ import '../../../../common/errors/app_error.dart';
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/responsive.dart';
+import '../../../auth/controller/auth.provider.dart';
+import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../player/controller/scene.controller.dart';
 import '../../../player/domain/scene.entity.dart';
 import '../../controller/pro.controller.dart';
@@ -51,7 +53,22 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
     _messageIsError = error;
   });
 
+  bool get _hasAccount => ref.read(authRepositoryProvider).current != null;
+
+  /// Pro belongs to the account (#108), so a signed-out listener signs in
+  /// first. `true` once there is an account to buy for.
+  Future<bool> _signIn() async {
+    if (_hasAccount) return true;
+    await showAccountSheet(
+      context,
+      reason: 'Pro stays with your account, on every phone you sign in on.',
+    );
+
+    return _hasAccount;
+  }
+
   Future<void> _buy(ProPlan plan) async {
+    if (!await _signIn() || !mounted) return;
     setState(() {
       _busy = true;
       _message = null;
@@ -79,6 +96,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
   }
 
   Future<void> _restore() async {
+    if (!await _signIn() || !mounted) return;
     setState(() {
       _busy = true;
       _message = null;
@@ -155,115 +173,115 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
             SizedBox(height: context.spaceL),
             FutureBuilder<List<ProPlan>>(
               future: _plans,
-              builder:
-                  (BuildContext context, AsyncSnapshot<List<ProPlan>> snap) {
-                    if (snap.connectionState != ConnectionState.done) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(vertical: context.spaceL),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      );
-                    }
-                    final List<ProPlan> plans = snap.data ?? const <ProPlan>[];
-                    if (snap.hasError || plans.isEmpty) {
-                      return Column(
-                        children: <Widget>[
-                          Text(
-                            'The plans could not be loaded.',
-                            style: quiet,
-                            textAlign: TextAlign.center,
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                setState(() => _plans = _pro.plans()),
-                            child: const Text('Try again'),
-                          ),
-                        ],
-                      );
-                    }
+              builder: (BuildContext context, AsyncSnapshot<List<ProPlan>> snap) {
+                if (snap.connectionState != ConnectionState.done) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: context.spaceL),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  );
+                }
+                final List<ProPlan> plans = snap.data ?? const <ProPlan>[];
+                if (snap.hasError || plans.isEmpty) {
+                  return Column(
+                    children: <Widget>[
+                      Text(
+                        'The plans could not be loaded.',
+                        style: quiet,
+                        textAlign: TextAlign.center,
+                      ),
+                      TextButton(
+                        // A block, not an arrow: setState must not be
+                        // handed the Future.
+                        onPressed: () => setState(() {
+                          _plans = _pro.plans();
+                        }),
+                        child: const Text('Try again'),
+                      ),
+                    ],
+                  );
+                }
 
-                    final ProPlan chosen = plans.firstWhere(
-                      (ProPlan p) => p.period == _chosen,
-                      orElse: () => plans.first,
-                    );
-                    final int? trial = chosen.trialDays;
+                final ProPlan chosen = plans.firstWhere(
+                  (ProPlan p) => p.period == _chosen,
+                  orElse: () => plans.first,
+                );
+                final int? trial = chosen.trialDays;
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        for (final ProPlan plan in plans) ...<Widget>[
-                          PlanOption(
-                            plan: plan,
-                            selected: plan.period == chosen.period,
-                            onTap: _busy
-                                ? null
-                                : () {
-                                    setState(() => _chosen = plan.period);
-                                    _pro.planSelected(plan);
-                                  },
-                          ),
-                          SizedBox(height: context.spaceS),
-                        ],
-                        SizedBox(height: context.spaceS),
-                        SizedBox(
-                          height: context.screenHeight * 0.06,
-                          child: FilledButton(
-                            onPressed: _busy ? null : () => _buy(chosen),
-                            // White on the dark sheet: the one thing to do
-                            // here, with "Not now" as plain text under it.
-                            style: FilledButton.styleFrom(
-                              backgroundColor: cs.onSurface,
-                              foregroundColor: cs.surface,
-                              shape: const StadiumBorder(),
-                            ),
-                            child: _busy
-                                ? SizedBox.square(
-                                    dimension: context.fontL,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: context.fontL * 0.12,
-                                      color: cs.surface,
-                                    ),
-                                  )
-                                : Text(
-                                    trial != null
-                                        ? 'Start $trial-day free trial'
-                                        : 'Get Pro',
-                                    style: TextStyle(
-                                      fontSize: context.fontM,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    for (final ProPlan plan in plans) ...<Widget>[
+                      PlanOption(
+                        plan: plan,
+                        selected: plan.period == chosen.period,
+                        onTap: _busy
+                            ? null
+                            : () {
+                                setState(() => _chosen = plan.period);
+                                _pro.planSelected(plan);
+                              },
+                      ),
+                      SizedBox(height: context.spaceS),
+                    ],
+                    SizedBox(height: context.spaceS),
+                    SizedBox(
+                      height: context.screenHeight * 0.06,
+                      child: FilledButton(
+                        onPressed: _busy ? null : () => _buy(chosen),
+                        // White on the dark sheet: the one thing to do
+                        // here, with "Not now" as plain text under it.
+                        style: FilledButton.styleFrom(
+                          backgroundColor: cs.onSurface,
+                          foregroundColor: cs.surface,
+                          shape: const StadiumBorder(),
                         ),
-                        TextButton(
-                          onPressed: _busy
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                          style: TextButton.styleFrom(
-                            foregroundColor: cs.onSurface,
-                          ),
-                          child: Text(
-                            'Not now',
-                            style: TextStyle(fontSize: context.fontM),
-                          ),
-                        ),
-                        Text(
-                          trial != null
-                              ? 'Free for $trial days, then ${chosen.price} '
-                                    '${PlanOption.perFor(chosen.period)}. '
-                                    'Cancel any time in your store settings.'
-                              : 'Renews at ${chosen.price} '
-                                    '${PlanOption.perFor(chosen.period)}. '
-                                    'Cancel any time in your store settings.',
-                          style: quiet,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    );
-                  },
+                        child: _busy
+                            ? SizedBox.square(
+                                dimension: context.fontL,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: context.fontL * 0.12,
+                                  color: cs.surface,
+                                ),
+                              )
+                            : Text(
+                                trial != null
+                                    ? 'Start $trial-day free trial'
+                                    : 'Get Pro',
+                                style: TextStyle(
+                                  fontSize: context.fontM,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: cs.onSurface,
+                      ),
+                      child: Text(
+                        'Not now',
+                        style: TextStyle(fontSize: context.fontM),
+                      ),
+                    ),
+                    Text(
+                      '${trial != null ? 'Free for $trial days, then ${chosen.price} ' : 'Renews at ${chosen.price} '}'
+                      '${PlanOption.perFor(chosen.period)}. '
+                      'Cancel any time in your store settings. '
+                      'Pro stays with your PureLofi account, '
+                      'on every phone you sign in on.',
+                      style: quiet,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                );
+              },
             ),
             if (_message != null) ...<Widget>[
               SizedBox(height: context.spaceM),

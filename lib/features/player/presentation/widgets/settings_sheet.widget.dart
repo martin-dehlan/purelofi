@@ -10,6 +10,8 @@ import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
 import '../../../../common/errors/app_error.dart';
 import '../../../../common/utils/app_links.dart';
+import '../../../auth/controller/auth.provider.dart';
+import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
@@ -76,6 +78,14 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   }
 
   Future<void> _restore() async {
+    // Pro belongs to the account (#108): restoring needs one to land on.
+    if (ref.read(authRepositoryProvider).current == null) {
+      await showAccountSheet(
+        context,
+        reason: 'Pro stays with your account, on every phone you sign in on.',
+      );
+      if (!mounted || ref.read(authRepositoryProvider).current == null) return;
+    }
     setState(() {
       _restoring = true;
       _restored = null;
