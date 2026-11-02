@@ -91,6 +91,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
     return Scaffold(
       backgroundColor: cs.surface,
+      // The room stays put when the keyboard comes up for a search in a
+      // sheet; only the sheet makes room for it.
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {

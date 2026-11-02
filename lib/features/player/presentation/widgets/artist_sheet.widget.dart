@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../../common/widgets/loading_dots.widget.dart';
+import '../../../../common/widgets/skeleton.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
@@ -38,9 +40,27 @@ class ArtistSheet extends ConsumerWidget {
     final PlayerController player = ref.read(playerControllerProvider.notifier);
 
     if (artist == null) {
+      final double avatar = context.screenWidth * 0.3;
+      // While the artists load, the page's top in outline: the picture's
+      // circle and the name's line, breathing.
       return Center(
         child: ref.watch(artistListControllerProvider).isLoading
-            ? const CircularProgressIndicator()
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Skeleton(
+                    width: avatar,
+                    height: avatar,
+                    borderRadius: BorderRadius.circular(avatar / 2),
+                  ),
+                  SizedBox(height: context.spaceM),
+                  Skeleton(
+                    width: avatar * 1.2,
+                    height: context.fontXxl,
+                    borderRadius: BorderRadius.circular(context.fontXxl / 4),
+                  ),
+                ],
+              )
             : Text(
                 'This artist is not on PureLofi any more.',
                 style: TextStyle(
@@ -142,12 +162,9 @@ class ArtistSheet extends ConsumerWidget {
                       backgroundColor: cs.surfaceContainerHigh,
                     ),
                     icon: downloading
-                        ? SizedBox.square(
-                            dimension: context.fontL,
-                            child: CircularProgressIndicator(
-                              strokeWidth: context.fontL * 0.12,
-                              color: cs.onSurfaceVariant,
-                            ),
+                        ? LoadingDots(
+                            size: context.fontL,
+                            color: cs.onSurfaceVariant,
                           )
                         : AppIcon(
                             AppGlyph.download,

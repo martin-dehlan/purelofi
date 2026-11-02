@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/loading_dots.widget.dart';
 
 /// One way to sign in: a full-width pill. Apple's is the [primary] one,
 /// white with its logo, as Apple's guidelines ask of a custom button; the
@@ -52,12 +53,9 @@ class AuthButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             if (busy)
-              SizedBox.square(
-                dimension: mark,
-                child: CircularProgressIndicator(
-                  strokeWidth: mark * 0.12,
-                  color: primary ? cs.surface : cs.onSurfaceVariant,
-                ),
+              LoadingDots(
+                size: mark,
+                color: primary ? cs.surface : cs.onSurfaceVariant,
               )
             else
               ?leading,

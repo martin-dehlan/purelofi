@@ -73,6 +73,21 @@ void main() {
     expect(controlsOpacity(tester), 1);
   });
 
+  testWidgets('the room stays put when the keyboard comes up', (tester) async {
+    await tester.pumpProviderApp(
+      child: const PlayerScreen(),
+      overrides: overrides(),
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<Scaffold>(find.byType(Scaffold).first)
+          .resizeToAvoidBottomInset,
+      isFalse,
+    );
+  });
+
   testWidgets('hides the controls after 4s of stillness', (tester) async {
     await tester.pumpProviderApp(
       child: const PlayerScreen(),

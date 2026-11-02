@@ -64,6 +64,14 @@ MediaCache? mediaCache(Ref ref) => null;
 Future<File?> sceneCover(Ref ref, String url) async =>
     ref.watch(mediaCacheProvider)?.store(url);
 
+/// Any picture on this device — a track's cover, an artist's photo:
+/// downloaded the first time it is shown, then read from disk, so the
+/// second time it is there at once. `null` without a cache or when the
+/// download failed; the picture then comes from the network.
+@Riverpod(keepAlive: true)
+Future<File?> pictureFile(Ref ref, String url) async =>
+    ref.watch(mediaCacheProvider)?.store(url);
+
 @Riverpod(keepAlive: true)
 SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
 
