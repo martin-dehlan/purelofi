@@ -6,7 +6,8 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import 'menu_sheet.widget.dart';
 
-/// The one button that is not about playback, top right of the scene.
+/// The menu, top left of the scene, where music apps keep the profile and
+/// everything about the app; the library sits opposite it.
 class MenuButton extends StatelessWidget {
   const MenuButton({super.key});
 

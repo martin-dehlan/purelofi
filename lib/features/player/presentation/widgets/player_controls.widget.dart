@@ -15,7 +15,6 @@ import '../../domain/playback_mode.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
-import 'library_sheet.widget.dart';
 import 'queue_sheet.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
@@ -89,7 +88,8 @@ class PlayerControls extends ConsumerWidget {
           Row(
             children: <Widget>[
               // The two ends take the same room, so the transport stays in
-              // the middle with one button on the left and two on the right.
+              // the middle: how it goes on at one end, what comes next at
+              // the other. The library is up top, opposite the menu.
               Expanded(
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
@@ -124,20 +124,13 @@ class PlayerControls extends ConsumerWidget {
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
               ),
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    _SheetButton(
-                      glyph: AppGlyph.queue,
-                      label: 'Queue',
-                      onTap: () => showQueueSheet(context),
-                    ),
-                    _SheetButton(
-                      glyph: AppGlyph.library,
-                      label: 'Library',
-                      onTap: () => showLibrarySheet(context),
-                    ),
-                  ],
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: _SheetButton(
+                    glyph: AppGlyph.queue,
+                    label: 'Queue',
+                    onTap: () => showQueueSheet(context),
+                  ),
                 ),
               ),
             ],
