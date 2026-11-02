@@ -80,7 +80,7 @@ class ArtistSheet extends ConsumerWidget {
 
     final List<String> links = artist.links;
 
-    final Widget page = CustomScrollView(
+    return CustomScrollView(
       controller: controller,
       slivers: <Widget>[
         SliverPadding(
@@ -176,29 +176,17 @@ class ArtistSheet extends ConsumerWidget {
             },
           ),
         ),
-        // Room under the last track for the bar floating over it.
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: links.isEmpty
-                ? context.spaceXl
-                : context.screenHeight * 0.12,
+        // The channels, small and raised, centred at the foot of the page,
+        // under the last track rather than over it.
+        SliverPadding(
+          padding: EdgeInsets.only(
+            top: context.spaceL,
+            bottom: context.spaceXl,
           ),
-        ),
-      ],
-    );
-    if (links.isEmpty) return page;
-
-    return Stack(
-      children: <Widget>[
-        page,
-        // The channels, small and raised, centred at the foot of the page.
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: context.spaceL,
-          child: SafeArea(
-            top: false,
-            child: Center(child: ArtistLinksBar(links: links)),
+          sliver: SliverToBoxAdapter(
+            child: links.isEmpty
+                ? const SizedBox.shrink()
+                : Center(child: ArtistLinksBar(links: links)),
           ),
         ),
       ],

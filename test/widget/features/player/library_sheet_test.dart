@@ -128,9 +128,7 @@ void main() {
     expect(find.textContaining('Nothing marked yet'), findsOneWidget);
   });
 
-  testWidgets('the track playing sits at the foot, with pause and next', (
-    tester,
-  ) async {
+  testWidgets('the track playing sits at the foot, with pause', (tester) async {
     await start(tester);
 
     final Finder bar = find.byType(MiniPlayer);

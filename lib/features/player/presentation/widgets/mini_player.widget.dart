@@ -10,8 +10,9 @@ import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'track_cover.widget.dart';
 
-/// The track playing, as a slim bar at the foot of the library: what it is,
-/// pause and skip. The library stays open while the music changes, so the
+/// The track playing, as a slim bar at the foot of the library: what it is
+/// and pause. Skipping waits in the room: the bare next triangle beside
+/// pause reads as a second play at this size. The library stays open while the music changes, so the
 /// music needs a place in it. Tapping the bar goes back to the room.
 ///
 /// Nothing while nothing plays.
@@ -30,14 +31,17 @@ class MiniPlayer extends ConsumerWidget {
     if (track == null) return const SizedBox.shrink();
     final PlayerController player = ref.read(playerControllerProvider.notifier);
 
+    // The home indicator's strip is gap enough below it; a phone without
+    // one gets a small margin instead.
     return SafeArea(
       top: false,
+      minimum: EdgeInsets.only(bottom: context.spaceS),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           context.spaceS,
           context.spaceXs,
           context.spaceS,
-          context.spaceS,
+          0,
         ),
         child: Material(
           color: cs.surfaceContainerHighest,
@@ -84,15 +88,6 @@ class MiniPlayer extends ConsumerWidget {
                     icon: AppIcon(
                       isPlaying ? AppGlyph.pause : AppGlyph.play,
                       size: context.fontXl,
-                      color: cs.onSurface,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Next',
-                    onPressed: () => unawaited(player.playNext()),
-                    icon: AppIcon(
-                      AppGlyph.next,
-                      size: context.fontL,
                       color: cs.onSurface,
                     ),
                   ),

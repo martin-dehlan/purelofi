@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../common/utils/responsive.dart';
 import 'artist_link_button.widget.dart';
 
-/// An artist's channels as a small floating bar, centred at the foot of
-/// their page: a raised pill holding one mark per channel, nothing else.
-/// It sits over the list rather than in it, so it is there however far
-/// the page has scrolled.
+/// An artist's channels as a small raised bar, centred at the foot of
+/// their page under the tracks: a pill holding one mark per channel,
+/// nothing else.
 class ArtistLinksBar extends StatelessWidget {
   const ArtistLinksBar({required this.links, super.key});
 
