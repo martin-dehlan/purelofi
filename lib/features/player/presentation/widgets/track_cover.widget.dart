@@ -7,9 +7,9 @@ import 'now_playing_bars.widget.dart';
 
 /// A track's round cover at the start of its row.
 ///
-/// The listener's own files show the cover from their tags. Anything
-/// without artwork — PureLofi's tracks, where the scene is the picture, and
-/// files with no cover tagged — shows a record. Not a waveform: bars are
+/// PureLofi's tracks show the artwork their artist made for them, the
+/// listener's own files the cover from their tags. Anything without
+/// artwork shows a record. Not a waveform: bars are
 /// what marks the track that is playing, and a cover drawn the same way
 /// would make every row look like it was. The one playing is marked on top.
 class TrackCover extends StatelessWidget {
@@ -36,6 +36,8 @@ class TrackCover extends StatelessWidget {
       ),
     );
     final String? path = track.coverPath;
+    final String? url = track.coverUrl;
+    final int pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
     return ClipOval(
       child: SizedBox.square(
@@ -43,16 +45,26 @@ class TrackCover extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            if (path == null)
-              record
-            else
+            if (path != null)
               Image.file(
                 File(path),
                 fit: BoxFit.cover,
-                cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                    .round(),
+                cacheWidth: pixels,
                 errorBuilder: (_, _, _) => record,
-              ),
+              )
+            else if (url != null)
+              Image.network(
+                url,
+                fit: BoxFit.cover,
+                cacheWidth: pixels,
+                // The record stands in while it loads, and for good if it
+                // will not.
+                frameBuilder: (_, Widget child, int? frame, bool sync) =>
+                    sync || frame != null ? child : record,
+                errorBuilder: (_, _, _) => record,
+              )
+            else
+              record,
             if (isCurrent)
               ColoredBox(
                 color: cs.scrim.withValues(alpha: 0.6),
@@ -68,8 +80,8 @@ class TrackCover extends StatelessWidget {
 }
 
 /// A record seen from above: the disc, a few grooves, the label and the
-/// hole. Every PureLofi track gets the same one — they have no artwork, and
-/// a made-up picture per track would be decoration pretending to be content.
+/// hole. Every track without artwork gets the same one — a made-up picture
+/// per track would be decoration pretending to be content.
 class _RecordPainter extends CustomPainter {
   _RecordPainter({
     required this.disc,

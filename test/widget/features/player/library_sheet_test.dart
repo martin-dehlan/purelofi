@@ -99,7 +99,7 @@ void main() {
     await start(tester);
 
     await openMore(tester, 'Slow Bass');
-    await tester.tap(find.widgetWithText(MenuItemButton, 'Play next'));
+    await tester.tap(find.text('Play next'));
     await tester.pumpAndSettle();
     Navigator.of(tester.element(find.byType(LibrarySheet))).pop();
     await tester.pumpAndSettle();

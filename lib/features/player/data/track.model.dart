@@ -16,6 +16,8 @@ abstract class TrackModel with _$TrackModel {
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'bts_video_url') String? btsVideoUrl,
     @JsonKey(name: 'duration_seconds') int? durationSeconds,
+    @JsonKey(name: 'artist_id') String? artistId,
+    @JsonKey(name: 'cover_url') String? coverUrl,
   }) = _TrackModel;
 
   factory TrackModel.fromJson(Map<String, dynamic> json) =>
@@ -30,5 +32,7 @@ extension TrackModelX on TrackModel {
     createdAt: createdAt,
     btsVideoUrl: btsVideoUrl,
     durationSeconds: durationSeconds,
+    artistId: artistId,
+    coverUrl: coverUrl,
   );
 }

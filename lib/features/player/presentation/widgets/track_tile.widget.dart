@@ -5,11 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import '../../../library/controller/library.controller.dart';
-import '../../../library/presentation/widgets/remove_track_dialog.dart';
-import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
+import 'track_actions_sheet.widget.dart';
 import 'track_cover.widget.dart';
 
 /// One track, the way a music app draws one: a round cover, the title, who
@@ -74,9 +72,7 @@ class TrackTile extends ConsumerWidget {
         style: TextStyle(fontSize: context.fontM, fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        track.source == TrackSource.local
-            ? (track.artist ?? 'Unknown artist')
-            : 'PureLofi',
+        track.artistName,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
       ),
@@ -100,61 +96,22 @@ class TrackTile extends ConsumerWidget {
   }
 }
 
-/// The `⋯`: queue it, mark it, or take it out.
-class _TrackMenu extends ConsumerWidget {
+/// The `⋯`: opens everything else that can be done with the track.
+class _TrackMenu extends StatelessWidget {
   const _TrackMenu({required this.track});
 
   final TrackEntity track;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final PlayerController player = ref.read(playerControllerProvider.notifier);
-    final bool isCatalogue = track.source == TrackSource.catalogue;
-    final bool isFavorite = ref.watch(
-      favoritesControllerProvider.select(
-        (AsyncValue<Set<String>> favorites) =>
-            favorites.hasValue && favorites.value!.contains(track.id),
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'More: ${track.title}',
+      icon: AppIcon(
+        AppGlyph.more,
+        size: context.fontL,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-    );
-    final TextStyle label = TextStyle(fontSize: context.fontM);
-    final double icon = context.fontL;
-
-    Widget item(AppGlyph glyph, String text, VoidCallback onPressed) =>
-        MenuItemButton(
-          leadingIcon: AppIcon(glyph, size: icon, color: cs.onSurfaceVariant),
-          onPressed: onPressed,
-          child: Text(text, style: label),
-        );
-
-    return MenuAnchor(
-      menuChildren: <Widget>[
-        item(AppGlyph.next, 'Play next', () => player.queueNext(track)),
-        item(AppGlyph.queue, 'Add to queue', () => player.addToQueue(track)),
-        if (isCatalogue)
-          item(
-            isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
-            isFavorite ? 'Remove from favorites' : 'Add to favorites',
-            () => unawaited(
-              ref.read(favoritesControllerProvider.notifier).toggle(track.id),
-            ),
-          ),
-        if (!isCatalogue)
-          item(AppGlyph.remove, 'Remove from PureLofi', () async {
-            if (!await confirmRemoveTrack(context, track)) return;
-            await ref.read(libraryControllerProvider.notifier).remove(track.id);
-          }),
-      ],
-      builder: (BuildContext context, MenuController menu, Widget? _) =>
-          IconButton(
-            tooltip: 'More: ${track.title}',
-            icon: AppIcon(
-              AppGlyph.more,
-              size: icon,
-              color: cs.onSurfaceVariant,
-            ),
-            onPressed: () => menu.isOpen ? menu.close() : menu.open(),
-          ),
+      onPressed: () => unawaited(showTrackActionsSheet(context, track)),
     );
   }
 }

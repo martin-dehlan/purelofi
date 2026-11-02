@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/cache/media_cache.service.dart';
 import '../../../common/config/supabase.provider.dart';
 import '../../../common/database/app_database.dart';
+import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/cached_file.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
@@ -75,7 +76,11 @@ ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
   api: ref.watch(contentApiProvider),
   trackDao: ref.watch(trackDaoProvider),
   sceneDao: ref.watch(sceneDaoProvider),
+  artistDao: ref.watch(artistDaoProvider),
 );
+
+@Riverpod(keepAlive: true)
+ArtistDao artistDao(Ref ref) => ArtistDao(ref.watch(appDatabaseProvider));
 
 /// Where shuffle and repeat are remembered. Overridden in tests with one in
 /// memory.

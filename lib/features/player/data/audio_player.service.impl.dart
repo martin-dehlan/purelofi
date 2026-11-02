@@ -129,7 +129,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
         id: track.id,
         title: _titleFor(track.title),
         // A listener's own file is not ours to sign: their tags or nothing.
-        artist: track.source == TrackSource.local ? track.artist : 'PureLofi',
+        // A file without the tag shows no artist there rather than a
+        // stand-in.
+        artist: track.source == TrackSource.local
+            ? track.artist
+            : track.artistName,
         album: _room,
         artUri: _artUri,
         duration: track.durationSeconds == null

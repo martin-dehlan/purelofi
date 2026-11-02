@@ -30,6 +30,7 @@ enum AppGlyph {
   settings,
   share,
   mail,
+  flag,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -79,6 +80,7 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.settings,
     AppGlyph.share,
     AppGlyph.mail,
+    AppGlyph.flag,
   };
 
   @override
@@ -257,6 +259,15 @@ class _GlyphPainter extends CustomPainter {
           ..moveTo(4.5, 7.5)
           ..lineTo(12, 13)
           ..lineTo(19.5, 7.5);
+      case AppGlyph.flag:
+        // A pennant on a pole: something to point out.
+        p
+          ..moveTo(6, 21)
+          ..lineTo(6, 3.5)
+          ..lineTo(18.5, 3.5)
+          ..lineTo(15.5, 8.5)
+          ..lineTo(18.5, 13.5)
+          ..lineTo(6, 13.5);
     }
     return p;
   }
