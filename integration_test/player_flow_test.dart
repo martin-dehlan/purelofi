@@ -6,6 +6,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/analytics/analytics.provider.dart';
 import 'package:purelofi/common/routes/app_router.dart';
+import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
@@ -13,6 +14,7 @@ import 'package:purelofi/features/player/presentation/screens/player.screen.dart
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 
 import '../test/helpers/fake_audio_player.service.dart';
+import '../test/helpers/fake_welcome_preferences.dart';
 import '../test/helpers/mock_repositories.dart';
 import '../test/helpers/recording_analytics.service.dart';
 
@@ -55,6 +57,9 @@ void main() {
           contentRepositoryProvider.overrideWithValue(mockRepo),
           audioPlayerServiceProvider.overrideWithValue(fakeAudio),
           analyticsServiceProvider.overrideWithValue(analytics),
+          welcomePreferencesProvider.overrideWithValue(
+            FakeWelcomePreferences(),
+          ),
           sceneVideoBuilderProvider.overrideWithValue(
             (SceneEntity scene) => Text('scene ${scene.id}'),
           ),

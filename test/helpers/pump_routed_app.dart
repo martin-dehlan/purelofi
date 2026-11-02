@@ -18,6 +18,7 @@ import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
 import 'fake_playback_preferences.dart';
 import 'fake_track_picker.dart';
+import 'fake_welcome_preferences.dart';
 
 /// Favourites in memory, so no widget test opens a database.
 ///
@@ -38,6 +39,14 @@ Override _fakeAuth(FakeAuthRepository? repository) {
   addTearDown(fake.dispose);
 
   return authRepositoryProvider.overrideWithValue(fake);
+}
+
+/// The first launch is behind every test unless it says otherwise, so the
+/// welcome does not cover the player.
+Override _fakeWelcome(FakeWelcomePreferences? preferences) {
+  return welcomePreferencesProvider.overrideWithValue(
+    preferences ?? FakeWelcomePreferences(),
+  );
 }
 
 /// The listener's library and the file picker, in memory, for the same
@@ -87,6 +96,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -95,6 +105,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakeWelcome(welcome),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
@@ -119,6 +130,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -127,6 +139,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakeWelcome(welcome),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,

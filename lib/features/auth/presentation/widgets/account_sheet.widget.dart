@@ -15,8 +15,13 @@ import 'signed_in_account.widget.dart';
 /// Optional from top to bottom: no onboarding, nothing gated, the music
 /// plays the same either way (#38). Signed out it offers the ways in;
 /// signed in it says who, and how to leave.
+///
+/// As the [welcome] on a first launch it carries a way past it, and closes
+/// itself once someone is signed in.
 class AccountSheet extends ConsumerStatefulWidget {
-  const AccountSheet({super.key});
+  const AccountSheet({super.key, this.welcome = false});
+
+  final bool welcome;
 
   @override
   ConsumerState<AccountSheet> createState() => _AccountSheetState();
@@ -72,6 +77,17 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
     final Account? account = ref.watch(authControllerProvider).value;
     final AuthController auth = ref.read(authControllerProvider.notifier);
 
+    if (widget.welcome) {
+      ref.listen<AsyncValue<Account?>>(authControllerProvider, (
+        AsyncValue<Account?>? was,
+        AsyncValue<Account?> now,
+      ) {
+        if (was?.value == null && now.value != null) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
+
     final Widget body;
     if (account != null) {
       body = SignedInAccount(
@@ -112,7 +128,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           children: <Widget>[
             if (account == null) ...<Widget>[
               Text(
-                'Sign in',
+                widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
                 style: TextStyle(
                   color: cs.onSurface,
                   fontSize: context.fontL,
@@ -122,6 +138,19 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
               SizedBox(height: context.spaceL),
             ],
             body,
+            if (widget.welcome && account == null && !_email) ...<Widget>[
+              SizedBox(height: context.spaceS),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(foregroundColor: cs.onSurface),
+                  child: Text(
+                    'Not now',
+                    style: TextStyle(fontSize: context.fontM),
+                  ),
+                ),
+              ),
+            ],
             if (_error != null) ...<Widget>[
               SizedBox(height: context.spaceM),
               Center(
@@ -146,5 +175,15 @@ Future<void> showAccountSheet(BuildContext context) {
     showDragHandle: true,
     isScrollControlled: true,
     builder: (BuildContext context) => const AccountSheet(),
+  );
+}
+
+/// Opens the account sheet as the first launch's welcome.
+Future<void> showWelcomeSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (BuildContext context) => const AccountSheet(welcome: true),
   );
 }

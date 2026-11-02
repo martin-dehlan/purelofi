@@ -6,7 +6,9 @@ import '../../../common/config/supabase.provider.dart';
 import '../data/apple_identity.service.impl.dart';
 import '../data/auth.repository.impl.dart';
 import '../data/google_identity.service.impl.dart';
+import '../data/welcome_preferences.service.impl.dart';
 import '../domain/auth.repository.dart';
+import '../domain/welcome_preferences.service.dart';
 
 part 'auth.provider.g.dart';
 
@@ -36,3 +38,6 @@ AuthRepository authRepository(Ref ref) {
     },
   );
 }
+
+@Riverpod(keepAlive: true)
+WelcomePreferences welcomePreferences(Ref ref) => WelcomePreferencesImpl();
