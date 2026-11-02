@@ -83,14 +83,16 @@ void main() {
 
       await tester.tap(find.text('30 minutes'));
       await tester.pumpAndSettle();
-      await openMenu(tester);
 
+      // The page stays open and says when the music stops.
+      expect(find.byType(SleepTimerSheet), findsOneWidget);
       expect(find.textContaining('Stops at'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Sleep timer');
       await tapMenuEntry(tester, 'Turn off');
-      await openMenu(tester);
+      expect(find.text('Turn off'), findsNothing);
 
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
       expect(find.text('Off'), findsOneWidget);
     });
   });

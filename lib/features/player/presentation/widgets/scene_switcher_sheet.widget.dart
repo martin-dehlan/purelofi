@@ -167,9 +167,9 @@ class _SceneTile extends ConsumerWidget {
           : null,
       selected: isActive,
       onTap: () {
-        final NavigatorState navigator = Navigator.of(context);
-        final BuildContext root = navigator.context;
-        navigator.pop();
+        // The room changes behind the sheet, which stays open: the
+        // listener closes it.
+        final BuildContext root = Navigator.of(context).context;
         if (ref.read(activeSceneControllerProvider.notifier).switchTo(scene)) {
           return;
         }
