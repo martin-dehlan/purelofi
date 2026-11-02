@@ -120,8 +120,15 @@ void main() {
     await openAda(tester);
 
     final Finder page = find.byType(ArtistSheet);
-    // Name and channels only: no count, no bio.
-    expect(find.text('Late nights, warm tape.'), findsNothing);
+    // Bio and channels in About, at the foot of the page.
+    await tester.scrollUntilVisible(
+      find.text('About'),
+      300,
+      scrollable: find
+          .descendant(of: page, matching: find.byType(Scrollable))
+          .first,
+    );
+    expect(find.text('Late nights, warm tape.'), findsOneWidget);
     // Every channel, by the name of the place.
     expect(find.byTooltip('YouTube'), findsOneWidget);
     expect(find.byTooltip('Website'), findsOneWidget);

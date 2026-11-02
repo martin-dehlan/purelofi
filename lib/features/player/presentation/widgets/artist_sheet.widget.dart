@@ -8,7 +8,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
-import 'artist_link_button.widget.dart';
+import 'artist_about.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -85,8 +85,6 @@ class ArtistSheet extends ConsumerWidget {
       );
     }
 
-    final List<String> links = artist.links;
-
     return CustomScrollView(
       controller: controller,
       slivers: <Widget>[
@@ -110,21 +108,6 @@ class ArtistSheet extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              // Where else to follow them: a row of round marks, one per
-              // channel, under the name. Nothing more up here: the tracks
-              // below say the rest.
-              if (links.isNotEmpty) ...<Widget>[
-                SizedBox(height: context.spaceM),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: context.spaceS,
-                  runSpacing: context.spaceS,
-                  children: <Widget>[
-                    for (final String link in links)
-                      ArtistLinkButton(url: link),
-                  ],
-                ),
-              ],
               SizedBox(height: context.spaceL),
               Row(
                 children: <Widget>[
@@ -199,7 +182,16 @@ class ArtistSheet extends ConsumerWidget {
             },
           ),
         ),
-        SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),
+        // Bio and channels at the foot, under the music, as music apps do.
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            context.horizontalPadding,
+            context.spaceL,
+            context.horizontalPadding,
+            context.spaceXl,
+          ),
+          sliver: SliverToBoxAdapter(child: ArtistAbout(artist: artist)),
+        ),
       ],
     );
   }
