@@ -32,6 +32,9 @@ enum AppGlyph {
   mail,
   flag,
   download,
+  chevron,
+  eye,
+  storage,
 
   /// A Pro scene not open yet (#16).
   lock,
@@ -86,6 +89,9 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.mail,
     AppGlyph.flag,
     AppGlyph.download,
+    AppGlyph.chevron,
+    AppGlyph.eye,
+    AppGlyph.storage,
   };
 
   @override
@@ -285,6 +291,26 @@ class _GlyphPainter extends CustomPainter {
           ..lineTo(4.5, 19.5)
           ..lineTo(19.5, 19.5)
           ..lineTo(19.5, 15.5);
+      case AppGlyph.chevron:
+        // Where a row leads: on, to another sheet.
+        p
+          ..moveTo(9.5, 5.5)
+          ..lineTo(16, 12)
+          ..lineTo(9.5, 18.5);
+      case AppGlyph.eye:
+        // Whether the controls stay in view.
+        p
+          ..moveTo(2.5, 12)
+          ..quadraticBezierTo(12, 2.5, 21.5, 12)
+          ..quadraticBezierTo(12, 21.5, 2.5, 12)
+          ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 3));
+      case AppGlyph.storage:
+        // A box with a lid: what is kept on the phone.
+        p
+          ..addRRect(_bar(3.5, 4.5, 17, 4.5, radius: 1.2))
+          ..addRRect(_bar(5, 9, 14, 10.5, radius: 1.2))
+          ..moveTo(10, 12.5)
+          ..lineTo(14, 12.5);
       case AppGlyph.lock:
         // The shackle is a ring with the body over its lower half.
         final Path shackle = Path.combine(
