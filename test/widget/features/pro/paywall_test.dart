@@ -242,7 +242,7 @@ void main() {
       await open(tester);
 
       expect(
-        find.text('Every room, every night. 1 more to sit in.'),
+        find.text('Every room, 1 more to sit in, and your music offline.'),
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Snow Cabin'), findsOneWidget);

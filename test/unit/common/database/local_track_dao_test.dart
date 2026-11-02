@@ -123,6 +123,9 @@ void main() {
         await current.customStatement(
           'ALTER TABLE tracks DROP COLUMN cover_url',
         );
+        await current.customStatement(
+          'ALTER TABLE cached_files DROP COLUMN is_pinned',
+        );
         await current.customStatement('PRAGMA user_version = 2');
         await current.close();
 

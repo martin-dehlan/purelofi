@@ -11,6 +11,9 @@ import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
 import '../../../library/controller/library.controller.dart';
 import '../../../library/presentation/widgets/remove_track_dialog.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
@@ -57,6 +60,12 @@ class TrackActionsSheet extends ConsumerWidget {
     );
 
     final String? artistId = isCatalogue ? track.artistId : null;
+    final Downloads downloads =
+        ref.watch(downloadsControllerProvider).value ?? const Downloads();
+    final bool downloadsOpen = ref.watch(downloadsOpenProvider);
+    final DownloadsController downloader = ref.read(
+      downloadsControllerProvider.notifier,
+    );
     // The sheet's own context goes with it; what opens next opens from the
     // navigator's.
     final NavigatorState navigator = Navigator.of(context);
@@ -140,6 +149,40 @@ class TrackActionsSheet extends ConsumerWidget {
                   title: 'Add to queue',
                   onTap: then(() => player.addToQueue(track)),
                 ),
+                if (isCatalogue)
+                  if (downloads.isLoading(track))
+                    const MenuRow(
+                      glyph: AppGlyph.download,
+                      title: 'Downloading…',
+                      onTap: null,
+                    )
+                  else if (downloads.has(track))
+                    MenuRow(
+                      glyph: AppGlyph.download,
+                      title: 'Remove download',
+                      subtitle: 'Plays offline now',
+                      onTap: then(
+                        () => downloader.remove(<TrackEntity>[track]),
+                      ),
+                    )
+                  else
+                    MenuRow(
+                      glyph: AppGlyph.download,
+                      title: 'Download',
+                      subtitle: downloadsOpen
+                          ? 'To listen offline'
+                          : 'With Pro',
+                      onTap: downloadsOpen
+                          ? then(
+                              () => downloader.download(<TrackEntity>[track]),
+                            )
+                          : then(
+                              () => showPaywallSheet(
+                                navigator.context,
+                                source: 'download',
+                              ),
+                            ),
+                    ),
                 if (artistId != null)
                   MenuRow(
                     glyph: AppGlyph.account,

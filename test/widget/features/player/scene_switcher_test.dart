@@ -192,4 +192,16 @@ class _GatedCache implements MediaCache {
 
   @override
   Future<void> clear() async {}
+
+  @override
+  Future<File?> download(String url) => _gate.future;
+
+  @override
+  Future<void> removeDownload(String url) async {}
+
+  @override
+  Future<Set<String>> downloadedUrls() async => <String>{};
+
+  @override
+  Future<int> downloadedBytes() async => 0;
 }

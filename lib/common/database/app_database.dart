@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(artistTable);
         await m.addColumn(trackTable, trackTable.artistId);
         await m.addColumn(trackTable, trackTable.coverUrl);
+      }
+
+      // 5: downloads, files kept on purpose. A column on the registry, so the
+      // files already on disk stay where they are.
+      if (from < 5) {
+        await m.addColumn(cachedFileTable, cachedFileTable.isPinned);
       }
     },
   );

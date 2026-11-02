@@ -13,6 +13,7 @@ import '../../../../common/utils/app_links.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/player.provider.dart';
 
 /// The few things about the app a listener may want differently: whether
@@ -39,6 +40,9 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   /// when there is no cache to count.
   int? _bytes;
 
+  /// What the downloads take up, counted with the rest.
+  int? _downloadedBytes;
+
   /// What the last restore found, said under its row.
   String? _restored;
   bool _restoring = false;
@@ -53,7 +57,13 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     final MediaCache? cache = ref.read(mediaCacheProvider);
     if (cache == null) return;
     final int bytes = await cache.sizeInBytes();
-    if (mounted) setState(() => _bytes = bytes);
+    final int downloaded = await cache.downloadedBytes();
+    if (mounted) {
+      setState(() {
+        _bytes = bytes;
+        _downloadedBytes = downloaded;
+      });
+    }
   }
 
   Future<void> _clear() async {
@@ -86,12 +96,30 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     }
   }
 
+  /// "3 tracks, 14 MB", or that there are none.
+  static String _downloadsLabel(int count, int? bytes) {
+    if (count == 0) return 'Nothing downloaded yet';
+    final String tracks = count == 1 ? '1 track' : '$count tracks';
+
+    return bytes == null
+        ? tracks
+        : '$tracks, ${SettingsSheet.sizeLabel(bytes)}';
+  }
+
+  Future<void> _removeDownloads() async {
+    await ref.read(downloadsControllerProvider.notifier).removeAll();
+    await _count();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
     final ProStatus pro =
         ref.watch(proControllerProvider).value ?? ProStatus.free;
     final String? manage = pro.manageUrl;
+    final int downloadCount =
+        ref.watch(downloadsControllerProvider).value?.done.length ?? 0;
+    final int? downloadedBytes = _downloadedBytes;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
@@ -159,6 +187,20 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                       child: const Text('Clear'),
                     ),
                     onTap: clear,
+                  ),
+                  MenuRow(
+                    glyph: AppGlyph.download,
+                    title: 'Downloads',
+                    subtitle: _downloadsLabel(downloadCount, downloadedBytes),
+                    trailing: TextButton(
+                      onPressed: downloadCount == 0
+                          ? null
+                          : () => unawaited(_removeDownloads()),
+                      child: const Text('Remove all'),
+                    ),
+                    // Nothing to open: the row says what is kept, the button
+                    // takes it back. Greyed while there is nothing.
+                    onTap: downloadCount == 0 ? null : () {},
                   ),
                 ],
               ),

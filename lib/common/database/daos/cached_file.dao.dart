@@ -16,14 +16,26 @@ class CachedFileDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<CachedFileTableData>> all() => select(cachedFileTable).get();
 
-  Future<int> totalBytes() async {
+  /// What the files take up: the downloads ([pinned]) or the rest.
+  Future<int> totalBytes({bool pinned = false}) async {
     final Expression<int> sum = cachedFileTable.sizeBytes.sum();
-    final TypedResult row = await (selectOnly(
-      cachedFileTable,
-    )..addColumns(<Expression<Object>>[sum])).getSingle();
+    final TypedResult row =
+        await (selectOnly(cachedFileTable)
+              ..addColumns(<Expression<Object>>[sum])
+              ..where(cachedFileTable.isPinned.equals(pinned)))
+            .getSingle();
 
     return row.read(sum) ?? 0;
   }
+
+  Future<List<CachedFileTableData>> pinned() => (select(
+    cachedFileTable,
+  )..where(($CachedFileTableTable f) => f.isPinned.equals(true))).get();
+
+  Future<void> setPinned(String url, {required bool pinned}) =>
+      (update(cachedFileTable)
+            ..where(($CachedFileTableTable f) => f.url.equals(url)))
+          .write(CachedFileTableCompanion(isPinned: Value<bool>(pinned)));
 
   Future<void> remember({
     required String url,
@@ -51,8 +63,10 @@ class CachedFileDao extends DatabaseAccessor<AppDatabase>
   )..where(($CachedFileTableTable f) => f.url.equals(url))).go();
 
   /// Least recently used first — the order things are thrown away in.
+  /// Downloads are never among them.
   Future<List<CachedFileTableData>> oldestFirst() =>
       (select(cachedFileTable)
+            ..where(($CachedFileTableTable f) => f.isPinned.equals(false))
             ..orderBy(<OrderClauseGenerator<$CachedFileTableTable>>[
               ($CachedFileTableTable f) => OrderingTerm.asc(f.lastUsedAt),
             ]))

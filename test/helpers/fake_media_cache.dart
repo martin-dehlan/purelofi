@@ -36,4 +36,24 @@ class FakeMediaCache implements MediaCache {
     cleared = true;
     size = 0;
   }
+
+  /// What has been downloaded on purpose, and what each download weighs.
+  final Set<String> downloads = <String>{};
+  int bytesPerDownload = 4 * 1024 * 1024;
+
+  @override
+  Future<File?> download(String url) async {
+    if (file != null) downloads.add(url);
+
+    return file;
+  }
+
+  @override
+  Future<void> removeDownload(String url) async => downloads.remove(url);
+
+  @override
+  Future<Set<String>> downloadedUrls() async => <String>{...downloads};
+
+  @override
+  Future<int> downloadedBytes() async => downloads.length * bytesPerDownload;
 }

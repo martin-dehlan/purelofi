@@ -31,6 +31,7 @@ enum AppGlyph {
   share,
   mail,
   flag,
+  download,
 
   /// A Pro scene not open yet (#16).
   lock,
@@ -84,6 +85,7 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.share,
     AppGlyph.mail,
     AppGlyph.flag,
+    AppGlyph.download,
   };
 
   @override
@@ -271,6 +273,18 @@ class _GlyphPainter extends CustomPainter {
           ..lineTo(15.5, 8.5)
           ..lineTo(18.5, 13.5)
           ..lineTo(6, 13.5);
+      case AppGlyph.download:
+        // An arrow coming down into a tray.
+        p
+          ..moveTo(12, 3.5)
+          ..lineTo(12, 14.5)
+          ..moveTo(7.5, 10)
+          ..lineTo(12, 14.5)
+          ..lineTo(16.5, 10)
+          ..moveTo(4.5, 15.5)
+          ..lineTo(4.5, 19.5)
+          ..lineTo(19.5, 19.5)
+          ..lineTo(19.5, 15.5);
       case AppGlyph.lock:
         // The shackle is a ring with the body over its lower half.
         final Path shackle = Path.combine(

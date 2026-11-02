@@ -133,3 +133,12 @@ Set<String> lockedScenes(Ref ref) {
     proAvailable: ref.watch(proRepositoryProvider).isAvailable,
   );
 }
+
+/// Whether this listener may download tracks for offline listening: with
+/// Pro, or anywhere Pro is not for sale, as with the rooms.
+@riverpod
+bool downloadsOpen(Ref ref) {
+  if (!ref.watch(proRepositoryProvider).isAvailable) return true;
+
+  return ref.watch(proControllerProvider).value?.isPro ?? false;
+}
