@@ -5,8 +5,9 @@ import '../../domain/artist.entity.dart';
 import 'artist_link_button.widget.dart';
 
 /// The foot of an artist's page, where music apps keep the rest about them:
-/// a few words if they wrote any, and every channel they are on. Below the
-/// tracks, so the top of the page stays the picture, the name and Play.
+/// a tile with their picture across the top, then a few words if they
+/// wrote any and every channel they are on. Below the tracks, so the top of
+/// the page stays the picture, the name and Play.
 ///
 /// Nothing at all when there is nothing to say.
 class ArtistAbout extends StatelessWidget {
@@ -22,45 +23,67 @@ class ArtistAbout extends StatelessWidget {
     final bool hasBio = bio != null && bio.isNotEmpty;
     if (!hasBio && links.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: EdgeInsets.all(context.spaceM),
-      decoration: BoxDecoration(
+    final String? picture = artist.avatarUrl;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(context.cardBorderRadius),
+      child: ColoredBox(
         color: cs.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(context.cardBorderRadius),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'About',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: context.fontL,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (hasBio) ...<Widget>[
-            SizedBox(height: context.spaceS),
-            Text(
-              bio,
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontM,
-                height: 1.4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            // Their picture, wide, as the tile's face. A picture that will
+            // not load leaves the words alone rather than a broken frame.
+            if (picture != null)
+              AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Image.network(
+                  picture,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.all(context.spaceM),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'About',
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: context.fontL,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (hasBio) ...<Widget>[
+                    SizedBox(height: context.spaceS),
+                    Text(
+                      bio,
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: context.fontM,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  if (links.isNotEmpty) ...<Widget>[
+                    SizedBox(height: context.spaceM),
+                    Wrap(
+                      spacing: context.spaceS,
+                      runSpacing: context.spaceS,
+                      children: <Widget>[
+                        for (final String link in links)
+                          ArtistLinkButton(url: link),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
-          if (links.isNotEmpty) ...<Widget>[
-            SizedBox(height: context.spaceM),
-            Wrap(
-              spacing: context.spaceS,
-              runSpacing: context.spaceS,
-              children: <Widget>[
-                for (final String link in links) ArtistLinkButton(url: link),
-              ],
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
