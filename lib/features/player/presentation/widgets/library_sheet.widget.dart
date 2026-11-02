@@ -3,31 +3,33 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../library/controller/library.controller.dart';
 import '../../../library/presentation/widgets/my_music.widget.dart';
+import '../../controller/artist.controller.dart';
 import '../../controller/favorites.controller.dart';
-import '../../controller/playback_source.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
+import '../../domain/artist.entity.dart';
 import '../../domain/track.entity.dart';
+import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
+import 'artist_sheet.widget.dart';
 import 'music_sheet.dart';
 import 'search_sheet.widget.dart';
 import 'track_tile.widget.dart';
-import 'up_next.widget.dart';
 
-/// What the sheet shows: what plays next, one of the two sides, the
-/// artists behind PureLofi's side, or the marked tracks.
-enum LibraryFilter { upNext, catalogue, artists, local, favorites }
+/// One kind of thing in the library. None chosen is the overview.
+enum LibraryFilter { tracks, artists, favorites, local }
 
-/// All the music in one lean sheet, the way a music app's library looks: a
-/// row of pills, and a list of tracks with round covers.
+/// "Your Library", the way music apps lay theirs out (#110): a big title
+/// with search beside it, a row of filters big enough to hit, and under
+/// them either everything at a glance — the collections first, then the
+/// artists — or the one kind the filter picked.
 ///
-/// "Up next" sits in the same row as the sides, so the queue needs no
-/// button of its own. The sheet opens on whichever side is playing. Picking
-/// a track from the other side is what turns the stream over to it (#66);
-/// the pills only change what is shown.
+/// It opens all the way, as a page; the queue has its own sheet.
 class LibrarySheet extends ConsumerStatefulWidget {
   const LibrarySheet({required this.controller, super.key});
 
@@ -38,86 +40,102 @@ class LibrarySheet extends ConsumerStatefulWidget {
 }
 
 class _LibrarySheetState extends ConsumerState<LibrarySheet> {
-  late LibraryFilter _filter =
-      ref.read(playbackSourceControllerProvider) == TrackSource.local
-      ? LibraryFilter.local
-      : LibraryFilter.catalogue;
+  LibraryFilter? _filter;
 
-  static const Map<LibraryFilter, String> _names = <LibraryFilter, String>{
-    LibraryFilter.upNext: 'Up next',
-    LibraryFilter.catalogue: 'PureLofi',
+  static const Map<LibraryFilter, String> names = <LibraryFilter, String>{
+    LibraryFilter.tracks: 'Tracks',
     LibraryFilter.artists: 'Artists',
-    LibraryFilter.local: 'My music',
     LibraryFilter.favorites: 'Favorites',
+    LibraryFilter.local: 'My music',
   };
+
+  /// A filter tapped again lets go of it, back to the overview.
+  void _pick(LibraryFilter filter) =>
+      setState(() => _filter = _filter == filter ? null : filter);
 
   @override
   Widget build(BuildContext context) {
-    final EdgeInsets sides = EdgeInsets.symmetric(
-      horizontal: context.horizontalPadding,
-    );
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final LibraryFilter? filter = _filter;
 
     return CustomScrollView(
       controller: widget.controller,
       slivers: <Widget>[
-        // One line that always fits: favourites is a heart alone, and on a
-        // narrow phone or under large text the row shrinks rather than
-        // running off the edge of the sheet.
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            context.horizontalPadding,
-            0,
-            context.horizontalPadding,
-            context.spaceM,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
           sliver: SliverToBoxAdapter(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // Search stands apart from the pills: it is not a list of
-                  // its own but a way into all of them.
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(end: context.spaceS),
-                    child: _SearchPill(
-                      onTap: () => unawaited(showSearchSheet(context)),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Your Library',
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: context.fontXl,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  for (final LibraryFilter filter in LibraryFilter.values)
-                    Padding(
-                      padding: EdgeInsetsDirectional.only(end: context.spaceS),
-                      child: _Pill(
-                        label: _names[filter]!,
-                        heart: filter == LibraryFilter.favorites,
-                        selected: _filter == filter,
-                        onTap: () => setState(() => _filter = filter),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+                IconButton(
+                  tooltip: 'Search',
+                  iconSize: context.fontXl,
+                  icon: AppIcon(
+                    AppGlyph.search,
+                    size: context.fontXl,
+                    color: cs.onSurface,
+                  ),
+                  onPressed: () => unawaited(showSearchSheet(context)),
+                ),
+              ],
             ),
           ),
         ),
+        SliverToBoxAdapter(child: SizedBox(height: context.spaceS)),
+        // The filters scroll sideways rather than shrink: they stay the size
+        // a thumb needs, however narrow the phone or large the text.
+        SliverToBoxAdapter(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(
+              horizontal: context.horizontalPadding,
+            ),
+            child: Row(
+              children: <Widget>[
+                if (filter != null) ...<Widget>[
+                  _ClearFilter(onTap: () => setState(() => _filter = null)),
+                  SizedBox(width: context.spaceS),
+                ],
+                for (final LibraryFilter f in LibraryFilter.values) ...<Widget>[
+                  _FilterPill(
+                    label: names[f]!,
+                    selected: filter == f,
+                    onTap: () => _pick(f),
+                  ),
+                  SizedBox(width: context.spaceS),
+                ],
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(child: SizedBox(height: context.spaceM)),
         SliverPadding(
-          padding: sides,
-          sliver: switch (_filter) {
-            LibraryFilter.upNext => const UpNext(),
-            LibraryFilter.catalogue => _Tracks(
+          padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
+          sliver: switch (filter) {
+            null => _Overview(onPick: _pick),
+            LibraryFilter.tracks => _Tracks(
               tracks:
                   ref.watch(trackListControllerProvider).value ??
                   const <TrackEntity>[],
               empty: 'No tracks yet.',
             ),
             LibraryFilter.artists => const ArtistList(),
-            LibraryFilter.local => const MyMusic(),
             LibraryFilter.favorites => _Tracks(
               tracks: ref.watch(favoriteTracksProvider),
               empty:
                   'Nothing marked yet. Tap ⋯ on a track, or the heart '
                   'beside the one playing.',
             ),
+            LibraryFilter.local => const MyMusic(),
           },
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),
@@ -126,25 +144,164 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
   }
 }
 
-/// One filter, as a pill: filled in the foreground colour when chosen, a
-/// quiet surface otherwise. Material's chip, with the outline taken off.
-class _Pill extends StatelessWidget {
-  const _Pill({
+/// Everything at a glance: the three collections, then every artist.
+class _Overview extends ConsumerWidget {
+  const _Overview({required this.onPick});
+
+  final void Function(LibraryFilter filter) onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final int catalogue =
+        (ref.watch(trackListControllerProvider).value ?? const <TrackEntity>[])
+            .length;
+    final int favorites = ref.watch(favoriteTracksProvider).length;
+    final int local =
+        (ref.watch(libraryControllerProvider).value ?? const <TrackEntity>[])
+            .length;
+    final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
+
+    String tracks(int n) => n == 1 ? '1 track' : '$n tracks';
+
+    return SliverList.list(
+      children: <Widget>[
+        _Row(
+          tile: _Tile(
+            background: cs.surfaceContainerHigh,
+            child: Text(
+              'P',
+              style: TextStyle(
+                color: cs.onSurface,
+                fontFamily: AppFonts.wordmark,
+                fontSize: context.fontXl,
+              ),
+            ),
+          ),
+          title: 'PureLofi',
+          subtitle: 'Collection · ${tracks(catalogue)}',
+          onTap: () => onPick(LibraryFilter.tracks),
+        ),
+        // The marked tracks in the accent, the one coloured tile here, as
+        // music apps set their liked songs apart.
+        _Row(
+          tile: _Tile(
+            background: cs.primary,
+            child: AppIcon(
+              AppGlyph.heart,
+              size: context.fontXl,
+              color: cs.onPrimary,
+            ),
+          ),
+          title: 'Favorites',
+          subtitle: 'Collection · ${tracks(favorites)}',
+          onTap: () => onPick(LibraryFilter.favorites),
+        ),
+        _Row(
+          tile: _Tile(
+            background: cs.surfaceContainerHigh,
+            child: AppIcon(
+              AppGlyph.storage,
+              size: context.fontXl,
+              color: cs.onSurface,
+            ),
+          ),
+          title: 'My music',
+          subtitle: 'On this phone · ${tracks(local)}',
+          onTap: () => onPick(LibraryFilter.local),
+        ),
+        for (final ArtistEntity artist in artists)
+          _Row(
+            tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
+            title: artist.name,
+            subtitle: 'Artist',
+            onTap: () => unawaited(showArtistSheet(context, artist.id)),
+          ),
+      ],
+    );
+  }
+}
+
+/// One entry of the overview: a picture, a name and what it is.
+class _Row extends StatelessWidget {
+  const _Row({
+    required this.tile,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final Widget tile;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      horizontalTitleGap: context.spaceM,
+      minVerticalPadding: context.spaceS,
+      leading: tile,
+      title: Text(
+        title,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: context.fontM, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+/// The square picture of a collection, the size of a track's cover.
+class _Tile extends StatelessWidget {
+  const _Tile({required this.background, required this.child});
+
+  final Color background;
+  final Widget child;
+
+  static double sizeFor(BuildContext context) => context.screenWidth * 0.15;
+
+  @override
+  Widget build(BuildContext context) {
+    final double size = sizeFor(context);
+
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(size * 0.12),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// One filter: filled in the foreground colour when chosen, a quiet surface
+/// otherwise. Material's chip, with the outline taken off.
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
     required this.label,
-    required this.heart,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
-  final bool heart;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Color ink = selected ? cs.surface : cs.onSurface;
 
     return ChoiceChip(
       tooltip: label,
@@ -153,27 +310,27 @@ class _Pill extends StatelessWidget {
       side: BorderSide.none,
       backgroundColor: cs.surfaceContainerHigh,
       selectedColor: cs.onSurface,
-      // The heart alone is the favourites pill: the shape says it, and
-      // the tooltip names it for anyone who cannot see it.
-      label: heart
-          ? AppIcon(AppGlyph.heart, size: context.fontM, color: ink)
-          : Text(
-              label,
-              style: TextStyle(
-                color: ink,
-                fontSize: context.fontM,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.spaceS,
+        vertical: context.spaceS,
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: selected ? cs.surface : cs.onSurface,
+          fontSize: context.fontM,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       selected: selected,
       onSelected: (_) => onTap(),
     );
   }
 }
 
-/// The magnifier at the head of the pills, opening the search.
-class _SearchPill extends StatelessWidget {
-  const _SearchPill({required this.onTap});
+/// The round × ahead of a chosen filter: back to everything.
+class _ClearFilter extends StatelessWidget {
+  const _ClearFilter({required this.onTap});
 
   final VoidCallback onTap;
 
@@ -182,11 +339,12 @@ class _SearchPill extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return ActionChip(
-      tooltip: 'Search',
-      shape: const StadiumBorder(),
+      tooltip: 'All',
+      shape: const CircleBorder(),
       side: BorderSide.none,
       backgroundColor: cs.surfaceContainerHigh,
-      label: AppIcon(AppGlyph.search, size: context.fontM, color: cs.onSurface),
+      padding: EdgeInsets.all(context.spaceS),
+      label: AppIcon(AppGlyph.close, size: context.fontM, color: cs.onSurface),
       onPressed: onTap,
     );
   }
@@ -233,9 +391,10 @@ class _Tracks extends ConsumerWidget {
   }
 }
 
-/// Opens the library.
+/// Opens the library, all the way up.
 Future<void> showLibrarySheet(BuildContext context) => showMusicSheet(
   context,
   (BuildContext context, ScrollController controller) =>
       LibrarySheet(controller: controller),
+  initialSize: 0.92,
 );

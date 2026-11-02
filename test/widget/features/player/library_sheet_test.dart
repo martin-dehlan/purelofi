@@ -50,6 +50,7 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openLibrary(tester);
+    await tapPill(tester, 'Tracks');
   }
 
   Finder row(String title) => find.descendant(

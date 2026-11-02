@@ -16,6 +16,7 @@ import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
 import 'library_sheet.widget.dart';
+import 'queue_sheet.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
 
@@ -87,11 +88,19 @@ class PlayerControls extends ConsumerWidget {
           // stream: how it goes on, and where its music lives.
           Row(
             children: <Widget>[
-              _ModeButton(
-                mode: mode,
-                onTap: ref.read(playbackModeControllerProvider.notifier).cycle,
+              // The two ends take the same room, so the transport stays in
+              // the middle with one button on the left and two on the right.
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _ModeButton(
+                    mode: mode,
+                    onTap: ref
+                        .read(playbackModeControllerProvider.notifier)
+                        .cycle,
+                  ),
+                ),
               ),
-              const Spacer(),
               _TransportButton(
                 glyph: AppGlyph.previous,
                 label: 'Previous track',
@@ -114,11 +123,22 @@ class PlayerControls extends ConsumerWidget {
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
               ),
-              const Spacer(),
-              _SheetButton(
-                glyph: AppGlyph.queue,
-                label: 'Library',
-                onTap: () => showLibrarySheet(context),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    _SheetButton(
+                      glyph: AppGlyph.queue,
+                      label: 'Queue',
+                      onTap: () => showQueueSheet(context),
+                    ),
+                    _SheetButton(
+                      glyph: AppGlyph.library,
+                      label: 'Library',
+                      onTap: () => showLibrarySheet(context),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

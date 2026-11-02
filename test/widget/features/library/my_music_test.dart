@@ -65,11 +65,31 @@ void main() {
       .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
       .selected;
 
-  testWidgets('the library opens on PureLofi\'s music', (tester) async {
+  testWidgets('the library opens on the overview, no filter chosen', (
+    tester,
+  ) async {
     await start(tester);
     await openLibrary(tester);
 
-    expect(chipSelected(tester, 'PureLofi'), isTrue);
+    expect(find.text('Your Library'), findsOneWidget);
+    expect(chipSelected(tester, 'Tracks'), isFalse);
+    expect(find.text('On this phone · 0 tracks'), findsOneWidget);
+    expect(find.byType(MyMusic), findsNothing);
+  });
+
+  testWidgets('My music in the overview opens it, the × goes back', (
+    tester,
+  ) async {
+    await start(tester);
+    await openLibrary(tester);
+
+    await tester.tap(find.text('On this phone · 0 tracks'));
+    await tester.pumpAndSettle();
+    expect(chipSelected(tester, 'My music'), isTrue);
+    expect(find.byType(MyMusic), findsOneWidget);
+
+    await tester.tap(find.byTooltip('All'));
+    await tester.pumpAndSettle();
     expect(find.byType(MyMusic), findsNothing);
   });
 
@@ -134,21 +154,6 @@ void main() {
       findsNothing,
       reason: 'the chrome is as it was for anyone on PureLofi\'s music',
     );
-  });
-
-  testWidgets('the library opens on the side that is playing', (tester) async {
-    library = FakeLibraryRepository(<TrackEntity>[
-      makeLocalTrack('mine', title: 'Kitchen Demo'),
-    ]);
-    await start(tester);
-    await openMyMusic(tester);
-    await tester.tap(find.text('Kitchen Demo'));
-    await tester.pumpAndSettle();
-
-    await openLibrary(tester);
-
-    expect(chipSelected(tester, 'My music'), isTrue);
-    expect(find.byType(MyMusic), findsOneWidget);
   });
 
   group('removing', () {

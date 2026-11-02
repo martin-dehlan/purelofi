@@ -100,7 +100,7 @@ void main() {
   ) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
 
     final Finder sheet = find.byType(LibrarySheet);
     expect(
@@ -157,7 +157,7 @@ void main() {
   testWidgets('a track\'s menu goes to its artist', (tester) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: Slow Bass'));
     await tester.pumpAndSettle();
 
@@ -171,7 +171,7 @@ void main() {
   testWidgets('an uncredited track has no way to an artist', (tester) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: Uncredited'));
     await tester.pumpAndSettle();
 

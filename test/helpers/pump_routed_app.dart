@@ -178,8 +178,7 @@ Future<void> openLibrary(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Taps one of the library's pills, found by name — the favourites one is a
-/// heart without a word on it.
+/// Taps one of the library's filters, found by name.
 Future<void> tapPill(WidgetTester tester, String label) async {
   final Finder pill = find.byWidgetPredicate(
     (Widget w) => w is ChoiceChip && w.tooltip == label,
@@ -190,8 +189,8 @@ Future<void> tapPill(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
-/// Opens the library on its "Up next" pill: the queue.
+/// Opens the queue, from its button beside the library's.
 Future<void> openQueue(WidgetTester tester) async {
-  await openLibrary(tester);
-  await tapPill(tester, 'Up next');
+  await tester.tap(find.bySemanticsLabel('Queue'));
+  await tester.pumpAndSettle();
 }

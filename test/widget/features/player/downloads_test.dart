@@ -70,7 +70,7 @@ void main() {
 
   Future<void> openTrackMenu(WidgetTester tester, String title) async {
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: $title'));
     await tester.pumpAndSettle();
   }

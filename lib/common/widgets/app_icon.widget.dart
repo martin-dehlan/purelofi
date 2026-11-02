@@ -23,6 +23,8 @@ enum AppGlyph {
   check,
   dropDown,
   queue,
+  library,
+  close,
   more,
   account,
   remove,
@@ -92,6 +94,7 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.chevron,
     AppGlyph.eye,
     AppGlyph.storage,
+    AppGlyph.close,
   };
 
   @override
@@ -216,6 +219,23 @@ class _GlyphPainter extends CustomPainter {
           ..addRRect(_bar(4, 10.2, 16, 2.6))
           ..addRRect(_bar(4, 15.4, 8, 2.6))
           ..addPath(_triangle(15, 14, 20.5, 17.2, 15, 20.4), Offset.zero);
+      case AppGlyph.library:
+        // Two records on the shelf and a third leaning on them.
+        p
+          ..addRRect(_bar(4, 4, 2.8, 16))
+          ..addRRect(_bar(9, 4, 2.8, 16))
+          ..addPolygon(const <Offset>[
+            Offset(13.6, 5.2),
+            Offset(16.2, 4.3),
+            Offset(20.6, 19),
+            Offset(18, 19.9),
+          ], true);
+      case AppGlyph.close:
+        p
+          ..moveTo(6.5, 6.5)
+          ..lineTo(17.5, 17.5)
+          ..moveTo(17.5, 6.5)
+          ..lineTo(6.5, 17.5);
       case AppGlyph.more:
         for (final double x in <double>[5.5, 12, 18.5]) {
           p.addOval(Rect.fromCircle(center: Offset(x, 12), radius: 2));
