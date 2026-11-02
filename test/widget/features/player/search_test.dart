@@ -87,7 +87,7 @@ void main() {
     expect(inSearch(find.text('Kitchen Demo')), findsOneWidget);
   });
 
-  testWidgets('a track found plays and goes back to the room', (tester) async {
+  testWidgets('a track found plays and the library stays open', (tester) async {
     await openSearch(tester);
     await tester.enterText(find.byType(SearchBar), 'travel');
     await tester.pumpAndSettle();
@@ -95,7 +95,7 @@ void main() {
     await tester.tap(inSearch(find.text('Travel Lofi')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(LibrarySheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsOneWidget);
     expect(fakeAudio.playedTracks.last.id, 'b');
   });
 

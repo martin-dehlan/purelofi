@@ -53,13 +53,8 @@ class ArtistSheet extends ConsumerWidget {
       );
     }
 
-    // Back to the room, the way picking a track in the library goes.
-    void backToRoom() =>
-        Navigator.of(context).popUntil((Route<dynamic> route) => route.isFirst);
-
     void playAll() {
       if (tracks.isEmpty) return;
-      backToRoom();
       player.clearQueue();
       for (final TrackEntity track in tracks.skip(1)) {
         player.addToQueue(track);
@@ -176,10 +171,9 @@ class ArtistSheet extends ConsumerWidget {
               final TrackEntity track = tracks[index];
               return TrackTile(
                 track: track,
-                onTap: () {
-                  backToRoom();
-                  unawaited(player.playTrack(track));
-                },
+                // It plays and the page stays open, as music apps keep the
+                // list in hand while the music changes.
+                onTap: () => unawaited(player.playTrack(track)),
               );
             },
           ),

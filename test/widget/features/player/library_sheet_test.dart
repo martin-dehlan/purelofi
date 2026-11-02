@@ -77,7 +77,7 @@ void main() {
     );
   });
 
-  testWidgets('tapping a track plays it and goes back to the room', (
+  testWidgets('tapping a track plays it and the library stays open', (
     tester,
   ) async {
     await start(tester);
@@ -86,7 +86,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fakeAudio.playedTracks.last.id, 'b');
-    expect(find.byType(LibrarySheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsOneWidget);
   });
 
   testWidgets('the track playing is the selected tile', (tester) async {

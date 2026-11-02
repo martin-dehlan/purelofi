@@ -20,8 +20,8 @@ import 'track_tile.widget.dart';
 ///
 /// Shown inside the library, in place of its lists, while its search field
 /// is open — no sheet of its own. Artists come first, then the tracks.
-/// Picking a track plays it and goes back to the room, the way the library
-/// does.
+/// Picking a track plays it and leaves the results open, the way the
+/// library does.
 ///
 /// A group of slivers, so it scrolls as part of the library.
 class SearchResults extends ConsumerWidget {
@@ -110,16 +110,9 @@ class SearchResults extends ConsumerWidget {
               final TrackEntity track = tracks[index];
               return TrackTile(
                 track: track,
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).popUntil((Route<dynamic> route) => route.isFirst);
-                  unawaited(
-                    ref
-                        .read(playerControllerProvider.notifier)
-                        .playTrack(track),
-                  );
-                },
+                onTap: () => unawaited(
+                  ref.read(playerControllerProvider.notifier).playTrack(track),
+                ),
               );
             },
           ),

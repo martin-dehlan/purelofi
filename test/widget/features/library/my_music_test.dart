@@ -139,12 +139,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(audio.playedTracks.last.id, 'mine');
-    expect(find.byType(LibrarySheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsOneWidget);
     expect(
       find.textContaining('Back to PureLofi', findRichText: true),
       findsOneWidget,
     );
 
+    // The way back is in the room, under the library: close it first.
+    Navigator.of(tester.element(find.byType(LibrarySheet))).pop();
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Back to PureLofi'));
     await tester.pumpAndSettle();
 

@@ -144,7 +144,7 @@ void main() {
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ArtistSheet), findsNothing);
+    expect(find.byType(ArtistSheet), findsOneWidget);
     expect(fakeAudio.playedTracks.last.id, 'a');
     expect(
       container(

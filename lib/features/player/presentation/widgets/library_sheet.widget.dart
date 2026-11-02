@@ -416,8 +416,8 @@ class _ClearFilter extends StatelessWidget {
   }
 }
 
-/// PureLofi's tracks, or the marked ones. Tapping one plays it and goes
-/// back to the room.
+/// PureLofi's tracks, or the marked ones. Tapping one plays it; the
+/// library stays open, as in music apps.
 class _Tracks extends ConsumerWidget {
   const _Tracks({required this.tracks, required this.empty});
 
@@ -445,12 +445,9 @@ class _Tracks extends ConsumerWidget {
         final TrackEntity track = tracks[index];
         return TrackTile(
           track: track,
-          onTap: () {
-            Navigator.of(context).pop();
-            unawaited(
-              ref.read(playerControllerProvider.notifier).playTrack(track),
-            );
-          },
+          onTap: () => unawaited(
+            ref.read(playerControllerProvider.notifier).playTrack(track),
+          ),
         );
       },
     );
