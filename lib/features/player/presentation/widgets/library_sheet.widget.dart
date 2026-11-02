@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import '../../../library/controller/library.controller.dart';
 import '../../../library/presentation/widgets/my_music.widget.dart';
 import '../../controller/artist.controller.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
@@ -17,57 +16,151 @@ import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
 import 'artist_sheet.widget.dart';
-import 'music_sheet.dart';
+import 'library_scope.widget.dart';
+import 'mini_player.widget.dart';
 import 'search_results.widget.dart';
 import 'track_tile.widget.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
-enum LibraryFilter { tracks, artists, favorites, local }
+enum LibraryFilter { tracks, artists, downloaded, local }
+
+/// A page that slides in over the library: an artist's, or the favourites.
+class _LibraryPage {
+  const _LibraryPage.artist(String this.artistId);
+  const _LibraryPage.favorites() : artistId = null;
+
+  final String? artistId;
+}
 
 /// "Your Library", the way music apps lay theirs out (#110): a big title
-/// with search beside it, a row of filters big enough to hit, and under
-/// them either everything at a glance — the collections first, then the
-/// artists — or the one kind the filter picked.
+/// with search beside it, a row of filters, and under them the favourites
+/// pinned on top and every artist, or the one kind a filter picked.
 ///
-/// Search happens here too: the magnifier turns the title into a search
-/// field and the lists into results, and Cancel turns them back.
-///
-/// It opens all the way, as a page; the queue has its own sheet.
+/// An artist or the favourites slide in over the list, with a way back,
+/// rather than stacking another sheet on it; the list is as it was when
+/// they slide out again. Search happens here too. The track playing sits
+/// at the foot the whole time, so picking a track never has to close it.
 class LibrarySheet extends ConsumerStatefulWidget {
-  const LibrarySheet({required this.controller, super.key});
-
-  final ScrollController controller;
+  const LibrarySheet({super.key});
 
   @override
   ConsumerState<LibrarySheet> createState() => _LibrarySheetState();
 }
 
-class _LibrarySheetState extends ConsumerState<LibrarySheet> {
+class _LibrarySheetState extends ConsumerState<LibrarySheet>
+    with SingleTickerProviderStateMixin {
   LibraryFilter? _filter;
 
   /// The search field is open; [_query] is what is typed in it.
   bool _searching = false;
   String _query = '';
 
+  /// The page over the list, and how far it has slid in.
+  _LibraryPage? _page;
+  late final AnimationController _slide = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  )..addStatusListener((_) => setState(() {}));
+
   static const Map<LibraryFilter, String> names = <LibraryFilter, String>{
     LibraryFilter.tracks: 'Tracks',
     LibraryFilter.artists: 'Artists',
-    LibraryFilter.favorites: 'Favorites',
+    LibraryFilter.downloaded: 'Downloaded',
     LibraryFilter.local: 'My music',
   };
+
+  @override
+  void dispose() {
+    _slide.dispose();
+    super.dispose();
+  }
 
   /// A filter tapped again lets go of it, back to the overview.
   void _pick(LibraryFilter filter) =>
       setState(() => _filter = _filter == filter ? null : filter);
 
+  void _open(_LibraryPage page) {
+    setState(() => _page = page);
+    unawaited(_slide.forward(from: 0));
+  }
+
+  Future<void> _back() async {
+    await _slide.reverse();
+    if (mounted) setState(() => _page = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final _LibraryPage? page = _page;
+    // Once the page covers it, the list steps out of the way entirely; it
+    // keeps where it was scrolled to for the way back.
+    final bool covered = page != null && _slide.isCompleted;
+
+    return LibraryScope(
+      openArtist: (String artistId) => _open(_LibraryPage.artist(artistId)),
+      child: PopScope(
+        canPop: page == null,
+        onPopInvokedWithResult: (bool didPop, Object? _) {
+          if (!didPop) unawaited(_back());
+        },
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: Stack(
+                children: <Widget>[
+                  Offstage(offstage: covered, child: _home(context)),
+                  if (page != null)
+                    SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(1, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: _slide,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                      child: _PageFrame(
+                        page: page,
+                        slide: _slide,
+                        onBack: () => unawaited(_back()),
+                        background:
+                            Theme.of(
+                              context,
+                            ).bottomSheetTheme.backgroundColor ??
+                            cs.surfaceContainerLow,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const MiniPlayer(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _home(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final LibraryFilter? filter = _filter;
     final bool searching = _searching;
+    final List<TrackEntity> catalogue =
+        ref.watch(trackListControllerProvider).value ?? const <TrackEntity>[];
+    final Downloads downloads =
+        ref.watch(downloadsControllerProvider).value ?? const Downloads();
+    // Downloaded is a filter only once there is something downloaded.
+    final List<LibraryFilter> filters = <LibraryFilter>[
+      for (final LibraryFilter f in LibraryFilter.values)
+        if (f != LibraryFilter.downloaded ||
+            downloads.done.isNotEmpty ||
+            filter == f)
+          f,
+    ];
 
     return CustomScrollView(
-      controller: widget.controller,
       slivers: <Widget>[
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
@@ -123,8 +216,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
                     _ClearFilter(onTap: () => setState(() => _filter = null)),
                     SizedBox(width: context.spaceS),
                   ],
-                  for (final LibraryFilter f
-                      in LibraryFilter.values) ...<Widget>[
+                  for (final LibraryFilter f in filters) ...<Widget>[
                     _FilterPill(
                       label: names[f]!,
                       selected: filter == f,
@@ -142,24 +234,123 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
           sliver: searching
               ? SearchResults(query: _query)
               : switch (filter) {
-                  null => _Overview(onPick: _pick),
+                  null => _Overview(
+                    onFavorites: () => _open(const _LibraryPage.favorites()),
+                  ),
                   LibraryFilter.tracks => _Tracks(
-                    tracks:
-                        ref.watch(trackListControllerProvider).value ??
-                        const <TrackEntity>[],
+                    tracks: catalogue,
                     empty: 'No tracks yet.',
                   ),
                   LibraryFilter.artists => const ArtistList(),
-                  LibraryFilter.favorites => _Tracks(
-                    tracks: ref.watch(favoriteTracksProvider),
-                    empty:
-                        'Nothing marked yet. Tap ⋯ on a track, or the heart '
-                        'beside the one playing.',
+                  LibraryFilter.downloaded => _Tracks(
+                    tracks: catalogue.where(downloads.has).toList(),
+                    empty: 'Nothing downloaded yet.',
                   ),
                   LibraryFilter.local => const MyMusic(),
                 },
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),
+      ],
+    );
+  }
+}
+
+/// A page slid in over the library: a way back on top, the page below.
+/// Pulled to the right it follows the finger, and let go far or fast
+/// enough it goes back, as pages do on a phone.
+class _PageFrame extends StatelessWidget {
+  const _PageFrame({
+    required this.page,
+    required this.slide,
+    required this.onBack,
+    required this.background,
+  });
+
+  final _LibraryPage page;
+  final AnimationController slide;
+  final VoidCallback onBack;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String? artistId = page.artistId;
+
+    return GestureDetector(
+      onHorizontalDragUpdate: (DragUpdateDetails details) =>
+          slide.value -= (details.primaryDelta ?? 0) / context.screenWidth,
+      onHorizontalDragEnd: (DragEndDetails details) {
+        if ((details.primaryVelocity ?? 0) > 300 || slide.value < 0.6) {
+          onBack();
+        } else {
+          unawaited(slide.forward());
+        }
+      },
+      // Material, not a plain fill: the rows' ink lands on it.
+      child: Material(
+        color: background,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: context.spaceXs),
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: onBack,
+                    icon: AppIcon(
+                      AppGlyph.back,
+                      size: context.fontXl,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  if (artistId == null)
+                    Text(
+                      'Favorites',
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: context.fontXl,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: artistId != null
+                  ? ArtistSheet(artistId: artistId)
+                  : const _FavoritesPage(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The marked tracks, as a page of their own.
+class _FavoritesPage extends ConsumerWidget {
+  const _FavoritesPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            context.horizontalPadding,
+            context.spaceS,
+            context.horizontalPadding,
+            context.spaceXl,
+          ),
+          sliver: _Tracks(
+            tracks: ref.watch(favoriteTracksProvider),
+            empty:
+                'Nothing marked yet. Tap ⋯ on a track, or the heart '
+                'beside the one playing.',
+          ),
+        ),
       ],
     );
   }
@@ -210,46 +401,21 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// Everything at a glance: the three collections, then every artist.
+/// Everything at a glance: the favourites pinned on top in the accent, as
+/// music apps set liked songs apart, then every artist.
 class _Overview extends ConsumerWidget {
-  const _Overview({required this.onPick});
+  const _Overview({required this.onFavorites});
 
-  final void Function(LibraryFilter filter) onPick;
+  final VoidCallback onFavorites;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final int catalogue =
-        (ref.watch(trackListControllerProvider).value ?? const <TrackEntity>[])
-            .length;
     final int favorites = ref.watch(favoriteTracksProvider).length;
-    final int local =
-        (ref.watch(libraryControllerProvider).value ?? const <TrackEntity>[])
-            .length;
     final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
-
-    String tracks(int n) => n == 1 ? '1 track' : '$n tracks';
 
     return SliverList.list(
       children: <Widget>[
-        _Row(
-          tile: _Tile(
-            background: cs.surfaceContainerHigh,
-            child: Text(
-              'P',
-              style: TextStyle(
-                color: cs.onSurface,
-                fontFamily: AppFonts.wordmark,
-                fontSize: context.fontXl,
-              ),
-            ),
-          ),
-          title: 'PureLofi',
-          subtitle: 'Collection · ${tracks(catalogue)}',
-          onTap: () => onPick(LibraryFilter.tracks),
-        ),
-        // The marked tracks in the accent, the one coloured tile here, as
-        // music apps set their liked songs apart.
         _Row(
           tile: _Tile(
             background: cs.primary,
@@ -260,28 +426,15 @@ class _Overview extends ConsumerWidget {
             ),
           ),
           title: 'Favorites',
-          subtitle: 'Collection · ${tracks(favorites)}',
-          onTap: () => onPick(LibraryFilter.favorites),
-        ),
-        _Row(
-          tile: _Tile(
-            background: cs.surfaceContainerHigh,
-            child: AppIcon(
-              AppGlyph.storage,
-              size: context.fontXl,
-              color: cs.onSurface,
-            ),
-          ),
-          title: 'My music',
-          subtitle: 'On this phone · ${tracks(local)}',
-          onTap: () => onPick(LibraryFilter.local),
+          subtitle: favorites == 1 ? '1 track' : '$favorites tracks',
+          onTap: onFavorites,
         ),
         for (final ArtistEntity artist in artists)
           _Row(
             tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
             title: artist.name,
             subtitle: 'Artist',
-            onTap: () => unawaited(showArtistSheet(context, artist.id)),
+            onTap: () => unawaited(openArtistPage(context, artist.id)),
           ),
       ],
     );
@@ -454,10 +607,14 @@ class _Tracks extends ConsumerWidget {
   }
 }
 
-/// Opens the library, all the way up.
-Future<void> showLibrarySheet(BuildContext context) => showMusicSheet(
-  context,
-  (BuildContext context, ScrollController controller) =>
-      LibrarySheet(controller: controller),
-  initialSize: 0.92,
-);
+/// Opens the library, nearly all the way up, as a page of its own.
+Future<void> showLibrarySheet(BuildContext context) =>
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.25),
+      builder: (BuildContext context) =>
+          const FractionallySizedBox(heightFactor: 0.92, child: LibrarySheet()),
+    );

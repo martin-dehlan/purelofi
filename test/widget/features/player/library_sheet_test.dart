@@ -6,6 +6,7 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/mini_player.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/track_cover.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
@@ -70,7 +71,7 @@ void main() {
     expect(row('Slow Bass'), findsOneWidget);
     expect(
       find.descendant(
-        of: find.byType(LibrarySheet),
+        of: find.byType(CustomScrollView),
         matching: find.byType(TrackCover),
       ),
       findsNWidgets(2),
@@ -122,8 +123,32 @@ void main() {
   ) async {
     await start(tester);
 
-    await tapPill(tester, 'Favorites');
+    await openFavorites(tester);
 
     expect(find.textContaining('Nothing marked yet'), findsOneWidget);
+  });
+
+  testWidgets('the track playing sits at the foot, with pause and next', (
+    tester,
+  ) async {
+    await start(tester);
+
+    final Finder bar = find.byType(MiniPlayer);
+    expect(bar, findsOneWidget);
+    await tester.tap(
+      find.descendant(of: bar, matching: find.byTooltip('Pause')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: bar, matching: find.byTooltip('Play')),
+      findsOneWidget,
+    );
+
+    // Tapping the bar goes back to the room.
+    await tester.tap(
+      find.descendant(of: bar, matching: find.byType(InkWell)).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(LibrarySheet), findsNothing);
   });
 }

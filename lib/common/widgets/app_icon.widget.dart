@@ -36,6 +36,7 @@ enum AppGlyph {
   flag,
   download,
   chevron,
+  back,
   eye,
   storage,
 
@@ -93,6 +94,7 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.flag,
     AppGlyph.download,
     AppGlyph.chevron,
+    AppGlyph.back,
     AppGlyph.eye,
     AppGlyph.storage,
     AppGlyph.close,
@@ -328,6 +330,12 @@ class _GlyphPainter extends CustomPainter {
           ..moveTo(9.5, 5.5)
           ..lineTo(16, 12)
           ..lineTo(9.5, 18.5);
+      case AppGlyph.back:
+        // Back the way a page came in.
+        p
+          ..moveTo(14.5, 5.5)
+          ..lineTo(8, 12)
+          ..lineTo(14.5, 18.5);
       case AppGlyph.eye:
         // Whether the controls stay in view.
         p

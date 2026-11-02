@@ -12,7 +12,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/artist.entity.dart';
 import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
-import 'artist_sheet.widget.dart';
+import 'library_scope.widget.dart';
 import 'track_tile.widget.dart';
 
 /// One search over all the music: PureLofi's tracks, the listener's own and
@@ -98,7 +98,7 @@ class SearchResults extends ConsumerWidget {
                       fontSize: context.fontS,
                     ),
                   ),
-                  onTap: () => showArtistSheet(context, artist.id),
+                  onTap: () => unawaited(openArtistPage(context, artist.id)),
                 ),
             ],
           ),

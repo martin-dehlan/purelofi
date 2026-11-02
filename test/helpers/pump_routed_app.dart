@@ -189,6 +189,17 @@ Future<void> tapPill(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
+/// Opens the favourites, pinned on top of the library's overview.
+Future<void> openFavorites(WidgetTester tester) async {
+  final Finder all = find.byTooltip('All');
+  if (all.evaluate().isNotEmpty) {
+    await tester.tap(all);
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(find.widgetWithText(ListTile, 'Favorites'));
+  await tester.pumpAndSettle();
+}
+
 /// Opens the queue, from its button beside the library's.
 Future<void> openQueue(WidgetTester tester) async {
   await tester.tap(find.bySemanticsLabel('Queue'));

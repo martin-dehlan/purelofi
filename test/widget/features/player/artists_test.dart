@@ -77,7 +77,7 @@ void main() {
   Future<void> openAda(WidgetTester tester) async {
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
-    await tester.tap(find.text('Ada Tapes'));
+    await tester.tap(find.widgetWithText(ListTile, 'Ada Tapes'));
     await tester.pumpAndSettle();
   }
 
@@ -91,7 +91,7 @@ void main() {
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
 
-    expect(find.text('Ada Tapes'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Ada Tapes'), findsOneWidget);
     expect(find.text('2 tracks'), findsOneWidget);
     expect(find.text('No Tracks Yet'), findsNothing);
   });
@@ -103,7 +103,7 @@ void main() {
     await openLibrary(tester);
     await tapPill(tester, 'Tracks');
 
-    final Finder sheet = find.byType(LibrarySheet);
+    final Finder sheet = find.byType(CustomScrollView);
     expect(
       find.descendant(of: sheet, matching: find.text('Ada Tapes')),
       findsNWidgets(2),
@@ -152,6 +152,29 @@ void main() {
       ).read(playerControllerProvider).queue.map((TrackEntity t) => t.id),
       <String>['b'],
     );
+  });
+
+  testWidgets('an artist slides in over the library, and Back slides out', (
+    tester,
+  ) async {
+    await start(tester);
+    await openAda(tester);
+
+    // One sheet: the page is inside the library, not on top of it.
+    expect(find.byType(LibrarySheet), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(LibrarySheet),
+        matching: find.byType(ArtistSheet),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ArtistSheet), findsNothing);
+    expect(find.widgetWithText(ListTile, 'Ada Tapes'), findsOneWidget);
   });
 
   testWidgets('a track\'s menu goes to its artist', (tester) async {

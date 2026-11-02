@@ -23,14 +23,12 @@ import 'track_tile.widget.dart';
 /// The link out matters as much as the play button. The music is theirs,
 /// and the page is as much a pointer to them as a list.
 class ArtistSheet extends ConsumerWidget {
-  const ArtistSheet({
-    required this.artistId,
-    required this.controller,
-    super.key,
-  });
+  const ArtistSheet({required this.artistId, this.controller, super.key});
 
   final String artistId;
-  final ScrollController controller;
+
+  /// The sheet's, when the page is a sheet of its own; none in the library.
+  final ScrollController? controller;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

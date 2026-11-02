@@ -73,21 +73,21 @@ void main() {
 
     expect(find.text('Your Library'), findsOneWidget);
     expect(chipSelected(tester, 'Tracks'), isFalse);
-    expect(find.text('On this phone · 0 tracks'), findsOneWidget);
+    // Favorites pinned on top; My music is a filter, not a row as well.
+    expect(find.widgetWithText(ListTile, 'Favorites'), findsOneWidget);
     expect(find.byType(MyMusic), findsNothing);
   });
 
-  testWidgets('My music in the overview opens it, the × goes back', (
-    tester,
-  ) async {
+  testWidgets('the My music filter opens it, the × goes back', (tester) async {
     await start(tester);
     await openLibrary(tester);
 
-    await tester.tap(find.text('On this phone · 0 tracks'));
-    await tester.pumpAndSettle();
+    await tapPill(tester, 'My music');
     expect(chipSelected(tester, 'My music'), isTrue);
     expect(find.byType(MyMusic), findsOneWidget);
 
+    await tester.ensureVisible(find.byTooltip('All'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('All'));
     await tester.pumpAndSettle();
     expect(find.byType(MyMusic), findsNothing);

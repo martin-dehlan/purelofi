@@ -130,7 +130,7 @@ void main() {
     await start(tester, withPro());
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
-    await tester.tap(find.text('massomusicofficial'));
+    await tester.tap(find.widgetWithText(ListTile, 'massomusicofficial'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Download all'));

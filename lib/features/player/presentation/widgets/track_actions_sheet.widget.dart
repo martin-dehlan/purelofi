@@ -18,6 +18,7 @@ import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'artist_sheet.widget.dart';
+import 'library_scope.widget.dart';
 import 'track_cover.widget.dart';
 
 /// Everything that can be done with one track, in the same grouped cards as
@@ -31,9 +32,14 @@ class TrackActionsSheet extends ConsumerWidget {
     required this.track,
     super.key,
     this.onShare = _share,
+    this.openArtist,
   });
 
   final TrackEntity track;
+
+  /// Opens the artist's page in the library this menu was opened from;
+  /// none outside it, where the page is a sheet of its own.
+  final void Function(String artistId)? openArtist;
 
   /// Opens the share sheet; tests pass their own.
   final Future<void> Function(TrackEntity track) onShare;
@@ -189,7 +195,9 @@ class TrackActionsSheet extends ConsumerWidget {
                     title: 'Go to artist',
                     subtitle: track.artist,
                     onTap: then(
-                      () => showArtistSheet(navigator.context, artistId),
+                      () => openArtist != null
+                          ? openArtist!(artistId)
+                          : showArtistSheet(navigator.context, artistId),
                     ),
                   ),
               ],
@@ -241,6 +249,9 @@ Future<void> showTrackActionsSheet(BuildContext context, TrackEntity track) {
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (BuildContext context) => TrackActionsSheet(track: track),
+    builder: (BuildContext sheet) => TrackActionsSheet(
+      track: track,
+      openArtist: LibraryScope.maybeOf(context)?.openArtist,
+    ),
   );
 }
