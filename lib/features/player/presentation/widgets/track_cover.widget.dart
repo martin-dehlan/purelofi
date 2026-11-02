@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../../domain/track.entity.dart';
 import 'now_playing_bars.widget.dart';
 
-/// A track's round cover at the start of its row.
+/// A track's cover at the start of its row: a square with softened
+/// corners, as artwork is made and as music apps show it. Cutting it round
+/// would lose the corners, and the signature often sits there.
 ///
 /// PureLofi's tracks show the artwork their artist made for them, the
 /// listener's own files the cover from their tags. Anything without
@@ -27,19 +29,28 @@ class TrackCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Widget record = CustomPaint(
-      painter: _RecordPainter(
-        disc: cs.surfaceContainerHighest,
-        grooves: cs.onSurfaceVariant.withValues(alpha: 0.25),
-        label: cs.primary.withValues(alpha: 0.8),
-        hole: cs.surface,
+    // A record on a sleeve: the stand-in sits on the same square, so a list
+    // with and without artwork keeps one shape.
+    final Widget record = ColoredBox(
+      color: cs.surfaceContainerHigh,
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.08),
+        child: CustomPaint(
+          painter: _RecordPainter(
+            disc: cs.surfaceContainerHighest,
+            grooves: cs.onSurfaceVariant.withValues(alpha: 0.25),
+            label: cs.primary.withValues(alpha: 0.8),
+            hole: cs.surface,
+          ),
+        ),
       ),
     );
     final String? path = track.coverPath;
     final String? url = track.coverUrl;
     final int pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
-    return ClipOval(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.12),
       child: SizedBox.square(
         dimension: size,
         child: Stack(
