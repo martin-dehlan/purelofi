@@ -14,6 +14,7 @@ abstract class ArtistModel with _$ArtistModel {
     String? bio,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     @JsonKey(name: 'link_url') String? linkUrl,
+    @Default(<String>[]) List<String> links,
   }) = _ArtistModel;
 
   factory ArtistModel.fromJson(Map<String, dynamic> json) =>
@@ -26,6 +27,7 @@ extension ArtistModelX on ArtistModel {
     name: name,
     bio: bio,
     avatarUrl: avatarUrl,
-    linkUrl: linkUrl,
+    // Rows from before #109 have only the one link.
+    links: links.isNotEmpty ? links : <String>[?linkUrl],
   );
 }

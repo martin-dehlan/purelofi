@@ -2,8 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'artist.entity.freezed.dart';
 
-/// Someone whose music PureLofi plays. [linkUrl] is where to find more of
-/// it: their own page, a label or a streaming profile.
+/// Someone whose music PureLofi plays. [links] are where to find more of
+/// it, every channel they are on (#109), in the order to show them.
 @freezed
 abstract class ArtistEntity with _$ArtistEntity {
   const factory ArtistEntity({
@@ -11,6 +11,6 @@ abstract class ArtistEntity with _$ArtistEntity {
     required String name,
     String? bio,
     String? avatarUrl,
-    String? linkUrl,
+    @Default(<String>[]) List<String> links,
   }) = _ArtistEntity;
 }

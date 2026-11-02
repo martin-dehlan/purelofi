@@ -332,7 +332,7 @@ void main() {
       final List<ArtistEntity> artists = await repository.getArtists();
 
       expect(artists.single.name, 'Ada Tapes');
-      expect(artists.single.linkUrl, 'https://example.com/ada');
+      expect(artists.single.links, <String>['https://example.com/ada']);
     });
   });
 }

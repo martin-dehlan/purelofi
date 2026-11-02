@@ -13,7 +13,9 @@ class ArtistTable extends Table {
   TextColumn get name => text()();
   TextColumn get bio => text().nullable()();
   TextColumn get avatarUrl => text().nullable()();
-  TextColumn get linkUrl => text().nullable()();
+
+  /// The artist's channels, one URL per line.
+  TextColumn get links => text().withDefault(const Constant(''))();
 
   DateTimeColumn get updatedAt => dateTime()();
 }

@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +69,14 @@ class AppDatabase extends _$AppDatabase {
       // files already on disk stay where they are.
       if (from < 5) {
         await m.addColumn(cachedFileTable, cachedFileTable.isPinned);
+      }
+
+      // 6: every link an artist has, not one (#109). The table is only a
+      // copy of the server's, so it is rebuilt rather than altered — but
+      // only when it was there to begin with: from < 4 just made it new.
+      if (from >= 4 && from < 6) {
+        await m.deleteTable(artistTable.actualTableName);
+        await m.createTable(artistTable);
       }
     },
   );
