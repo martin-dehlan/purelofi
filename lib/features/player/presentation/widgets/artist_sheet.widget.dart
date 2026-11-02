@@ -85,7 +85,6 @@ class ArtistSheet extends ConsumerWidget {
       );
     }
 
-    final String? bio = artist.bio;
     final List<String> links = artist.links;
 
     return CustomScrollView(
@@ -111,17 +110,9 @@ class ArtistSheet extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: context.spaceS),
-              Text(
-                tracks.length == 1 ? '1 track' : '${tracks.length} tracks',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
-                ),
-              ),
               // Where else to follow them: a row of round marks, one per
-              // channel, under the count.
+              // channel, under the name. Nothing more up here: the tracks
+              // below say the rest.
               if (links.isNotEmpty) ...<Widget>[
                 SizedBox(height: context.spaceM),
                 Wrap(
@@ -132,18 +123,6 @@ class ArtistSheet extends ConsumerWidget {
                     for (final String link in links)
                       ArtistLinkButton(url: link),
                   ],
-                ),
-              ],
-              if (bio != null && bio.trim().isNotEmpty) ...<Widget>[
-                SizedBox(height: context.spaceM),
-                Text(
-                  bio,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurfaceVariant,
-                    fontSize: context.fontM,
-                    height: 1.4,
-                  ),
                 ),
               ],
               SizedBox(height: context.spaceL),

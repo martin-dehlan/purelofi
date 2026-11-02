@@ -120,10 +120,8 @@ void main() {
     await openAda(tester);
 
     final Finder page = find.byType(ArtistSheet);
-    expect(
-      find.descendant(of: page, matching: find.text('Late nights, warm tape.')),
-      findsOneWidget,
-    );
+    // Name and channels only: no count, no bio.
+    expect(find.text('Late nights, warm tape.'), findsNothing);
     // Every channel, by the name of the place.
     expect(find.byTooltip('YouTube'), findsOneWidget);
     expect(find.byTooltip('Website'), findsOneWidget);
