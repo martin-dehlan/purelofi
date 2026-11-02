@@ -18,7 +18,7 @@ import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
 import 'artist_sheet.widget.dart';
 import 'music_sheet.dart';
-import 'search_sheet.widget.dart';
+import 'search_results.widget.dart';
 import 'track_tile.widget.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
@@ -28,6 +28,9 @@ enum LibraryFilter { tracks, artists, favorites, local }
 /// with search beside it, a row of filters big enough to hit, and under
 /// them either everything at a glance — the collections first, then the
 /// artists — or the one kind the filter picked.
+///
+/// Search happens here too: the magnifier turns the title into a search
+/// field and the lists into results, and Cancel turns them back.
 ///
 /// It opens all the way, as a page; the queue has its own sheet.
 class LibrarySheet extends ConsumerStatefulWidget {
@@ -41,6 +44,10 @@ class LibrarySheet extends ConsumerStatefulWidget {
 
 class _LibrarySheetState extends ConsumerState<LibrarySheet> {
   LibraryFilter? _filter;
+
+  /// The search field is open; [_query] is what is typed in it.
+  bool _searching = false;
+  String _query = '';
 
   static const Map<LibraryFilter, String> names = <LibraryFilter, String>{
     LibraryFilter.tracks: 'Tracks',
@@ -57,6 +64,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final LibraryFilter? filter = _filter;
+    final bool searching = _searching;
 
     return CustomScrollView(
       controller: widget.controller,
@@ -64,81 +72,139 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
           sliver: SliverToBoxAdapter(
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    'Your Library',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontSize: context.fontXl,
-                      fontWeight: FontWeight.w700,
-                    ),
+            child: searching
+                ? _SearchField(
+                    onChanged: (String value) => setState(() => _query = value),
+                    onCancel: () => setState(() {
+                      _searching = false;
+                      _query = '';
+                    }),
+                  )
+                : Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          'Your Library',
+                          style: TextStyle(
+                            color: cs.onSurface,
+                            fontSize: context.fontXl,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Search',
+                        iconSize: context.fontXl,
+                        icon: AppIcon(
+                          AppGlyph.search,
+                          size: context.fontXl,
+                          color: cs.onSurface,
+                        ),
+                        onPressed: () => setState(() => _searching = true),
+                      ),
+                    ],
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Search',
-                  iconSize: context.fontXl,
-                  icon: AppIcon(
-                    AppGlyph.search,
-                    size: context.fontXl,
-                    color: cs.onSurface,
-                  ),
-                  onPressed: () => unawaited(showSearchSheet(context)),
-                ),
-              ],
-            ),
           ),
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceS)),
         // The filters scroll sideways rather than shrink: they stay the size
-        // a thumb needs, however narrow the phone or large the text.
-        SliverToBoxAdapter(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(
-              horizontal: context.horizontalPadding,
-            ),
-            child: Row(
-              children: <Widget>[
-                if (filter != null) ...<Widget>[
-                  _ClearFilter(onTap: () => setState(() => _filter = null)),
-                  SizedBox(width: context.spaceS),
+        // a thumb needs, however narrow the phone or large the text. A
+        // search runs over everything, so they step aside for it.
+        if (!searching)
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(
+                horizontal: context.horizontalPadding,
+              ),
+              child: Row(
+                children: <Widget>[
+                  if (filter != null) ...<Widget>[
+                    _ClearFilter(onTap: () => setState(() => _filter = null)),
+                    SizedBox(width: context.spaceS),
+                  ],
+                  for (final LibraryFilter f
+                      in LibraryFilter.values) ...<Widget>[
+                    _FilterPill(
+                      label: names[f]!,
+                      selected: filter == f,
+                      onTap: () => _pick(f),
+                    ),
+                    SizedBox(width: context.spaceS),
+                  ],
                 ],
-                for (final LibraryFilter f in LibraryFilter.values) ...<Widget>[
-                  _FilterPill(
-                    label: names[f]!,
-                    selected: filter == f,
-                    onTap: () => _pick(f),
-                  ),
-                  SizedBox(width: context.spaceS),
-                ],
-              ],
+              ),
             ),
           ),
-        ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceM)),
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
-          sliver: switch (filter) {
-            null => _Overview(onPick: _pick),
-            LibraryFilter.tracks => _Tracks(
-              tracks:
-                  ref.watch(trackListControllerProvider).value ??
-                  const <TrackEntity>[],
-              empty: 'No tracks yet.',
-            ),
-            LibraryFilter.artists => const ArtistList(),
-            LibraryFilter.favorites => _Tracks(
-              tracks: ref.watch(favoriteTracksProvider),
-              empty:
-                  'Nothing marked yet. Tap ⋯ on a track, or the heart '
-                  'beside the one playing.',
-            ),
-            LibraryFilter.local => const MyMusic(),
-          },
+          sliver: searching
+              ? SearchResults(query: _query)
+              : switch (filter) {
+                  null => _Overview(onPick: _pick),
+                  LibraryFilter.tracks => _Tracks(
+                    tracks:
+                        ref.watch(trackListControllerProvider).value ??
+                        const <TrackEntity>[],
+                    empty: 'No tracks yet.',
+                  ),
+                  LibraryFilter.artists => const ArtistList(),
+                  LibraryFilter.favorites => _Tracks(
+                    tracks: ref.watch(favoriteTracksProvider),
+                    empty:
+                        'Nothing marked yet. Tap ⋯ on a track, or the heart '
+                        'beside the one playing.',
+                  ),
+                  LibraryFilter.local => const MyMusic(),
+                },
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),
+      ],
+    );
+  }
+}
+
+/// The library's search field, with Cancel beside it to close it.
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.onChanged, required this.onCancel});
+
+  final ValueChanged<String> onChanged;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: SearchBar(
+            autoFocus: true,
+            hintText: 'Tracks and artists',
+            onChanged: onChanged,
+            elevation: const WidgetStatePropertyAll<double>(0),
+            backgroundColor: WidgetStatePropertyAll<Color>(
+              cs.surfaceContainerHighest,
+            ),
+            textStyle: WidgetStatePropertyAll<TextStyle>(
+              TextStyle(color: cs.onSurface, fontSize: context.fontM),
+            ),
+            hintStyle: WidgetStatePropertyAll<TextStyle>(
+              TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontM),
+            ),
+            leading: AppIcon(
+              AppGlyph.search,
+              size: context.fontL,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: onCancel,
+          style: TextButton.styleFrom(foregroundColor: cs.onSurface),
+          child: Text('Cancel', style: TextStyle(fontSize: context.fontM)),
+        ),
       ],
     );
   }
