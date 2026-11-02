@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
-import '../../domain/artist_link.dart';
+import 'artist_link_button.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -121,6 +120,20 @@ class ArtistSheet extends ConsumerWidget {
                   fontSize: context.fontS,
                 ),
               ),
+              // Where else to follow them: a row of round marks, one per
+              // channel, under the count.
+              if (links.isNotEmpty) ...<Widget>[
+                SizedBox(height: context.spaceM),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: context.spaceS,
+                  runSpacing: context.spaceS,
+                  children: <Widget>[
+                    for (final String link in links)
+                      ArtistLinkButton(url: link),
+                  ],
+                ),
+              ],
               if (bio != null && bio.trim().isNotEmpty) ...<Widget>[
                 SizedBox(height: context.spaceM),
                 Text(
@@ -187,35 +200,6 @@ class ArtistSheet extends ConsumerWidget {
                   ),
                 ],
               ),
-              // Every channel they are on, by name: where to follow them
-              // once a track has done its work.
-              if (links.isNotEmpty) ...<Widget>[
-                SizedBox(height: context.spaceM),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: context.spaceS,
-                  runSpacing: context.spaceS,
-                  children: <Widget>[
-                    for (final String link in links)
-                      ActionChip(
-                        label: Text(artistLinkLabel(link)),
-                        labelStyle: TextStyle(
-                          color: cs.onSurface,
-                          fontSize: context.fontS,
-                        ),
-                        backgroundColor: cs.surfaceContainerHigh,
-                        side: BorderSide.none,
-                        shape: const StadiumBorder(),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: context.spaceS,
-                          vertical: context.spaceXs,
-                        ),
-                        onPressed: () =>
-                            unawaited(AppLinks.open(Uri.parse(link))),
-                      ),
-                  ],
-                ),
-              ],
               SizedBox(height: context.spaceM),
             ],
           ),

@@ -125,8 +125,8 @@ void main() {
       findsOneWidget,
     );
     // Every channel, by the name of the place.
-    expect(find.text('YouTube'), findsOneWidget);
-    expect(find.text('Website'), findsOneWidget);
+    expect(find.byTooltip('YouTube'), findsOneWidget);
+    expect(find.byTooltip('Website'), findsOneWidget);
     expect(
       find.descendant(of: page, matching: find.text('Dusk Tape')),
       findsOneWidget,

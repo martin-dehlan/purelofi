@@ -25,6 +25,7 @@ enum AppGlyph {
   queue,
   library,
   close,
+  globe,
   more,
   account,
   remove,
@@ -95,6 +96,7 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.eye,
     AppGlyph.storage,
     AppGlyph.close,
+    AppGlyph.globe,
   };
 
   @override
@@ -236,6 +238,15 @@ class _GlyphPainter extends CustomPainter {
           ..lineTo(17.5, 17.5)
           ..moveTo(17.5, 6.5)
           ..lineTo(6.5, 17.5);
+      case AppGlyph.globe:
+        // An artist's own site: a globe, its meridian and equator.
+        p
+          ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 8.5))
+          ..addOval(
+            Rect.fromCenter(center: const Offset(12, 12), width: 8, height: 17),
+          )
+          ..moveTo(3.5, 12)
+          ..lineTo(20.5, 12);
       case AppGlyph.more:
         for (final double x in <double>[5.5, 12, 18.5]) {
           p.addOval(Rect.fromCircle(center: Offset(x, 12), radius: 2));
