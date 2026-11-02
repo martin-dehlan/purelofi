@@ -8,11 +8,16 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
+import '../../../../common/errors/app_error.dart';
+import '../../../../common/utils/app_links.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/player.provider.dart';
 
 /// The few things about the app a listener may want differently: whether
-/// the controls step aside, and the room the saved files take up.
+/// the controls step aside, the room the saved files take up and, where Pro
+/// is for sale, getting a purchase back or changing it.
 class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
@@ -33,6 +38,10 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   /// What the saved files take up; `null` while it is being counted, and
   /// when there is no cache to count.
   int? _bytes;
+
+  /// What the last restore found, said under its row.
+  String? _restored;
+  bool _restoring = false;
 
   @override
   void initState() {
@@ -56,8 +65,33 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     await _count();
   }
 
+  Future<void> _restore() async {
+    setState(() {
+      _restoring = true;
+      _restored = null;
+    });
+    String said;
+    try {
+      said = await ref.read(proControllerProvider.notifier).restore()
+          ? 'Pro is back'
+          : 'No earlier purchase on this store account';
+    } on AppError catch (error) {
+      said = error.userMessage;
+    }
+    if (mounted) {
+      setState(() {
+        _restoring = false;
+        _restored = said;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
+    final ProStatus pro =
+        ref.watch(proControllerProvider).value ?? ProStatus.free;
+    final String? manage = pro.manageUrl;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
@@ -126,6 +160,26 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                     ),
                     onTap: clear,
                   ),
+                ],
+              ),
+            ],
+            if (sellsPro) ...<Widget>[
+              SizedBox(height: context.spaceM),
+              MenuGroup(
+                children: <Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.inOrder,
+                    title: 'Restore purchases',
+                    subtitle: _restoring ? 'Asking the store…' : _restored,
+                    onTap: _restoring ? null : () => unawaited(_restore()),
+                  ),
+                  if (pro.isPro && manage != null)
+                    MenuRow(
+                      glyph: AppGlyph.settings,
+                      title: 'Manage subscription',
+                      subtitle: 'Change or cancel in your store',
+                      onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
+                    ),
                 ],
               ),
             ],

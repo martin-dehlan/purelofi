@@ -128,21 +128,25 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            // One big line in the middle and the reason under it, the way
+            // the rest of the sheets open now.
             Text(
               'PureLofi Pro',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: cs.onSurface,
                 fontFamily: AppFonts.wordmark,
-                fontSize: context.fontXl,
+                fontSize: context.fontXxl,
               ),
             ),
-            SizedBox(height: context.spaceXs),
+            SizedBox(height: context.spaceS),
             Text(
               rooms.isEmpty
                   ? 'Every room, every night.'
-                  : 'Every room, every night — '
+                  : 'Every room, every night. '
                         '${rooms.length} more to sit in.',
-              style: quiet,
+              textAlign: TextAlign.center,
+              style: quiet.copyWith(fontSize: context.fontM),
             ),
             if (rooms.isNotEmpty) ...<Widget>[
               SizedBox(height: context.spaceM),
@@ -208,7 +212,11 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                           height: context.screenHeight * 0.06,
                           child: FilledButton(
                             onPressed: _busy ? null : () => _buy(chosen),
+                            // White on the dark sheet: the one thing to do
+                            // here, with "Not now" as plain text under it.
                             style: FilledButton.styleFrom(
+                              backgroundColor: cs.onSurface,
+                              foregroundColor: cs.surface,
                               shape: const StadiumBorder(),
                             ),
                             child: _busy
@@ -216,7 +224,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                                     dimension: context.fontL,
                                     child: CircularProgressIndicator(
                                       strokeWidth: context.fontL * 0.12,
-                                      color: cs.onPrimary,
+                                      color: cs.surface,
                                     ),
                                   )
                                 : Text(
@@ -230,7 +238,18 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                                   ),
                           ),
                         ),
-                        SizedBox(height: context.spaceS),
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: cs.onSurface,
+                          ),
+                          child: Text(
+                            'Not now',
+                            style: TextStyle(fontSize: context.fontM),
+                          ),
+                        ),
                         Text(
                           trial != null
                               ? 'Free for $trial days, then ${chosen.price} '

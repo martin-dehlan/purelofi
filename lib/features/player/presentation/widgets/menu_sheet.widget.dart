@@ -15,6 +15,10 @@ import '../../../../common/widgets/menu_row.widget.dart';
 import '../../../auth/controller/auth.controller.dart';
 import '../../../auth/domain/account.entity.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/domain/pro_plan.entity.dart';
+import '../../../pro/domain/pro_status.entity.dart';
+import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/sleep_timer.controller.dart';
 import '../../domain/scene.entity.dart';
@@ -53,6 +57,10 @@ class MenuSheet extends ConsumerWidget {
     final Account? account = ref.watch(authControllerProvider).value;
     final SceneEntity? scene = ref.watch(activeSceneControllerProvider);
     final DateTime? stopsAt = ref.watch(sleepTimerControllerProvider);
+    final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
+    final ProStatus pro =
+        ref.watch(proControllerProvider).value ?? ProStatus.free;
+    final String? manage = pro.manageUrl;
 
     // Closes the menu, then opens what the row is for.
     VoidCallback then(Future<void> Function() open) => () {
@@ -74,6 +82,30 @@ class MenuSheet extends ConsumerWidget {
                     account: account,
                     onTap: then(() => showAccountSheet(context)),
                   ),
+                  // Right under who is listening, as what they have. Only
+                  // where Pro can be bought; a build without RevenueCat's
+                  // keys has nothing to offer here (#16).
+                  if (sellsPro)
+                    MenuRow(
+                      glyph: pro.isPro ? AppGlyph.check : AppGlyph.lock,
+                      title: 'PureLofi Pro',
+                      subtitle: pro.isPro
+                          ? switch (pro.plan) {
+                              PlanPeriod.yearly => 'Pro · yearly',
+                              PlanPeriod.monthly => 'Pro · monthly',
+                              null => 'Pro',
+                            }
+                          : 'Unlock every room',
+                      onTap: pro.isPro
+                          ? (manage == null
+                                ? null
+                                : () => unawaited(
+                                    AppLinks.open(Uri.parse(manage)),
+                                  ))
+                          : then(
+                              () => showPaywallSheet(context, source: 'menu'),
+                            ),
+                    ),
                 ],
               ),
               SizedBox(height: context.spaceM),

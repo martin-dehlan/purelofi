@@ -59,7 +59,7 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides(), pro: pro);
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Change scene');
+    await tapMenuEntry(tester, 'Change room');
   }
 
   Finder lockOn(String title) => find.descendant(
@@ -242,7 +242,7 @@ void main() {
       await open(tester);
 
       expect(
-        find.text('Every room, every night — 1 more to sit in.'),
+        find.text('Every room, every night. 1 more to sit in.'),
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Snow Cabin'), findsOneWidget);
@@ -285,5 +285,67 @@ void main() {
 
       expect(find.text('PureLofi Pro'), findsNothing);
     });
+  });
+
+  group('the settings', () {
+    Future<void> openSettings(
+      WidgetTester tester,
+      FakeProRepository pro,
+    ) async {
+      phoneSized(tester);
+      await tester.pumpRoutedApp(overrides: overrides(), pro: pro);
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+      await tapMenuEntry(tester, 'Settings');
+    }
+
+    testWidgets('restore says what it found', (tester) async {
+      final FakeProRepository pro = FakeProRepository()..restoreFinds = true;
+      await openSettings(tester, pro);
+
+      await tester.tap(find.text('Restore purchases'));
+      await tester.pumpAndSettle();
+
+      expect(pro.calls, <String>['restore']);
+      expect(find.text('Pro is back'), findsOneWidget);
+    });
+
+    testWidgets('a Pro listener can manage the subscription', (tester) async {
+      await openSettings(
+        tester,
+        FakeProRepository(
+          initial: const ProStatus(
+            isPro: true,
+            manageUrl: 'https://apps.apple.com/account/subscriptions',
+          ),
+        ),
+      );
+
+      expect(find.text('Manage subscription'), findsOneWidget);
+    });
+
+    testWidgets('nothing about purchases where Pro is not for sale', (
+      tester,
+    ) async {
+      await openSettings(tester, FakeProRepository(available: false));
+
+      expect(find.text('Restore purchases'), findsNothing);
+    });
+  });
+
+  testWidgets('"Not now" closes the paywall', (tester) async {
+    phoneSized(tester);
+    await tester.pumpRoutedApp(
+      overrides: overrides(),
+      pro: FakeProRepository(),
+    );
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+    await tapMenuEntry(tester, 'PureLofi Pro');
+
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PaywallSheet), findsNothing);
   });
 }
