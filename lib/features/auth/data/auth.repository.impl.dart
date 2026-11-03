@@ -200,6 +200,7 @@ class AuthRepositoryImpl implements AuthRepository {
       id: user.id,
       email: user.email,
       name: name is String && name.trim().isNotEmpty ? name : null,
+      memberSince: DateTime.tryParse(user.createdAt),
       method: switch (user.appMetadata['provider']) {
         'apple' => SignInMethod.apple,
         'google' => SignInMethod.google,

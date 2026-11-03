@@ -418,11 +418,12 @@ void main() {
 
       expect(
         repository().current,
-        const Account(
+        Account(
           id: 'u1',
           method: SignInMethod.google,
           email: 'me@example.com',
           name: 'Martin',
+          memberSince: DateTime.utc(2026, 10, 29),
         ),
       );
     });

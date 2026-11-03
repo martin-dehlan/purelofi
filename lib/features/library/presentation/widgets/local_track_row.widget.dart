@@ -39,12 +39,9 @@ class LocalTrackRow extends ConsumerWidget {
       ),
       child: TrackTile(
         track: track,
-        onTap: () {
-          Navigator.of(context).pop();
-          unawaited(
-            ref.read(playerControllerProvider.notifier).playTrack(track),
-          );
-        },
+        onTap: () => unawaited(
+          ref.read(playerControllerProvider.notifier).playTrack(track),
+        ),
       ),
     );
   }

@@ -15,7 +15,8 @@ import '../../domain/playback_mode.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
-import 'library_sheet.widget.dart';
+import 'queue_sheet.widget.dart';
+import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport —
@@ -86,11 +87,20 @@ class PlayerControls extends ConsumerWidget {
           // stream: how it goes on, and where its music lives.
           Row(
             children: <Widget>[
-              _ModeButton(
-                mode: mode,
-                onTap: ref.read(playbackModeControllerProvider.notifier).cycle,
+              // The two ends take the same room, so the transport stays in
+              // the middle: how it goes on at one end, what comes next at
+              // the other. The library is up top, opposite the menu.
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _ModeButton(
+                    mode: mode,
+                    onTap: ref
+                        .read(playbackModeControllerProvider.notifier)
+                        .cycle,
+                  ),
+                ),
               ),
-              const Spacer(),
               _TransportButton(
                 glyph: AppGlyph.previous,
                 label: 'Previous track',
@@ -113,11 +123,15 @@ class PlayerControls extends ConsumerWidget {
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
               ),
-              const Spacer(),
-              _SheetButton(
-                glyph: AppGlyph.queue,
-                label: 'Library',
-                onTap: () => showLibrarySheet(context),
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: _SheetButton(
+                    glyph: AppGlyph.queue,
+                    label: 'Queue',
+                    onTap: () => showQueueSheet(context),
+                  ),
+                ),
               ),
             ],
           ),
@@ -185,6 +199,32 @@ class _Progress extends ConsumerWidget {
             // PureLofi's tracks, so the listener's own carry none.
             if (track != null && track!.source == TrackSource.catalogue)
               FavoriteButton(trackId: track!.id, size: context.fontM),
+            // The rest of what can be done with it — sharing it among them —
+            // one tap further, as the rows in the library have it.
+            if (track != null)
+              Semantics(
+                button: true,
+                label: 'More: ${track!.title}',
+                excludeSemantics: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () =>
+                      unawaited(showTrackActionsSheet(context, track!)),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints.tightFor(
+                      width: context.screenWidth * 0.11,
+                      height: context.screenWidth * 0.11,
+                    ),
+                    child: Center(
+                      child: AppIcon(
+                        AppGlyph.more,
+                        size: context.fontL,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
         SizedBox(height: context.spaceS),

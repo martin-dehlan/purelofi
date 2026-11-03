@@ -16,7 +16,12 @@ import 'signed_in_account.widget.dart';
 /// plays the same either way (#38). Signed out it offers the ways in;
 /// signed in it says who, and how to leave.
 class AccountSheet extends ConsumerStatefulWidget {
-  const AccountSheet({super.key});
+  const AccountSheet({this.reason, super.key});
+
+  /// Why an account is asked for here, said under the title — the sheet
+  /// was opened on the way to something (Pro, #108), so it closes the
+  /// moment the sign-in lands and that something carries on.
+  final String? reason;
 
   @override
   ConsumerState<AccountSheet> createState() => _AccountSheetState();
@@ -71,6 +76,17 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final Account? account = ref.watch(authControllerProvider).value;
     final AuthController auth = ref.read(authControllerProvider.notifier);
+    final String? reason = widget.reason;
+    if (reason != null) {
+      ref.listen<AsyncValue<Account?>>(authControllerProvider, (
+        AsyncValue<Account?>? previous,
+        AsyncValue<Account?> next,
+      ) {
+        if (previous?.value == null && next.value != null) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
 
     final Widget body;
     if (account != null) {
@@ -119,22 +135,28 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: context.spaceXs),
-              Text(
-                'Optional. The music never needs it.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
+              if (reason != null) ...<Widget>[
+                SizedBox(height: context.spaceXs),
+                Text(
+                  reason,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: context.fontS,
+                    height: 1.4,
+                  ),
                 ),
-              ),
+              ],
               SizedBox(height: context.spaceL),
             ],
             body,
             if (_error != null) ...<Widget>[
               SizedBox(height: context.spaceM),
-              Text(
-                _error!,
-                style: TextStyle(color: cs.error, fontSize: context.fontS),
+              Center(
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.error, fontSize: context.fontS),
+                ),
               ),
             ],
           ],
@@ -144,12 +166,13 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
   }
 }
 
-/// Opens the account sheet.
-Future<void> showAccountSheet(BuildContext context) {
+/// Opens the account sheet. With a [reason] it is a step on the way to
+/// something else and closes once signed in.
+Future<void> showAccountSheet(BuildContext context, {String? reason}) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (BuildContext context) => const AccountSheet(),
+    builder: (BuildContext context) => AccountSheet(reason: reason),
   );
 }

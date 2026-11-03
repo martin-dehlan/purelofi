@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,5 +154,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(inQueue('Next in queue'), findsNothing);
+  });
+
+  testWidgets('a queued track held and dragged moves down the queue', (
+    tester,
+  ) async {
+    final PlayerController player = await start(tester);
+    final TrackEntity other = makeTrack('r', title: 'Second Tape');
+    player
+      ..addToQueue(queued)
+      ..addToQueue(other);
+    await openQueue(tester);
+
+    final Finder first = find.descendant(
+      of: find.byType(UpNext),
+      matching: find.widgetWithText(ListTile, 'Queued Tape'),
+    );
+    final double rowHeight = tester.getSize(first.first).height;
+    final TestGesture drag = await tester.startGesture(
+      tester.getCenter(first.first),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+    for (int step = 0; step < 6; step++) {
+      await drag.moveBy(Offset(0, rowHeight * 0.3));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await drag.up();
+    await tester.pumpAndSettle();
+
+    final ProviderContainer c = ProviderScope.containerOf(
+      tester.element(find.byType(UpNext)),
+    );
+    expect(
+      c.read(playerControllerProvider).queue.map((TrackEntity t) => t.id),
+      <String>['r', 'q'],
+    );
   });
 }

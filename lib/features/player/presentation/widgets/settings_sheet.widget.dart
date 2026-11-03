@@ -3,143 +3,236 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_fonts.dart';
-import '../../../../common/utils/app_version.dart';
+import '../../../../common/cache/media_cache.service.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import '../../../auth/controller/auth.controller.dart';
-import '../../../auth/domain/account.entity.dart';
+import '../../../../common/widgets/menu_group.widget.dart';
+import '../../../../common/widgets/menu_row.widget.dart';
+import '../../../../common/errors/app_error.dart';
+import '../../../../common/utils/app_links.dart';
+import '../../../auth/controller/auth.provider.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
-import '../../controller/player.controller.dart';
-import '../../domain/track.entity.dart';
-import 'bts_modal.widget.dart';
-import 'scene_switcher_sheet.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/domain/pro_status.entity.dart';
+import '../../controller/auto_hide_controls.controller.dart';
+import '../../controller/downloads.controller.dart';
+import '../../controller/player.provider.dart';
 
-/// The menu top right: everything that is not the music.
-///
-/// The music has its own places since the library and the queue arrived —
-/// under the transport, where a music app keeps them. What is left here is
-/// the room, the proof that the playing is real, and the account — which is
-/// optional, and says so.
-///
-/// Built from Material's own list tiles, so it reads and behaves the way a
-/// phone's menus do.
-class SettingsSheet extends ConsumerWidget {
+/// The few things about the app a listener may want differently: whether
+/// the controls step aside, the room the saved files take up and, where Pro
+/// is for sale, getting a purchase back or changing it.
+class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
+  /// "84 MB", "1.2 GB" — whole megabytes are precise enough here.
+  static String sizeLabel(int bytes) {
+    const int mb = 1024 * 1024;
+    if (bytes >= 1024 * mb) {
+      return '${(bytes / (1024 * mb)).toStringAsFixed(1)} GB';
+    }
+    return '${(bytes / mb).round()} MB';
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TrackEntity? track = ref.watch(
-      playerControllerProvider.select((state) => state.currentTrack),
-    );
-    final Account? account = ref.watch(authControllerProvider).value;
-    final bool hasFootage =
-        track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty;
+  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends ConsumerState<SettingsSheet> {
+  /// What the saved files take up; `null` while it is being counted, and
+  /// when there is no cache to count.
+  int? _bytes;
+
+  /// What the downloads take up, counted with the rest.
+  int? _downloadedBytes;
+
+  /// What the last restore found, said under its row.
+  String? _restored;
+  bool _restoring = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_count());
+  }
+
+  Future<void> _count() async {
+    final MediaCache? cache = ref.read(mediaCacheProvider);
+    if (cache == null) return;
+    final int bytes = await cache.sizeInBytes();
+    final int downloaded = await cache.downloadedBytes();
+    if (mounted) {
+      setState(() {
+        _bytes = bytes;
+        _downloadedBytes = downloaded;
+      });
+    }
+  }
+
+  Future<void> _clear() async {
+    final MediaCache? cache = ref.read(mediaCacheProvider);
+    if (cache == null) return;
+    await cache.clear();
+    // The room covers held on to their files; they fetch them again.
+    ref.invalidate(sceneCoverProvider);
+    await _count();
+  }
+
+  Future<void> _restore() async {
+    // Pro belongs to the account (#108): restoring needs one to land on.
+    if (ref.read(authRepositoryProvider).current == null) {
+      await showAccountSheet(
+        context,
+        reason: 'Pro stays with your account, on every phone you sign in on.',
+      );
+      if (!mounted || ref.read(authRepositoryProvider).current == null) return;
+    }
+    setState(() {
+      _restoring = true;
+      _restored = null;
+    });
+    String said;
+    try {
+      said = await ref.read(proControllerProvider.notifier).restore()
+          ? 'Pro is back'
+          : 'No earlier purchase on this store account';
+    } on AppError catch (error) {
+      said = error.userMessage;
+    }
+    if (mounted) {
+      setState(() {
+        _restoring = false;
+        _restored = said;
+      });
+    }
+  }
+
+  /// "3 tracks, 14 MB", or that there are none.
+  static String _downloadsLabel(int count, int? bytes) {
+    if (count == 0) return 'Nothing downloaded yet';
+    final String tracks = count == 1 ? '1 track' : '$count tracks';
+
+    return bytes == null
+        ? tracks
+        : '$tracks, ${SettingsSheet.sizeLabel(bytes)}';
+  }
+
+  Future<void> _removeDownloads() async {
+    await ref.read(downloadsControllerProvider.notifier).removeAll();
+    await _count();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
+    final ProStatus pro =
+        ref.watch(proControllerProvider).value ?? ProStatus.free;
+    final String? manage = pro.manageUrl;
+    final int downloadCount =
+        ref.watch(downloadsControllerProvider).value?.done.length ?? 0;
+    final int? downloadedBytes = _downloadedBytes;
+    final bool autoHide =
+        ref.watch(autoHideControlsControllerProvider).value ?? true;
+    final bool hasCache = ref.watch(mediaCacheProvider) != null;
+    final int? bytes = _bytes;
+    final VoidCallback? clear = bytes == null || bytes == 0
+        ? null
+        : () => unawaited(_clear());
 
     return SafeArea(
       child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: context.spaceM),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _Entry(
-                glyph: AppGlyph.scene,
-                title: 'Change scene',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showSceneSwitcherSheet(context));
-                },
-              ),
-              _Entry(
-                glyph: AppGlyph.camera,
-                title: 'Behind the scenes',
-                subtitle: hasFootage
-                    ? 'Watch "${track.title}" being played'
-                    : 'No footage for this track',
-                onTap: hasFootage
-                    ? () {
-                        Navigator.of(context).pop();
-                        unawaited(showBtsModal(context, ref, track));
-                      }
-                    : null,
-              ),
-              _Entry(
-                glyph: AppGlyph.account,
-                title: 'Account',
-                subtitle: account == null
-                    ? 'Optional — sign in if you like'
-                    : account.email ?? account.name ?? 'Signed in',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showAccountSheet(context));
-                },
-              ),
-              SizedBox(height: context.spaceM),
-              Text(
-                'PureLofi $appVersion',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                  fontFamily: AppFonts.wordmark,
-                  fontSize: context.fontXs,
+        padding: EdgeInsets.only(bottom: context.spaceM),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            MenuGroup(
+              children: <Widget>[
+                MenuRow(
+                  glyph: AppGlyph.eye,
+                  title: 'Hide controls',
+                  subtitle: 'After a few seconds without a tap',
+                  trailing: Switch(
+                    value: autoHide,
+                    onChanged: (bool on) => unawaited(
+                      ref
+                          .read(autoHideControlsControllerProvider.notifier)
+                          .set(on),
+                    ),
+                  ),
+                  onTap: () => unawaited(
+                    ref
+                        .read(autoHideControlsControllerProvider.notifier)
+                        .set(!autoHide),
+                  ),
                 ),
+              ],
+            ),
+            if (hasCache) ...<Widget>[
+              SizedBox(height: context.spaceM),
+              MenuGroup(
+                children: <Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.storage,
+                    title: 'Saved music and rooms',
+                    subtitle: bytes == null
+                        ? 'Counting…'
+                        : '${SettingsSheet.sizeLabel(bytes)} on this phone',
+                    trailing: TextButton(
+                      onPressed: clear,
+                      child: const Text('Clear'),
+                    ),
+                    onTap: clear,
+                  ),
+                  MenuRow(
+                    glyph: AppGlyph.download,
+                    title: 'Downloads',
+                    subtitle: _downloadsLabel(downloadCount, downloadedBytes),
+                    trailing: TextButton(
+                      onPressed: downloadCount == 0
+                          ? null
+                          : () => unawaited(_removeDownloads()),
+                      child: const Text('Remove all'),
+                    ),
+                    // Nothing to open: the row says what is kept, the button
+                    // takes it back. Greyed while there is nothing.
+                    onTap: downloadCount == 0 ? null : () {},
+                  ),
+                ],
               ),
             ],
-          ),
+            if (sellsPro) ...<Widget>[
+              SizedBox(height: context.spaceM),
+              MenuGroup(
+                children: <Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.inOrder,
+                    title: 'Restore purchases',
+                    subtitle: _restoring ? 'Asking the store…' : _restored,
+                    onTap: _restoring ? null : () => unawaited(_restore()),
+                  ),
+                  if (pro.isPro && manage != null)
+                    MenuRow(
+                      glyph: AppGlyph.settings,
+                      title: 'Manage subscription',
+                      subtitle: 'Change or cancel in your store',
+                      onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 }
 
-/// One line of the menu. [onTap] `null` greys it out.
-class _Entry extends StatelessWidget {
-  const _Entry({
-    required this.glyph,
-    required this.title,
-    required this.onTap,
-    this.subtitle,
-  });
-
-  final AppGlyph glyph;
-  final String title;
-  final String? subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool enabled = onTap != null;
-
-    return ListTile(
-      enabled: enabled,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: context.horizontalPadding,
-      ),
-      leading: AppIcon(
-        glyph,
-        size: context.fontL,
-        color: enabled
-            ? cs.onSurfaceVariant
-            : cs.onSurfaceVariant.withValues(alpha: 0.38),
-      ),
-      title: Text(title, style: TextStyle(fontSize: context.fontM)),
-      subtitle: subtitle == null
-          ? null
-          : Text(subtitle!, style: TextStyle(fontSize: context.fontS)),
-      onTap: onTap,
-    );
-  }
-}
-
-/// Opens the menu as a bottom sheet.
+/// Opens the settings.
 Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     builder: (BuildContext context) => const SettingsSheet(),
   );
 }

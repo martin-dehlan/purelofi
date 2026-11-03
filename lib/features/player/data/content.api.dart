@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'artist.model.dart';
 import 'scene.model.dart';
 import 'track.model.dart';
 
@@ -11,6 +12,7 @@ class ContentApi {
   static const String scenesTable = 'scenes';
   static const String tracksTable = 'tracks';
   static const String layersTable = 'scene_layers';
+  static const String artistsTable = 'artists';
 
   final SupabaseClient _client;
 
@@ -33,6 +35,16 @@ class ContentApi {
         .order('created_at');
 
     return rows.map(TrackModel.fromJson).toList();
+  }
+
+  Future<List<ArtistModel>> fetchArtists() async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from(artistsTable)
+        .select()
+        .eq('is_active', true)
+        .order('name');
+
+    return rows.map(ArtistModel.fromJson).toList();
   }
 
   Future<TrackModel?> fetchTrackById(String id) async {

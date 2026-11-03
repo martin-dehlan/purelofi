@@ -4,7 +4,6 @@ import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/auth/domain/account.entity.dart';
 import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
 import 'package:purelofi/features/auth/presentation/widgets/auth_button.widget.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../helpers/fake_auth.repository.dart';
 import '../../../helpers/pump_routed_app.dart';
@@ -22,12 +21,11 @@ void main() {
   }
 
   group('signed out', () {
-    testWidgets('offers the ways in, and says it is optional', (tester) async {
+    testWidgets('offers the ways in', (tester) async {
       await open(tester, FakeAuthRepository(apple: true));
 
       expect(find.text('Sign in'), findsOneWidget);
-      expect(find.text('Optional. The music never needs it.'), findsOneWidget);
-      expect(find.byType(SignInWithAppleButton), findsOneWidget);
+      expect(find.text('Continue with Apple'), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
       expect(find.text('Continue with email'), findsOneWidget);
     });
@@ -35,7 +33,7 @@ void main() {
     testWidgets('no Apple where there is no Apple sheet', (tester) async {
       await open(tester, FakeAuthRepository());
 
-      expect(find.byType(SignInWithAppleButton), findsNothing);
+      expect(find.text('Continue with Apple'), findsNothing);
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
@@ -229,6 +227,24 @@ void main() {
       expect(find.text('Martin'), findsOneWidget);
       expect(find.text('martin@example.com'), findsOneWidget);
       expect(find.text('Signed in with Apple'), findsOneWidget);
+    });
+
+    testWidgets('the profile shows an initial and since when', (tester) async {
+      await open(
+        tester,
+        FakeAuthRepository(
+          signedIn: account.copyWith(memberSince: DateTime(2026, 10, 30, 12)),
+        ),
+      );
+
+      expect(find.text('M'), findsOneWidget);
+      expect(find.text('Member since October 2026'), findsOneWidget);
+    });
+
+    testWidgets('no date known, no member line', (tester) async {
+      await open(tester, FakeAuthRepository(signedIn: account));
+
+      expect(find.textContaining('Member since'), findsNothing);
     });
 
     testWidgets('signs out', (tester) async {

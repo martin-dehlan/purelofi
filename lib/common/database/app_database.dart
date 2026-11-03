@@ -1,10 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'daos/artist.dao.dart';
 import 'daos/cached_file.dao.dart';
 import 'daos/local_track.dao.dart';
 import 'daos/scene.dao.dart';
 import 'daos/track.dao.dart';
+import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
 import 'tables/local_track.table.dart';
 import 'tables/scene.table.dart';
@@ -27,8 +29,9 @@ part 'app_database.g.dart';
     SceneLayerTable,
     CachedFileTable,
     LocalTrackTable,
+    ArtistTable,
   ],
-  daos: <Type>[TrackDao, SceneDao, CachedFileDao, LocalTrackDao],
+  daos: <Type>[TrackDao, SceneDao, CachedFileDao, LocalTrackDao, ArtistDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -37,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +55,29 @@ class AppDatabase extends _$AppDatabase {
       // 3: the listener's own library. A whole table whose rows no fetch can
       // bring back, so it is created here and never dropped and recreated.
       if (from < 3) await m.createTable(localTrackTable);
+
+      // 4: who made each track, a page for each of them and the track's
+      // artwork. Both refill on
+      // the next fetch, like the rest of the content.
+      if (from < 4) {
+        await m.createTable(artistTable);
+        await m.addColumn(trackTable, trackTable.artistId);
+        await m.addColumn(trackTable, trackTable.coverUrl);
+      }
+
+      // 5: downloads, files kept on purpose. A column on the registry, so the
+      // files already on disk stay where they are.
+      if (from < 5) {
+        await m.addColumn(cachedFileTable, cachedFileTable.isPinned);
+      }
+
+      // 6: every link an artist has, not one (#109). The table is only a
+      // copy of the server's, so it is rebuilt rather than altered — but
+      // only when it was there to begin with: from < 4 just made it new.
+      if (from >= 4 && from < 6) {
+        await m.deleteTable(artistTable.actualTableName);
+        await m.createTable(artistTable);
+      }
     },
   );
 
