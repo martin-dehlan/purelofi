@@ -99,6 +99,7 @@ class ArtistSheet extends ConsumerWidget {
     }
 
     final List<String> links = artist.links;
+    final double avatar = context.screenWidth * 0.3;
 
     return CustomScrollView(
       controller: controller,
@@ -107,21 +108,37 @@ class ArtistSheet extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
           sliver: SliverList.list(
             children: <Widget>[
-              Center(
-                child: ArtistAvatar(
-                  artist: artist,
-                  size: context.screenWidth * 0.3,
-                ),
-              ),
-              SizedBox(height: context.spaceM),
-              Text(
-                artist.name,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: context.fontXxl,
-                  fontWeight: FontWeight.w600,
-                ),
+              // The picture and the name centred; the channels stand beside
+              // them on the right, over the header rather than in it, so
+              // unfolding more channels moves neither.
+              Stack(
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Center(
+                        child: ArtistAvatar(artist: artist, size: avatar),
+                      ),
+                      SizedBox(height: context.spaceM),
+                      Text(
+                        artist.name,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: cs.onSurface,
+                          fontSize: context.fontXxl,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (links.isNotEmpty)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: ArtistLinksBar(links: links, height: avatar),
+                    ),
+                ],
               ),
               SizedBox(height: context.spaceL),
               Row(
@@ -193,19 +210,7 @@ class ArtistSheet extends ConsumerWidget {
             },
           ),
         ),
-        // The channels, small and raised, centred at the foot of the page,
-        // under the last track rather than over it.
-        SliverPadding(
-          padding: EdgeInsets.only(
-            top: context.spaceL,
-            bottom: context.spaceXl,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: links.isEmpty
-                ? const SizedBox.shrink()
-                : Center(child: ArtistLinksBar(links: links)),
-          ),
-        ),
+        SliverPadding(padding: EdgeInsets.only(bottom: context.spaceXl)),
       ],
     );
   }
