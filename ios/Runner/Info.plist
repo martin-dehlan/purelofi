@@ -84,6 +84,16 @@
 				<string>purelofi</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.552397307630-ldnnmctivos92ckacq6q7ijmpp1ddk5p</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
