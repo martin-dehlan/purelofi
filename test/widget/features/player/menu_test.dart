@@ -49,6 +49,25 @@ void main() {
     await openMenu(tester);
   }
 
+  testWidgets('a page inside the menu keeps the sheet the same height', (
+    tester,
+  ) async {
+    await start(tester);
+    final double menu = tester.getSize(find.byType(MenuSheet)).height;
+
+    for (final String entry in <String>[
+      'Change room',
+      'Sleep timer',
+      'Settings',
+    ]) {
+      await tapMenuEntry(tester, entry);
+      expect(tester.getSize(find.byType(MenuSheet)).height, menu);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(MenuSheet)).height, menu);
+    }
+  });
+
   testWidgets('the room, the timer and the settings open inside the menu', (
     tester,
   ) async {
@@ -63,7 +82,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Share PureLofi'), findsNothing);
+    expect(find.text('Share PureLofi').hitTestable(), findsNothing);
 
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
@@ -86,7 +105,7 @@ void main() {
 
       // The page stays open and says when the music stops.
       expect(find.byType(SleepTimerSheet), findsOneWidget);
-      expect(find.textContaining('Stops at'), findsOneWidget);
+      expect(find.textContaining('Stops at').hitTestable(), findsOneWidget);
 
       await tapMenuEntry(tester, 'Turn off');
       expect(find.text('Turn off'), findsNothing);
