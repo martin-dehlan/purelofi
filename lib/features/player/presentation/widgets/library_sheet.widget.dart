@@ -13,6 +13,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import 'artist_list.widget.dart';
 import 'music_sheet.dart';
+import 'search_sheet.widget.dart';
 import 'track_tile.widget.dart';
 import 'up_next.widget.dart';
 
@@ -76,6 +77,14 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
+                  // Search stands apart from the pills: it is not a list of
+                  // its own but a way into all of them.
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(end: context.spaceS),
+                    child: _SearchPill(
+                      onTap: () => unawaited(showSearchSheet(context)),
+                    ),
+                  ),
                   for (final LibraryFilter filter in LibraryFilter.values)
                     Padding(
                       padding: EdgeInsetsDirectional.only(end: context.spaceS),
@@ -158,6 +167,27 @@ class _Pill extends StatelessWidget {
             ),
       selected: selected,
       onSelected: (_) => onTap(),
+    );
+  }
+}
+
+/// The magnifier at the head of the pills, opening the search.
+class _SearchPill extends StatelessWidget {
+  const _SearchPill({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    return ActionChip(
+      tooltip: 'Search',
+      shape: const StadiumBorder(),
+      side: BorderSide.none,
+      backgroundColor: cs.surfaceContainerHigh,
+      label: AppIcon(AppGlyph.search, size: context.fontM, color: cs.onSurface),
+      onPressed: onTap,
     );
   }
 }

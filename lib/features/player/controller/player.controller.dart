@@ -175,6 +175,18 @@ class PlayerController extends _$PlayerController {
     );
   }
 
+  /// Moves the queued track at [from] so that it ends up at [to], both
+  /// counted in the queue as it is before the move.
+  void moveInQueue(int from, int to) {
+    final int length = state.queue.length;
+    if (from < 0 || from >= length || to < 0 || to >= length || from == to) {
+      return;
+    }
+    final List<TrackEntity> queue = <TrackEntity>[...state.queue];
+    queue.insert(to, queue.removeAt(from));
+    state = state.copyWith(queue: queue);
+  }
+
   void clearQueue() => state = state.copyWith(queue: const <TrackEntity>[]);
 
   /// Jumps to the [index]th queued track. What was queued before it is

@@ -160,6 +160,34 @@ void main() {
       expect(played(), <String>['a', 'c', 'a', 'b']);
     });
 
+    test('a queued track can be moved to another place', () async {
+      final ProviderContainer c = make();
+      final PlayerController player = c.read(playerControllerProvider.notifier);
+      await player.playNext();
+      player
+        ..addToQueue(abc[0])
+        ..addToQueue(abc[1])
+        ..addToQueue(abc[2]);
+
+      player.moveInQueue(2, 0);
+      expect(ids(c.read(playerControllerProvider).queue), <String>[
+        'c',
+        'a',
+        'b',
+      ]);
+
+      player.moveInQueue(0, 2);
+      expect(ids(c.read(playerControllerProvider).queue), <String>[
+        'a',
+        'b',
+        'c',
+      ]);
+
+      // Out of range is ignored, not an error.
+      player.moveInQueue(5, 0);
+      expect(c.read(playerControllerProvider).queue, hasLength(3));
+    });
+
     test('play next goes ahead of what is already queued', () async {
       final PlayerController player = make().read(
         playerControllerProvider.notifier,
