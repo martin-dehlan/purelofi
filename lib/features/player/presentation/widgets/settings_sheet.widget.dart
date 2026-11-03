@@ -8,11 +8,19 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
+import '../../../../common/errors/app_error.dart';
+import '../../../../common/utils/app_links.dart';
+import '../../../auth/controller/auth.provider.dart';
+import '../../../auth/presentation/widgets/account_sheet.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/player.provider.dart';
 
 /// The few things about the app a listener may want differently: whether
-/// the controls step aside, and the room the saved files take up.
+/// the controls step aside, the room the saved files take up and, where Pro
+/// is for sale, getting a purchase back or changing it.
 class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
@@ -34,6 +42,13 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   /// when there is no cache to count.
   int? _bytes;
 
+  /// What the downloads take up, counted with the rest.
+  int? _downloadedBytes;
+
+  /// What the last restore found, said under its row.
+  String? _restored;
+  bool _restoring = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +59,13 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     final MediaCache? cache = ref.read(mediaCacheProvider);
     if (cache == null) return;
     final int bytes = await cache.sizeInBytes();
-    if (mounted) setState(() => _bytes = bytes);
+    final int downloaded = await cache.downloadedBytes();
+    if (mounted) {
+      setState(() {
+        _bytes = bytes;
+        _downloadedBytes = downloaded;
+      });
+    }
   }
 
   Future<void> _clear() async {
@@ -56,8 +77,59 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     await _count();
   }
 
+  Future<void> _restore() async {
+    // Pro belongs to the account (#108): restoring needs one to land on.
+    if (ref.read(authRepositoryProvider).current == null) {
+      await showAccountSheet(
+        context,
+        reason: 'Pro stays with your account, on every phone you sign in on.',
+      );
+      if (!mounted || ref.read(authRepositoryProvider).current == null) return;
+    }
+    setState(() {
+      _restoring = true;
+      _restored = null;
+    });
+    String said;
+    try {
+      said = await ref.read(proControllerProvider.notifier).restore()
+          ? 'Pro is back'
+          : 'No earlier purchase on this store account';
+    } on AppError catch (error) {
+      said = error.userMessage;
+    }
+    if (mounted) {
+      setState(() {
+        _restoring = false;
+        _restored = said;
+      });
+    }
+  }
+
+  /// "3 tracks, 14 MB", or that there are none.
+  static String _downloadsLabel(int count, int? bytes) {
+    if (count == 0) return 'Nothing downloaded yet';
+    final String tracks = count == 1 ? '1 track' : '$count tracks';
+
+    return bytes == null
+        ? tracks
+        : '$tracks, ${SettingsSheet.sizeLabel(bytes)}';
+  }
+
+  Future<void> _removeDownloads() async {
+    await ref.read(downloadsControllerProvider.notifier).removeAll();
+    await _count();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
+    final ProStatus pro =
+        ref.watch(proControllerProvider).value ?? ProStatus.free;
+    final String? manage = pro.manageUrl;
+    final int downloadCount =
+        ref.watch(downloadsControllerProvider).value?.done.length ?? 0;
+    final int? downloadedBytes = _downloadedBytes;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
@@ -73,25 +145,10 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.horizontalPadding,
-                0,
-                context.horizontalPadding,
-                context.spaceM,
-              ),
-              child: Text(
-                'Settings',
-                style: TextStyle(
-                  fontSize: context.fontL,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
             MenuGroup(
               children: <Widget>[
                 MenuRow(
-                  glyph: AppGlyph.menu,
+                  glyph: AppGlyph.eye,
                   title: 'Hide controls',
                   subtitle: 'After a few seconds without a tap',
                   trailing: Switch(
@@ -115,7 +172,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
               MenuGroup(
                 children: <Widget>[
                   MenuRow(
-                    glyph: AppGlyph.queue,
+                    glyph: AppGlyph.storage,
                     title: 'Saved music and rooms',
                     subtitle: bytes == null
                         ? 'Counting…'
@@ -126,6 +183,40 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
                     ),
                     onTap: clear,
                   ),
+                  MenuRow(
+                    glyph: AppGlyph.download,
+                    title: 'Downloads',
+                    subtitle: _downloadsLabel(downloadCount, downloadedBytes),
+                    trailing: TextButton(
+                      onPressed: downloadCount == 0
+                          ? null
+                          : () => unawaited(_removeDownloads()),
+                      child: const Text('Remove all'),
+                    ),
+                    // Nothing to open: the row says what is kept, the button
+                    // takes it back. Greyed while there is nothing.
+                    onTap: downloadCount == 0 ? null : () {},
+                  ),
+                ],
+              ),
+            ],
+            if (sellsPro) ...<Widget>[
+              SizedBox(height: context.spaceM),
+              MenuGroup(
+                children: <Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.inOrder,
+                    title: 'Restore purchases',
+                    subtitle: _restoring ? 'Asking the store…' : _restored,
+                    onTap: _restoring ? null : () => unawaited(_restore()),
+                  ),
+                  if (pro.isPro && manage != null)
+                    MenuRow(
+                      glyph: AppGlyph.settings,
+                      title: 'Manage subscription',
+                      subtitle: 'Change or cancel in your store',
+                      onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
+                    ),
                 ],
               ),
             ],

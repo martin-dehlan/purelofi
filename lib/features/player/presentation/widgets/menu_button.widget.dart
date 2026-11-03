@@ -6,7 +6,9 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import 'menu_sheet.widget.dart';
 
-/// The one button that is not about playback, top right of the scene.
+/// The menu, top left of the scene, as a gear: the account, the settings
+/// and the rest of the app live behind it. The library sits opposite it,
+/// the same size, so the two read as a pair.
 class MenuButton extends StatelessWidget {
   const MenuButton({super.key});
 
@@ -15,12 +17,13 @@ class MenuButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Menu',
+      excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => unawaited(showMenuSheet(context)),
         child: Padding(
           padding: EdgeInsets.all(context.spaceM),
-          child: AppIcon(AppGlyph.menu, size: context.screenWidth * 0.07),
+          child: AppIcon(AppGlyph.settings, size: context.screenWidth * 0.07),
         ),
       ),
     );

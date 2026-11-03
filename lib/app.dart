@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'common/routes/app_router.dart';
 import 'common/utils/app_fonts.dart';
+import 'features/player/controller/favorites_sync.controller.dart';
 
 /// Dark, with quiet type.
 ///
@@ -58,6 +59,10 @@ class PureLofiApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Built once at the root so a session from last time syncs favorites on
+    // start, before anyone opens the library (#78).
+    ref.watch(favoritesSyncControllerProvider);
+
     return MaterialApp.router(
       title: 'PureLofi',
       debugShowCheckedModeBanner: false,

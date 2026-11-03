@@ -96,7 +96,7 @@ void main() {
       await tester.tap(find.byType(FavoriteButton));
       await tester.pumpAndSettle();
       await openLibrary(tester);
-      await tapPill(tester, 'Favorites');
+      await openFavorites(tester);
 
       expect(find.widgetWithText(ListTile, 'Dusk Tape'), findsOneWidget);
     });

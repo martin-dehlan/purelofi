@@ -65,11 +65,31 @@ void main() {
       .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
       .selected;
 
-  testWidgets('the library opens on PureLofi\'s music', (tester) async {
+  testWidgets('the library opens on the overview, no filter chosen', (
+    tester,
+  ) async {
     await start(tester);
     await openLibrary(tester);
 
-    expect(chipSelected(tester, 'PureLofi'), isTrue);
+    expect(find.text('Your Library'), findsOneWidget);
+    expect(chipSelected(tester, 'Tracks'), isFalse);
+    // Favorites pinned on top; My music is a filter, not a row as well.
+    expect(find.widgetWithText(ListTile, 'Favorites'), findsOneWidget);
+    expect(find.byType(MyMusic), findsNothing);
+  });
+
+  testWidgets('the My music filter opens it, the × goes back', (tester) async {
+    await start(tester);
+    await openLibrary(tester);
+
+    await tapPill(tester, 'My music');
+    expect(chipSelected(tester, 'My music'), isTrue);
+    expect(find.byType(MyMusic), findsOneWidget);
+
+    await tester.ensureVisible(find.byTooltip('All'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('All'));
+    await tester.pumpAndSettle();
     expect(find.byType(MyMusic), findsNothing);
   });
 
@@ -119,12 +139,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(audio.playedTracks.last.id, 'mine');
-    expect(find.byType(LibrarySheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsOneWidget);
     expect(
       find.textContaining('Back to PureLofi', findRichText: true),
       findsOneWidget,
     );
 
+    // The way back is in the room, under the library: close it first.
+    Navigator.of(tester.element(find.byType(LibrarySheet))).pop();
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Back to PureLofi'));
     await tester.pumpAndSettle();
 
@@ -134,21 +157,6 @@ void main() {
       findsNothing,
       reason: 'the chrome is as it was for anyone on PureLofi\'s music',
     );
-  });
-
-  testWidgets('the library opens on the side that is playing', (tester) async {
-    library = FakeLibraryRepository(<TrackEntity>[
-      makeLocalTrack('mine', title: 'Kitchen Demo'),
-    ]);
-    await start(tester);
-    await openMyMusic(tester);
-    await tester.tap(find.text('Kitchen Demo'));
-    await tester.pumpAndSettle();
-
-    await openLibrary(tester);
-
-    expect(chipSelected(tester, 'My music'), isTrue);
-    expect(find.byType(MyMusic), findsOneWidget);
   });
 
   group('removing', () {

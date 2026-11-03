@@ -9,8 +9,10 @@ import '../domain/identity.service.dart';
 ///
 /// Apple and Google hand over an ID token from their own sheets, which
 /// Supabase verifies (`signInWithIdToken`) — no browser, no redirect. Email
-/// is a six-digit code the listener types into the app. The browser is only
-/// the fallback for Google where the phone has no native sheet.
+/// is an address and a password; confirming the address and resetting the
+/// password both run on six-digit codes typed into the app, never on a link.
+/// The browser is only the fallback for Google where the phone has no native
+/// sheet.
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required GoTrueClient auth,
@@ -94,18 +96,87 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<void> sendEmailCode(String email) =>
-      _guard(() => _auth.signInWithOtp(email: email.trim()));
+  Future<EmailSignIn> signInWithPassword({
+    required String email,
+    required String password,
+  }) => _guard(() async {
+    try {
+      await _auth.signInWithPassword(email: email.trim(), password: password);
+      return EmailSignIn.signedIn;
+    } on AuthException catch (error) {
+      if (error.code != 'email_not_confirmed') rethrow;
+    }
+
+    // Right password, address never confirmed: send the code again rather
+    // than leave them stuck. A rate limit here means a recent code is still
+    // in the inbox, so it is no reason to fail.
+    try {
+      await _auth.resend(type: OtpType.signup, email: email.trim());
+    } on AuthException {
+      // The code step offers "Send a new code".
+    }
+    return EmailSignIn.needsCode;
+  });
 
   @override
-  Future<void> verifyEmailCode({required String email, required String code}) =>
+  Future<EmailSignIn> createAccount({
+    required String email,
+    required String password,
+  }) => _guard(() async {
+    final AuthResponse response = await _auth.signUp(
+      email: email.trim(),
+      password: password,
+    );
+
+    // With confirmations on, Supabase answers an address that already has
+    // an account with a stand-in user and no identities, and mails nothing.
+    // Say so instead of waiting on a code that never comes.
+    final List<UserIdentity>? identities = response.user?.identities;
+    if (identities != null && identities.isEmpty) {
+      throw const AuthException(
+        'User already registered',
+        code: 'user_already_exists',
+      );
+    }
+
+    // No session means the confirmation code is on its way.
+    return response.session == null
+        ? EmailSignIn.needsCode
+        : EmailSignIn.signedIn;
+  });
+
+  @override
+  Future<void> confirmEmail({required String email, required String code}) =>
       _guard(
         () => _auth.verifyOTP(
           email: email.trim(),
           token: code.trim(),
-          type: OtpType.email,
+          type: OtpType.signup,
         ),
       );
+
+  @override
+  Future<void> resendConfirmation(String email) =>
+      _guard(() => _auth.resend(type: OtpType.signup, email: email.trim()));
+
+  @override
+  Future<void> sendPasswordReset(String email) =>
+      _guard(() => _auth.resetPasswordForEmail(email.trim()));
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => _guard(() async {
+    // The recovery code signs in; the new password is set on that session.
+    await _auth.verifyOTP(
+      email: email.trim(),
+      token: code.trim(),
+      type: OtpType.recovery,
+    );
+    await _auth.updateUser(UserAttributes(password: newPassword));
+  });
 
   @override
   Future<void> signOut() => _guard(() async {

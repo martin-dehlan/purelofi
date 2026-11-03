@@ -46,6 +46,12 @@ void main() {
     ),
   ];
 
+  // The menu stays laid out under its page and names the room too.
+  Finder inSwitcher(String text) => find.descendant(
+    of: find.byType(SceneSwitcherSheet),
+    matching: find.text(text),
+  );
+
   Future<void> openSwitcher(WidgetTester tester) async {
     await tester.pumpProviderApp(
       child: const PlayerScreen(),
@@ -115,23 +121,24 @@ void main() {
     await openSwitcher(tester);
 
     expect(find.byType(SceneSwitcherSheet), findsOneWidget);
-    final Offset rainy = tester.getTopLeft(find.text('Rainy Room'));
-    final Offset night = tester.getTopLeft(find.text('Night Bus'));
+    final Offset rainy = tester.getTopLeft(inSwitcher('Rainy Room'));
+    final Offset night = tester.getTopLeft(inSwitcher('Night Bus'));
     expect(rainy.dy, lessThan(night.dy));
   });
 
-  testWidgets('picking a scene switches the background and closes the sheet', (
-    tester,
-  ) async {
-    await openSwitcher(tester);
-    expect(find.text('scene scene-a'), findsOneWidget);
+  testWidgets(
+    'picking a scene switches the background and the list stays open',
+    (tester) async {
+      await openSwitcher(tester);
+      expect(find.text('scene scene-a'), findsOneWidget);
 
-    await tester.tap(find.text('Night Bus'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Night Bus'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SceneSwitcherSheet), findsNothing);
-    expect(find.text('scene scene-b'), findsOneWidget);
-  });
+      expect(find.byType(SceneSwitcherSheet), findsOneWidget);
+      expect(find.text('scene scene-b'), findsOneWidget);
+    },
+  );
 
   testWidgets('switching scenes leaves the audio alone', (tester) async {
     await openSwitcher(tester);
@@ -164,7 +171,7 @@ void main() {
 
     final ListTile active = tester.widget<ListTile>(
       find.ancestor(
-        of: find.text('Rainy Room'),
+        of: inSwitcher('Rainy Room'),
         matching: find.byType(ListTile),
       ),
     );
@@ -192,4 +199,16 @@ class _GatedCache implements MediaCache {
 
   @override
   Future<void> clear() async {}
+
+  @override
+  Future<File?> download(String url) => _gate.future;
+
+  @override
+  Future<void> removeDownload(String url) async {}
+
+  @override
+  Future<Set<String>> downloadedUrls() async => <String>{};
+
+  @override
+  Future<int> downloadedBytes() async => 0;
 }

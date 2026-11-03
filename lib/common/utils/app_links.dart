@@ -19,6 +19,13 @@ abstract final class AppLinks {
     query: 'subject=PureLofi feedback',
   );
 
+  /// A mail to us about one track, naming it so we can find it.
+  static Uri report({required String trackId, required String title}) => Uri(
+    scheme: 'mailto',
+    path: 'contact@purelofi.app',
+    query: 'subject=Problem with $title&body=Track: $trackId',
+  );
+
   /// Opens [uri] outside the app. A link that will not open is not worth an
   /// error: the listener is still exactly where they were.
   static Future<void> open(Uri uri) async {

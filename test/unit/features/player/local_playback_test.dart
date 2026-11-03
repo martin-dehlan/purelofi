@@ -87,6 +87,21 @@ void main() {
     expect(cache.stored, <String>['https://example.com/a.mp3']);
   });
 
+  test('a credited track names its artist on the lock screen', () async {
+    await service.playTrack(
+      TrackEntity(
+        id: 'a',
+        title: 'Travel Lofi',
+        audioUrl: 'https://example.com/a.mp3',
+        createdAt: DateTime.utc(2026, 9, 28),
+        artistId: 'ada',
+        artist: 'Ada Tapes',
+      ),
+    );
+
+    expect(service.mediaItem.value?.artist, 'Ada Tapes');
+  });
+
   group('a scene switch mid-track', () {
     // The lock screen names the room the listener is in, and follows it.
     test('names the room as the album, with the new cover', () async {

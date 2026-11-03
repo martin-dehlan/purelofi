@@ -10,6 +10,7 @@ import 'package:purelofi/features/player/presentation/player.routes.dart';
 
 import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
+import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
 import 'fake_display_preferences.dart';
@@ -17,6 +18,7 @@ import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
 import 'fake_playback_preferences.dart';
+import 'fake_pro.repository.dart';
 import 'fake_track_picker.dart';
 import 'fake_welcome_preferences.dart';
 
@@ -39,6 +41,16 @@ Override _fakeAuth(FakeAuthRepository? repository) {
   addTearDown(fake.dispose);
 
   return authRepositoryProvider.overrideWithValue(fake);
+}
+
+/// Pro in memory. Not for sale unless [repository] says otherwise, which is
+/// how a build without RevenueCat's keys behaves: nothing is locked.
+Override _fakePro(FakeProRepository? repository) {
+  final FakeProRepository fake =
+      repository ?? FakeProRepository(available: false);
+  addTearDown(fake.dispose);
+
+  return proRepositoryProvider.overrideWithValue(fake);
 }
 
 /// The first launch is behind every test unless it says otherwise, so the
@@ -96,6 +108,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
@@ -105,6 +118,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
           _fakeWelcome(welcome),
           ...overrides,
         ],
@@ -130,6 +144,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
@@ -139,6 +154,7 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
           _fakeWelcome(welcome),
           ...overrides,
         ],
@@ -175,8 +191,7 @@ Future<void> openLibrary(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Taps one of the library's pills, found by name — the favourites one is a
-/// heart without a word on it.
+/// Taps one of the library's filters, found by name.
 Future<void> tapPill(WidgetTester tester, String label) async {
   final Finder pill = find.byWidgetPredicate(
     (Widget w) => w is ChoiceChip && w.tooltip == label,
@@ -187,8 +202,19 @@ Future<void> tapPill(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
-/// Opens the library on its "Up next" pill: the queue.
+/// Opens the favourites, pinned on top of the library's overview.
+Future<void> openFavorites(WidgetTester tester) async {
+  final Finder all = find.byTooltip('All');
+  if (all.evaluate().isNotEmpty) {
+    await tester.tap(all);
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(find.widgetWithText(ListTile, 'Favorites'));
+  await tester.pumpAndSettle();
+}
+
+/// Opens the queue, from its button beside the library's.
 Future<void> openQueue(WidgetTester tester) async {
-  await openLibrary(tester);
-  await tapPill(tester, 'Up next');
+  await tester.tap(find.bySemanticsLabel('Queue'));
+  await tester.pumpAndSettle();
 }

@@ -19,12 +19,11 @@ class SleepTimerSheet extends ConsumerWidget {
     final SleepTimerController timer = ref.read(
       sleepTimerControllerProvider.notifier,
     );
-    final bool running = ref.watch(sleepTimerControllerProvider) != null;
+    final DateTime? stopsAt = ref.watch(sleepTimerControllerProvider);
+    final bool running = stopsAt != null;
 
-    VoidCallback choose(void Function() action) => () {
-      action();
-      Navigator.of(context).pop();
-    };
+    // A choice is made and the page stays: the listener closes it.
+    VoidCallback choose(void Function() action) => action;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -33,21 +32,6 @@ class SleepTimerSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.horizontalPadding,
-                0,
-                context.horizontalPadding,
-                context.spaceM,
-              ),
-              child: Text(
-                'Sleep timer',
-                style: TextStyle(
-                  fontSize: context.fontL,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
             MenuGroup(
               children: <Widget>[
                 for (final int length in minutes)
@@ -70,6 +54,8 @@ class SleepTimerSheet extends ConsumerWidget {
                   MenuRow(
                     glyph: AppGlyph.remove,
                     title: 'Turn off',
+                    subtitle:
+                        'Stops at ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(stopsAt), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}',
                     onTap: choose(timer.cancel),
                   ),
                 ],
