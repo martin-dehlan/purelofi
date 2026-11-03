@@ -19,11 +19,16 @@ part 'pro.controller.g.dart';
 
 /// Whether this listener has Pro (#16), and the ways to get it.
 ///
-/// Pro follows the account when there is one: a sign-in hands RevenueCat
-/// the Supabase user id, a sign-out hands Pro back to the store account on
-/// the device. Buying never needs an account.
+/// Pro belongs to the account (#108): a sign-in hands RevenueCat the
+/// Supabase user id, so Pro follows the listener to every device and, later,
+/// to the website. The paywall asks a signed-out listener to sign in before
+/// buying or restoring.
 @Riverpod(keepAlive: true)
 class ProController extends _$ProController {
+  /// The last hand-over to RevenueCat. A purchase waits for it, so it lands
+  /// on the account and not on the anonymous id it replaced.
+  Future<void> _identified = Future<void>.value();
+
   @override
   Stream<ProStatus> build() {
     final ProRepository pro = ref.watch(proRepositoryProvider);
@@ -38,10 +43,11 @@ class ProController extends _$ProController {
       // Moving Pro between accounts is housekeeping: a failure here must not
       // surface as a sign-in error. RevenueCat retries on the next change.
       if (now != null) {
-        unawaited(pro.logIn(now).catchError((Object _) {}));
+        _identified = pro.logIn(now).catchError((Object _) {});
       } else if (was != null) {
-        unawaited(pro.logOut().catchError((Object _) {}));
+        _identified = pro.logOut().catchError((Object _) {});
       }
+      unawaited(_identified);
     }, fireImmediately: true);
 
     return pro.status;
@@ -84,6 +90,7 @@ class ProController extends _$ProController {
     unawaited(_analytics.capture(AnalyticsEvents.purchaseStarted, props));
 
     try {
+      await _identified;
       final PurchaseOutcome outcome = await _pro.purchase(plan.period);
       unawaited(
         _analytics.capture(switch (outcome) {
@@ -106,6 +113,7 @@ class ProController extends _$ProController {
 
   Future<bool> restore() async {
     unawaited(_analytics.capture(AnalyticsEvents.restoreTapped));
+    await _identified;
     final bool found = await _pro.restore();
     unawaited(
       _analytics.capture(AnalyticsEvents.restoreCompleted, <String, Object>{

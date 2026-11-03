@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
+import 'package:purelofi/features/auth/domain/account.entity.dart';
+import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
@@ -14,6 +16,7 @@ import 'package:purelofi/features/pro/domain/pro_status.entity.dart';
 import 'package:purelofi/features/pro/presentation/widgets/paywall_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
+import '../../../helpers/fake_auth.repository.dart';
 import '../../../helpers/fake_pro.repository.dart';
 import '../../../helpers/mock_repositories.dart';
 import '../../../helpers/pump_routed_app.dart';
@@ -36,6 +39,19 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
+  /// Pro belongs to the account (#108): most tests buy as someone.
+  FakeAuthRepository signedIn() => FakeAuthRepository(
+    signedIn: const Account(
+      id: 'u1',
+      method: SignInMethod.email,
+      email: 'listener@example.com',
+    ),
+  );
+
+  /// What the store was asked, without the account hand-over.
+  List<String> storeCalls(FakeProRepository pro) =>
+      pro.calls.where((String c) => !c.startsWith('logIn')).toList();
+
   setUp(() {
     mockRepo = MockContentRepository();
     fakeAudio = FakeAudioPlayerService();
@@ -56,7 +72,11 @@ void main() {
 
   Future<void> openSwitcher(WidgetTester tester, FakeProRepository pro) async {
     phoneSized(tester);
-    await tester.pumpRoutedApp(overrides: overrides(), pro: pro);
+    await tester.pumpRoutedApp(
+      overrides: overrides(),
+      pro: pro,
+      auth: signedIn(),
+    );
     await tester.pumpAndSettle();
     await openMenu(tester);
     await tapMenuEntry(tester, 'Change room');
@@ -103,7 +123,7 @@ void main() {
       await tester.tap(find.text('Start 7-day free trial'));
       await tester.pumpAndSettle();
 
-      expect(pro.calls, <String>['purchase yearly']);
+      expect(storeCalls(pro), <String>['purchase yearly']);
       expect(find.byType(PaywallSheet), findsNothing);
       expect(find.text('scene snow'), findsOneWidget);
     });
@@ -129,6 +149,7 @@ void main() {
     Future<FakeProRepository> open(
       WidgetTester tester, [
       FakeProRepository? repository,
+      FakeAuthRepository? auth,
     ]) async {
       final FakeProRepository pro = repository ?? FakeProRepository();
       phoneSized(tester);
@@ -136,6 +157,7 @@ void main() {
         child: const Scaffold(body: PaywallSheet(source: 'menu')),
         overrides: overrides(),
         pro: pro,
+        auth: auth ?? signedIn(),
       );
       await tester.pumpAndSettle();
       return pro;
@@ -154,7 +176,8 @@ void main() {
       expect(
         find.text(
           'Free for 7 days, then €29.99 a year. '
-          'Cancel any time in your store settings.',
+          'Cancel any time in your store settings. '
+          'Pro stays with your PureLofi account, on every phone you sign in on.',
         ),
         findsOneWidget,
       );
@@ -170,14 +193,15 @@ void main() {
       expect(find.text('Get Pro'), findsOneWidget);
       expect(
         find.text(
-          'Renews at €3.99 a month. Cancel any time in your store settings.',
+          'Renews at €3.99 a month. Cancel any time in your store settings. '
+          'Pro stays with your PureLofi account, on every phone you sign in on.',
         ),
         findsOneWidget,
       );
 
       await tester.tap(find.text('Get Pro'));
       await tester.pumpAndSettle();
-      expect(pro.calls, <String>['purchase monthly']);
+      expect(storeCalls(pro), <String>['purchase monthly']);
     });
 
     testWidgets('closing the store sheet says nothing', (tester) async {
@@ -238,6 +262,45 @@ void main() {
       );
     });
 
+    testWidgets('signed out, buying asks to sign in first', (tester) async {
+      final FakeProRepository pro = await open(
+        tester,
+        null,
+        FakeAuthRepository(),
+      );
+
+      await tester.tap(find.text('Start 7-day free trial'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AccountSheet), findsOneWidget);
+      expect(storeCalls(pro), isEmpty);
+    });
+
+    testWidgets('signed in from there, the purchase goes on', (tester) async {
+      final FakeAuthRepository auth = FakeAuthRepository();
+      final FakeProRepository pro = await open(tester, null, auth);
+
+      await tester.tap(find.text('Start 7-day free trial'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      expect(pro.calls, <String>['logIn u1', 'purchase yearly']);
+    });
+
+    testWidgets('trying again after a failed load is no error', (tester) async {
+      final FakeProRepository pro = FakeProRepository()..plansFail = true;
+      await open(tester, pro);
+      expect(find.text('The plans could not be loaded.'), findsOneWidget);
+
+      pro.plansFail = false;
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Yearly'), findsOneWidget);
+    });
+
     testWidgets('shows the locked rooms it opens', (tester) async {
       await open(tester);
 
@@ -293,7 +356,11 @@ void main() {
       FakeProRepository pro,
     ) async {
       phoneSized(tester);
-      await tester.pumpRoutedApp(overrides: overrides(), pro: pro);
+      await tester.pumpRoutedApp(
+        overrides: overrides(),
+        pro: pro,
+        auth: signedIn(),
+      );
       await tester.pumpAndSettle();
       await openMenu(tester);
       await tapMenuEntry(tester, 'Settings');
@@ -306,7 +373,7 @@ void main() {
       await tester.tap(find.text('Restore purchases'));
       await tester.pumpAndSettle();
 
-      expect(pro.calls, <String>['restore']);
+      expect(storeCalls(pro), <String>['restore']);
       expect(find.text('Pro is back'), findsOneWidget);
     });
 

@@ -59,8 +59,16 @@ class FakeProRepository implements ProRepository {
     yield* _changes.stream;
   }
 
+  /// The next plans() throws, the way a store with nothing to sell does.
+  bool plansFail = false;
+
   @override
-  Future<List<ProPlan>> plans() async => _plans;
+  Future<List<ProPlan>> plans() async {
+    if (plansFail) {
+      throw const AppError.purchase(message: 'The plans could not be loaded.');
+    }
+    return _plans;
+  }
 
   @override
   Future<PurchaseOutcome> purchase(PlanPeriod period) async {
