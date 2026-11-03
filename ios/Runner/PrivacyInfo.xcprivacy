@@ -4,11 +4,13 @@
   PureLofi's privacy manifest. It must match the App Store privacy labels
   and purelofi.app/privacy (#79, #80):
   - no tracking, and no tracking domains
-  - email and user ID: only with the optional account (#38), for the app's
-    own function
+  - email, name and user ID: only with the optional account (#38), for the
+    app's own function; the name only if Apple or Google passes it on
   - product interaction: usage events in PostHog (#82), linked to the user
     ID when signed in
   - purchase history: PureLofi Pro through RevenueCat (#16)
+  - crash data and other diagnostic data: PostHog error tracking (#122),
+    linked to the user ID when signed in
   - UserDefaults: shared_preferences keeps play order and sort on the device
     (CA92.1, the app's own data only)
   Plugins ship their own manifests for the APIs they use.
@@ -68,6 +70,42 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeName</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCrashData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
 	</array>
