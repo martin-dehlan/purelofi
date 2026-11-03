@@ -78,7 +78,7 @@ class ProfileCard extends StatelessWidget {
               ),
             ),
             AppIcon(
-              AppGlyph.next,
+              AppGlyph.chevron,
               size: context.fontM,
               color: cs.onSurfaceVariant,
             ),

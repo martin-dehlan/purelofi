@@ -153,7 +153,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
             MenuGroup(
               children: <Widget>[
                 MenuRow(
-                  glyph: AppGlyph.menu,
+                  glyph: AppGlyph.eye,
                   title: 'Hide controls',
                   subtitle: 'After a few seconds without a tap',
                   trailing: Switch(
@@ -177,7 +177,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
               MenuGroup(
                 children: <Widget>[
                   MenuRow(
-                    glyph: AppGlyph.queue,
+                    glyph: AppGlyph.storage,
                     title: 'Saved music and rooms',
                     subtitle: bytes == null
                         ? 'Counting…'

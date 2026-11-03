@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/auth/domain/account.entity.dart';
 import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../helpers/fake_auth.repository.dart';
 import '../../../helpers/pump_routed_app.dart';
@@ -25,7 +24,7 @@ void main() {
       await open(tester, FakeAuthRepository(apple: true));
 
       expect(find.text('Sign in'), findsOneWidget);
-      expect(find.byType(SignInWithAppleButton), findsOneWidget);
+      expect(find.text('Continue with Apple'), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
       expect(find.text('Continue with email'), findsOneWidget);
     });
@@ -33,7 +32,7 @@ void main() {
     testWidgets('no Apple where there is no Apple sheet', (tester) async {
       await open(tester, FakeAuthRepository());
 
-      expect(find.byType(SignInWithAppleButton), findsNothing);
+      expect(find.text('Continue with Apple'), findsNothing);
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
