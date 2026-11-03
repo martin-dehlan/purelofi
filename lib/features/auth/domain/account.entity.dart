@@ -15,6 +15,7 @@ enum SignInMethod {
 ///
 /// Accounts are optional and additive: nothing in the app waits on one
 /// (#38). [email] can be missing — Apple lets a listener hide it.
+/// [memberSince] is when the account was created, for the profile (#96).
 @freezed
 abstract class Account with _$Account {
   const factory Account({
@@ -22,5 +23,6 @@ abstract class Account with _$Account {
     required SignInMethod method,
     String? email,
     String? name,
+    DateTime? memberSince,
   }) = _Account;
 }

@@ -3,143 +3,145 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../common/utils/app_fonts.dart';
-import '../../../../common/utils/app_version.dart';
+import '../../../../common/cache/media_cache.service.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
-import '../../../auth/controller/auth.controller.dart';
-import '../../../auth/domain/account.entity.dart';
-import '../../../auth/presentation/widgets/account_sheet.widget.dart';
-import '../../controller/player.controller.dart';
-import '../../domain/track.entity.dart';
-import 'bts_modal.widget.dart';
-import 'scene_switcher_sheet.widget.dart';
+import '../../../../common/widgets/menu_group.widget.dart';
+import '../../../../common/widgets/menu_row.widget.dart';
+import '../../controller/auto_hide_controls.controller.dart';
+import '../../controller/player.provider.dart';
 
-/// The menu top right: everything that is not the music.
-///
-/// The music has its own places since the library and the queue arrived —
-/// under the transport, where a music app keeps them. What is left here is
-/// the room, the proof that the playing is real, and the account — which is
-/// optional, and says so.
-///
-/// Built from Material's own list tiles, so it reads and behaves the way a
-/// phone's menus do.
-class SettingsSheet extends ConsumerWidget {
+/// The few things about the app a listener may want differently: whether
+/// the controls step aside, and the room the saved files take up.
+class SettingsSheet extends ConsumerStatefulWidget {
   const SettingsSheet({super.key});
 
+  /// "84 MB", "1.2 GB" — whole megabytes are precise enough here.
+  static String sizeLabel(int bytes) {
+    const int mb = 1024 * 1024;
+    if (bytes >= 1024 * mb) {
+      return '${(bytes / (1024 * mb)).toStringAsFixed(1)} GB';
+    }
+    return '${(bytes / mb).round()} MB';
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final TrackEntity? track = ref.watch(
-      playerControllerProvider.select((state) => state.currentTrack),
-    );
-    final Account? account = ref.watch(authControllerProvider).value;
-    final bool hasFootage =
-        track?.btsVideoUrl != null && track!.btsVideoUrl!.isNotEmpty;
+  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends ConsumerState<SettingsSheet> {
+  /// What the saved files take up; `null` while it is being counted, and
+  /// when there is no cache to count.
+  int? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_count());
+  }
+
+  Future<void> _count() async {
+    final MediaCache? cache = ref.read(mediaCacheProvider);
+    if (cache == null) return;
+    final int bytes = await cache.sizeInBytes();
+    if (mounted) setState(() => _bytes = bytes);
+  }
+
+  Future<void> _clear() async {
+    final MediaCache? cache = ref.read(mediaCacheProvider);
+    if (cache == null) return;
+    await cache.clear();
+    // The room covers held on to their files; they fetch them again.
+    ref.invalidate(sceneCoverProvider);
+    await _count();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool autoHide =
+        ref.watch(autoHideControlsControllerProvider).value ?? true;
+    final bool hasCache = ref.watch(mediaCacheProvider) != null;
+    final int? bytes = _bytes;
+    final VoidCallback? clear = bytes == null || bytes == 0
+        ? null
+        : () => unawaited(_clear());
 
     return SafeArea(
       child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: context.spaceM),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _Entry(
-                glyph: AppGlyph.scene,
-                title: 'Change scene',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showSceneSwitcherSheet(context));
-                },
+        padding: EdgeInsets.only(bottom: context.spaceM),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.horizontalPadding,
+                0,
+                context.horizontalPadding,
+                context.spaceM,
               ),
-              _Entry(
-                glyph: AppGlyph.camera,
-                title: 'Behind the scenes',
-                subtitle: hasFootage
-                    ? 'Watch "${track.title}" being played'
-                    : 'No footage for this track',
-                onTap: hasFootage
-                    ? () {
-                        Navigator.of(context).pop();
-                        unawaited(showBtsModal(context, ref, track));
-                      }
-                    : null,
-              ),
-              _Entry(
-                glyph: AppGlyph.account,
-                title: 'Account',
-                subtitle: account == null
-                    ? 'Optional — sign in if you like'
-                    : account.email ?? account.name ?? 'Signed in',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  unawaited(showAccountSheet(context));
-                },
-              ),
-              SizedBox(height: context.spaceM),
-              Text(
-                'PureLofi $appVersion',
-                textAlign: TextAlign.center,
+              child: Text(
+                'Settings',
                 style: TextStyle(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                  fontFamily: AppFonts.wordmark,
-                  fontSize: context.fontXs,
+                  fontSize: context.fontL,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            MenuGroup(
+              children: <Widget>[
+                MenuRow(
+                  glyph: AppGlyph.menu,
+                  title: 'Hide controls',
+                  subtitle: 'After a few seconds without a tap',
+                  trailing: Switch(
+                    value: autoHide,
+                    onChanged: (bool on) => unawaited(
+                      ref
+                          .read(autoHideControlsControllerProvider.notifier)
+                          .set(on),
+                    ),
+                  ),
+                  onTap: () => unawaited(
+                    ref
+                        .read(autoHideControlsControllerProvider.notifier)
+                        .set(!autoHide),
+                  ),
+                ),
+              ],
+            ),
+            if (hasCache) ...<Widget>[
+              SizedBox(height: context.spaceM),
+              MenuGroup(
+                children: <Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.queue,
+                    title: 'Saved music and rooms',
+                    subtitle: bytes == null
+                        ? 'Counting…'
+                        : '${SettingsSheet.sizeLabel(bytes)} on this phone',
+                    trailing: TextButton(
+                      onPressed: clear,
+                      child: const Text('Clear'),
+                    ),
+                    onTap: clear,
+                  ),
+                ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// One line of the menu. [onTap] `null` greys it out.
-class _Entry extends StatelessWidget {
-  const _Entry({
-    required this.glyph,
-    required this.title,
-    required this.onTap,
-    this.subtitle,
-  });
-
-  final AppGlyph glyph;
-  final String title;
-  final String? subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool enabled = onTap != null;
-
-    return ListTile(
-      enabled: enabled,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: context.horizontalPadding,
-      ),
-      leading: AppIcon(
-        glyph,
-        size: context.fontL,
-        color: enabled
-            ? cs.onSurfaceVariant
-            : cs.onSurfaceVariant.withValues(alpha: 0.38),
-      ),
-      title: Text(title, style: TextStyle(fontSize: context.fontM)),
-      subtitle: subtitle == null
-          ? null
-          : Text(subtitle!, style: TextStyle(fontSize: context.fontS)),
-      onTap: onTap,
-    );
-  }
-}
-
-/// Opens the menu as a bottom sheet.
+/// Opens the settings.
 Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     builder: (BuildContext context) => const SettingsSheet(),
   );
 }

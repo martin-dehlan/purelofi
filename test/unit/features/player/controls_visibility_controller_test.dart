@@ -1,11 +1,22 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/controller/auto_hide_controls.controller.dart';
 import 'package:purelofi/features/player/controller/controls_visibility.controller.dart';
+import 'package:purelofi/features/player/controller/player.provider.dart';
+
+import '../../../helpers/fake_display_preferences.dart';
 
 void main() {
-  ProviderContainer makeContainer() {
-    final ProviderContainer container = ProviderContainer();
+  ProviderContainer makeContainer({bool autoHide = true}) {
+    final ProviderContainer container = ProviderContainer(
+      overrides: <Override>[
+        displayPreferencesProvider.overrideWithValue(
+          FakeDisplayPreferences(autoHide: autoHide),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(controlsVisibilityControllerProvider, (_, _) {});
     return container;
@@ -71,6 +82,32 @@ void main() {
       async.elapse(const Duration(seconds: 10));
 
       expect(async.pendingTimers, isEmpty);
+    });
+  });
+
+  test('turned off in the settings, they stay', () {
+    fakeAsync((FakeAsync async) {
+      final ProviderContainer container = makeContainer(autoHide: false);
+      container.read(controlsVisibilityControllerProvider);
+
+      async.elapse(const Duration(seconds: 30));
+      expect(container.read(controlsVisibilityControllerProvider), isTrue);
+    });
+  });
+
+  test('turning it off brings them back and keeps them', () {
+    fakeAsync((FakeAsync async) {
+      final ProviderContainer container = makeContainer();
+      container.read(controlsVisibilityControllerProvider);
+      async.elapse(const Duration(seconds: 5));
+      expect(container.read(controlsVisibilityControllerProvider), isFalse);
+
+      container.read(autoHideControlsControllerProvider.notifier).set(false);
+      async.flushMicrotasks();
+      expect(container.read(controlsVisibilityControllerProvider), isTrue);
+
+      async.elapse(const Duration(seconds: 30));
+      expect(container.read(controlsVisibilityControllerProvider), isTrue);
     });
   });
 }

@@ -29,6 +29,10 @@ abstract class MediaCache {
 
   /// Throws away the least recently used files until the cache fits.
   Future<void> evict();
+
+  /// Throws away every file, for the settings' "Clear". Whatever is needed
+  /// again is fetched again.
+  Future<void> clear();
 }
 
 /// A [MediaCache] on the filesystem, with Drift as its index.
@@ -143,19 +147,30 @@ class FileMediaCache implements MediaCache {
     for (final CachedFileTableData row in await _dao.oldestFirst()) {
       if (total <= maxBytes) return;
 
-      final File file = File('${_directory.path}/${row.fileName}');
-      if (file.existsSync()) {
-        try {
-          await file.delete();
-        } on Object {
-          // A file the OS will not let go of stays; its row goes, so the
-          // cache stops counting on it.
-        }
-      }
-
-      await _dao.forget(row.url);
+      await _drop(row);
       total -= row.sizeBytes;
     }
+  }
+
+  @override
+  Future<void> clear() async {
+    for (final CachedFileTableData row in await _dao.all()) {
+      await _drop(row);
+    }
+  }
+
+  Future<void> _drop(CachedFileTableData row) async {
+    final File file = File('${_directory.path}/${row.fileName}');
+    if (file.existsSync()) {
+      try {
+        await file.delete();
+      } on Object {
+        // A file the OS will not let go of stays; its row goes, so the
+        // cache stops counting on it.
+      }
+    }
+
+    await _dao.forget(row.url);
   }
 
   /// A name derived from the URL, so the same file is never fetched twice and
