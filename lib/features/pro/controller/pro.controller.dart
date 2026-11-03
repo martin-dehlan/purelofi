@@ -107,6 +107,7 @@ class ProController extends _$ProController {
           'reason': error is NetworkError ? 'network' : 'store',
         }),
       );
+      unawaited(_analytics.error(error, where: 'purchase'));
       rethrow;
     }
   }
@@ -114,7 +115,13 @@ class ProController extends _$ProController {
   Future<bool> restore() async {
     unawaited(_analytics.capture(AnalyticsEvents.restoreTapped));
     await _identified;
-    final bool found = await _pro.restore();
+    final bool found;
+    try {
+      found = await _pro.restore();
+    } on AppError catch (error) {
+      unawaited(_analytics.error(error, where: 'restore'));
+      rethrow;
+    }
     unawaited(
       _analytics.capture(AnalyticsEvents.restoreCompleted, <String, Object>{
         'found': found,

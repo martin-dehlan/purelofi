@@ -1,6 +1,7 @@
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 import '../config/env.dart';
+import '../errors/app_error.dart';
 
 /// What PureLofi learns about how it is used: that people open the app,
 /// listen, check the footage and pick scenes — and, since accounts and Pro
@@ -8,6 +9,10 @@ import '../config/env.dart';
 ///
 /// Never an email, a name or free text. A signed-in listener is known by
 /// their Supabase user id and nothing else; a signed-out one is anonymous.
+///
+/// Errors go the same way, to PostHog's error tracking: the crashes it
+/// catches by itself, and through [error] the failures the app caught and
+/// lived with but that should not have happened.
 abstract class AnalyticsService {
   /// From now on, events belong to [userId]. PostHog joins the anonymous
   /// history from before the sign-in onto the same person.
@@ -31,6 +36,16 @@ abstract class AnalyticsService {
   Future<void> btsOpened(String trackId);
 
   Future<void> sceneSwitched(String sceneId);
+
+  /// A failure the app caught: a track that would not play, a purchase the
+  /// store refused, a sign-in that broke. [where] names the part of the app
+  /// it happened in. A lost connection or a wrong password is not a bug and
+  /// is left out.
+  Future<void> error(
+    Object error, {
+    required String where,
+    StackTrace? stackTrace,
+  });
 }
 
 /// Event names, kept in one place so the dashboard and the code agree.
@@ -79,6 +94,15 @@ class PostHogAnalyticsService implements AnalyticsService {
     final String? host = Env.maybeRead(Env.posthogHostEnv);
     if (host != null) config.host = host;
 
+    // Crashes, and errors nothing caught: in the framework, in Dart and in
+    // the Android and iOS code underneath.
+    config.errorTrackingConfig
+      ..captureFlutterErrors = true
+      ..capturePlatformDispatcherErrors = true
+      ..captureNativeExceptions = true
+      ..inAppIncludes.add('package:purelofi');
+    config.beforeSend = <BeforeSendCallback>[PrivateDataScrubber.event];
+
     await Posthog().setup(config);
     return PostHogAnalyticsService(Posthog());
   }
@@ -123,6 +147,37 @@ class PostHogAnalyticsService implements AnalyticsService {
     <String, Object>{'scene_id': sceneId},
   );
 
+  @override
+  Future<void> error(
+    Object error, {
+    required String where,
+    StackTrace? stackTrace,
+  }) async {
+    if (!isWorthReporting(error)) return;
+
+    // What the mapper wrapped, with the trace from where it was thrown.
+    final (Object cause, StackTrace? trace) = switch (error) {
+      UnknownError(:final Object cause, stackTrace: final StackTrace? at) => (
+        cause,
+        at ?? stackTrace,
+      ),
+      _ => (error, stackTrace),
+    };
+
+    await _safely(
+      () => _posthog.captureException(
+        error: cause,
+        stackTrace: trace,
+        properties: <String, Object>{'where': where},
+      ),
+    );
+  }
+
+  /// A dropped connection is the network's, and a wrong password or a
+  /// taken email the listener's. Neither is something to fix in the app.
+  static bool isWorthReporting(Object error) =>
+      error is! NetworkError && error is! AuthError;
+
   Future<void> _capture(String event, [Map<String, Object>? properties]) =>
       _safely(() => _posthog.capture(eventName: event, properties: properties));
 
@@ -164,4 +219,52 @@ class NoopAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> sceneSwitched(String sceneId) async {}
+
+  @override
+  Future<void> error(
+    Object error, {
+    required String where,
+    StackTrace? stackTrace,
+  }) async {}
+}
+
+/// Takes what could say who someone is out of an event before it leaves
+/// the phone. Mostly for error reports, whose messages are whatever the
+/// code that failed put in them: an email address in a sign-in error, the
+/// path of a song from the listener's own phone.
+abstract final class PrivateDataScrubber {
+  static final RegExp _email = RegExp(
+    r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
+  );
+
+  /// A file of the listener's own (#66): a path, from its first slash, or
+  /// a bare name, up to an audio file's extension. It takes a stream's URL
+  /// along too, which is no loss: the events carry the track's id.
+  static final RegExp _audioFile = RegExp(
+    r'''(?:/[^\n'"]*?|[^\s/'"]+)\.(?:mp3|m4a|aac|flac|wav|ogg|opus)\b''',
+    caseSensitive: false,
+  );
+
+  static PostHogEvent event(PostHogEvent event) {
+    final Map<String, Object>? properties = event.properties;
+    if (properties != null) {
+      event.properties = value(properties) as Map<String, Object>;
+    }
+    return event;
+  }
+
+  /// [input] with every string in it, however deep, scrubbed.
+  static Object value(Object input) => switch (input) {
+    final String text =>
+      text.replaceAll(_email, '[email]').replaceAll(_audioFile, '[file]'),
+    final Map<Object?, Object?> map => <String, Object>{
+      for (final MapEntry<Object?, Object?> entry in map.entries)
+        if (entry.value != null) entry.key.toString(): value(entry.value!),
+    },
+    final List<Object?> list => <Object>[
+      for (final Object? item in list)
+        if (item != null) value(item),
+    ],
+    _ => input,
+  };
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/analytics/analytics.provider.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/player/controller/player.controller.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
@@ -16,12 +17,14 @@ import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_favorites.repository.dart';
 import '../../../helpers/fake_media_cache.dart';
 import '../../../helpers/mock_repositories.dart';
+import '../../../helpers/recording_analytics.service.dart';
 
 void main() {
   late MockContentRepository mockRepo;
   late FakeAudioPlayerService fakeAudio;
   late FakeFavoritesRepository fakeFavorites;
   late ProviderContainer container;
+  late RecordingAnalyticsService analytics;
   FakeMediaCache? cacheOverride;
 
   Future<ProviderContainer> makeContainer(
@@ -37,6 +40,7 @@ void main() {
         contentRepositoryProvider.overrideWithValue(mockRepo),
         audioPlayerServiceProvider.overrideWithValue(fakeAudio),
         favoritesRepositoryProvider.overrideWithValue(fakeFavorites),
+        analyticsServiceProvider.overrideWithValue(analytics),
         if (cacheOverride != null)
           mediaCacheProvider.overrideWithValue(cacheOverride),
       ],
@@ -53,6 +57,7 @@ void main() {
 
   setUp(() {
     cacheOverride = null;
+    analytics = RecordingAnalyticsService();
     mockRepo = MockContentRepository();
     fakeAudio = FakeAudioPlayerService();
     addTearDown(fakeAudio.dispose);
@@ -208,6 +213,17 @@ void main() {
       expect(state.error, isA<PlaybackError>());
       expect(state.error?.userMessage, 'Playback error: the stream failed');
       expect(state.isPlaying, isFalse);
+    });
+
+    test('a playback failure goes to error tracking', () async {
+      container = await makeContainer(<TrackEntity>[makeTrack('a')]);
+      const AppError failure = AppError.playback(message: 'the stream failed');
+      fakeAudio.failureOnPlay = failure;
+
+      await container.read(playerControllerProvider.notifier).playNext();
+      await pumpEventQueue();
+
+      expect(analytics.errors, <(Object, String)>[(failure, 'playback')]);
     });
 
     test('a later successful play clears the error', () async {

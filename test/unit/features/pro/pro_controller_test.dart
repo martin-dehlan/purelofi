@@ -198,6 +198,9 @@ void main() {
         'trial': true,
         'reason': 'store',
       });
+      // And to error tracking, where the store's refusal can be read.
+      expect(analytics.errors.single.$1, isA<PurchaseError>());
+      expect(analytics.errors.single.$2, 'purchase');
     });
 
     test('a restore says whether it found anything', () async {

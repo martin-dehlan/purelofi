@@ -65,4 +65,14 @@ class RecordingAnalyticsService implements AnalyticsService {
     AnalyticsEvents.sceneSwitched,
     <String, Object>{'scene_id': sceneId},
   ));
+
+  /// Every [error] reported, with where it happened.
+  final List<(Object error, String where)> errors = <(Object, String)>[];
+
+  @override
+  Future<void> error(
+    Object error, {
+    required String where,
+    StackTrace? stackTrace,
+  }) async => errors.add((error, where));
 }
