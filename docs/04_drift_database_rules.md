@@ -9,8 +9,13 @@
 > network failure swallowed whenever there is something cached to show, and
 > raised when there is not.
 >
-> Favorites (`#15`) are the first data that will be written locally *first*,
-> which is what `isSynced` exists for. Nothing writes it yet.
+> Favorites (`#15`) are the first data written locally *first*: a toggle
+> sets `isFavorite` and `isSynced = false`. For a signed-in listener (#78)
+> `syncFavorites` pushes every unsynced mark to `user_favorites`, marks it
+> synced, then applies the account's list to the synced rows (pending ones
+> are newer and left alone). On sign-out the marks are released — set
+> unsynced again — so the next sign-in takes them along instead of losing
+> them. A content refresh never touches either column.
 >
 > **The one exception is `local_tracks` (#66):** the listener's own music,
 > copied into the app. It exists only on this device and is never synced, so

@@ -12,6 +12,8 @@ import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
+import '../data/device_favorites.impl.dart';
+import '../data/favorites.api.dart';
 import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
@@ -20,6 +22,7 @@ import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
 import '../domain/display_preferences.service.dart';
 import '../domain/favorites.repository.dart';
+import '../domain/favorites_sync.dart';
 import '../domain/playback_preferences.service.dart';
 import '../domain/track.entity.dart';
 import '../domain/scene.entity.dart';
@@ -78,6 +81,15 @@ SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
 @Riverpod(keepAlive: true)
 FavoritesRepository favoritesRepository(Ref ref) =>
     FavoritesRepositoryImpl(dao: ref.watch(trackDaoProvider));
+
+/// The account's favorites (#78). Only ever called while signed in.
+@Riverpod(keepAlive: true)
+AccountFavorites accountFavorites(Ref ref) =>
+    FavoritesApi(ref.watch(supabaseClientProvider));
+
+@Riverpod(keepAlive: true)
+DeviceFavorites deviceFavorites(Ref ref) =>
+    DeviceFavoritesImpl(ref.watch(trackDaoProvider));
 
 @Riverpod(keepAlive: true)
 ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
