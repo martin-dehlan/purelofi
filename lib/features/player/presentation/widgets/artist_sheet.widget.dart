@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../pro/controller/pro.controller.dart';
+import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
 import '../../domain/track.entity.dart';
@@ -63,6 +67,24 @@ class ArtistSheet extends ConsumerWidget {
       unawaited(player.playTrack(tracks.first));
     }
 
+    final Downloads downloads =
+        ref.watch(downloadsControllerProvider).value ?? const Downloads();
+    final bool allDownloaded = tracks.isNotEmpty && tracks.every(downloads.has);
+    final bool downloading = tracks.any(downloads.isLoading);
+
+    void toggleDownloads() {
+      if (!ref.read(downloadsOpenProvider)) {
+        unawaited(showPaywallSheet(context, source: 'download'));
+        return;
+      }
+      final DownloadsController downloader = ref.read(
+        downloadsControllerProvider.notifier,
+      );
+      unawaited(
+        allDownloaded ? downloader.remove(tracks) : downloader.download(tracks),
+      );
+    }
+
     final String? bio = artist.bio;
     final String? link = artist.linkUrl;
 
@@ -111,21 +133,58 @@ class ArtistSheet extends ConsumerWidget {
                 ),
               ],
               SizedBox(height: context.spaceL),
-              FilledButton(
-                onPressed: tracks.isEmpty ? null : playAll,
-                style: FilledButton.styleFrom(
-                  backgroundColor: cs.onSurface,
-                  foregroundColor: cs.surface,
-                  minimumSize: Size.fromHeight(context.screenHeight * 0.06),
-                  shape: const StadiumBorder(),
-                ),
-                child: Text(
-                  'Play',
-                  style: TextStyle(
-                    fontSize: context.fontM,
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: tracks.isEmpty ? null : playAll,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: cs.onSurface,
+                        foregroundColor: cs.surface,
+                        minimumSize: Size.fromHeight(
+                          context.screenHeight * 0.06,
+                        ),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text(
+                        'Play',
+                        style: TextStyle(
+                          fontSize: context.fontM,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(width: context.spaceS),
+                  // All of them for offline in one tap, the accent once
+                  // they are all here.
+                  IconButton.filledTonal(
+                    tooltip: allDownloaded
+                        ? 'Remove downloads'
+                        : 'Download all',
+                    onPressed: tracks.isEmpty || downloading
+                        ? null
+                        : toggleDownloads,
+                    iconSize: context.fontL,
+                    padding: EdgeInsets.all(context.spaceM),
+                    style: IconButton.styleFrom(
+                      backgroundColor: cs.surfaceContainerHigh,
+                    ),
+                    icon: downloading
+                        ? SizedBox.square(
+                            dimension: context.fontL,
+                            child: CircularProgressIndicator(
+                              strokeWidth: context.fontL * 0.12,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          )
+                        : AppIcon(
+                            AppGlyph.download,
+                            size: context.fontL,
+                            color: allDownloaded ? cs.primary : cs.onSurface,
+                          ),
+                  ),
+                ],
               ),
               if (link != null) ...<Widget>[
                 SizedBox(height: context.spaceS),

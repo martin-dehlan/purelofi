@@ -142,9 +142,9 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
             SizedBox(height: context.spaceS),
             Text(
               rooms.isEmpty
-                  ? 'Every room, every night.'
-                  : 'Every room, every night. '
-                        '${rooms.length} more to sit in.',
+                  ? 'Every room, and your music offline.'
+                  : 'Every room, ${rooms.length} more to sit in, '
+                        'and your music offline.',
               textAlign: TextAlign.center,
               style: quiet.copyWith(fontSize: context.fontM),
             ),

@@ -24,15 +24,30 @@ abstract class MediaCache {
   /// listener should see.
   Future<File?> store(String url);
 
-  /// How much disk the cache is using.
+  /// How much disk the cache is using, downloads not counted.
   Future<int> sizeInBytes();
 
   /// Throws away the least recently used files until the cache fits.
+  /// Downloads are never thrown away.
   Future<void> evict();
 
-  /// Throws away every file, for the settings' "Clear". Whatever is needed
-  /// again is fetched again.
+  /// Throws away every file but the downloads, for the settings' "Clear".
+  /// Whatever is needed again is fetched again.
   Future<void> clear();
+
+  /// Downloads [url] if needed and keeps it for good, for listening
+  /// offline. `null` when the download failed.
+  Future<File?> download(String url);
+
+  /// Takes a download back: the file becomes an ordinary cached one, and
+  /// goes when the cache next needs the room.
+  Future<void> removeDownload(String url);
+
+  /// The URLs downloaded on purpose.
+  Future<Set<String>> downloadedUrls();
+
+  /// What the downloads take up.
+  Future<int> downloadedBytes();
 }
 
 /// A [MediaCache] on the filesystem, with Drift as its index.
@@ -140,6 +155,30 @@ class FileMediaCache implements MediaCache {
   Future<int> sizeInBytes() => _dao.totalBytes();
 
   @override
+  Future<File?> download(String url) async {
+    final File? file = await store(url);
+    if (file != null) await _dao.setPinned(url, pinned: true);
+
+    return file;
+  }
+
+  @override
+  Future<void> removeDownload(String url) async {
+    await _dao.setPinned(url, pinned: false);
+    await evict();
+  }
+
+  @override
+  Future<Set<String>> downloadedUrls() async => <String>{
+    for (final CachedFileTableData row in await _dao.pinned()) row.url,
+  };
+
+  @override
+  Future<int> downloadedBytes() => _dao.totalBytes(pinned: true);
+
+  /// The limit is for what the app keeps on its own; downloads were asked
+  /// for, so they neither count against it nor give way to it.
+  @override
   Future<void> evict() async {
     int total = await _dao.totalBytes();
     if (total <= maxBytes) return;
@@ -155,7 +194,7 @@ class FileMediaCache implements MediaCache {
   @override
   Future<void> clear() async {
     for (final CachedFileTableData row in await _dao.all()) {
-      await _drop(row);
+      if (!row.isPinned) await _drop(row);
     }
   }
 

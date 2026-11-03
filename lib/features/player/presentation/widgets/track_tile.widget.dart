@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
 import 'track_actions_sheet.widget.dart';
@@ -53,6 +54,12 @@ class TrackTile extends ConsumerWidget {
           ),
         );
 
+    final bool downloaded = ref.watch(
+      downloadsControllerProvider.select(
+        (AsyncValue<Downloads> d) => d.value?.has(track) ?? false,
+      ),
+    );
+
     return ListTile(
       selected: isCurrent,
       // The accent on the title is the whole mark; a tinted row on top of it
@@ -71,10 +78,32 @@ class TrackTile extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: context.fontM, fontWeight: FontWeight.w600),
       ),
-      subtitle: Text(
-        track.artistName,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
+      subtitle: Row(
+        children: <Widget>[
+          // Kept for offline: a small arrow ahead of the name, the way music
+          // apps mark it.
+          if (downloaded) ...<Widget>[
+            Semantics(
+              label: 'Downloaded',
+              child: AppIcon(
+                AppGlyph.download,
+                size: context.fontS,
+                color: cs.primary,
+              ),
+            ),
+            SizedBox(width: context.spaceXs),
+          ],
+          Flexible(
+            child: Text(
+              track.artistName,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: context.fontS,
+              ),
+            ),
+          ),
+        ],
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
