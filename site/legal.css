@@ -1,0 +1,35 @@
+/* The legal pages: the same night, the same type, nothing moving. */
+@font-face{font-family:'Pixelify Sans';src:url(a/PixelifySans.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Karla';src:url(a/Karla.ttf) format('truetype');font-weight:200 800;font-display:swap}
+
+:root{
+  color-scheme:dark;
+  --night:#130C1F;--ink:#030308;--paper:#FFF2E8;--mist:#92B5BB;--lamp:#F0A05D;--lamp-hi:#FEDA7D;--rim:#3D2544;
+  --display:'Pixelify Sans',ui-monospace,monospace;
+  --body:'Karla',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--paper);font:17px/1.65 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
+a:focus-visible{outline:2px solid var(--lamp-hi);outline-offset:3px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;max-width:760px;margin:0 auto;padding:24px max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px))}
+.wordmark{font-family:var(--display);font-size:24px;color:var(--paper);text-decoration:none}
+.back{font-size:15px;min-height:44px;display:inline-flex;align-items:center}
+
+main{max-width:760px;margin:0 auto;padding:56px max(20px,env(safe-area-inset-right,0px)) 72px max(20px,env(safe-area-inset-left,0px))}
+h1{margin:0 0 10px;font-family:var(--display);font-weight:400;font-size:clamp(38px,6vw,56px);line-height:1}
+h2{margin:44px 0 10px;font-family:var(--display);font-weight:400;font-size:24px;line-height:1.2}
+p,li{max-width:64ch}
+p{margin:0 0 14px}
+ul{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 6px}
+li::marker{color:var(--lamp)}
+.updated{color:var(--mist);margin-bottom:36px}
+.lede{font-size:20px}
+.draft{background:#1D1228;color:var(--lamp-hi);padding:12px 16px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--rim)}
+
+footer{max-width:760px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-right,0px)) 40px max(20px,env(safe-area-inset-left,0px));box-shadow:inset 0 1px 0 var(--rim);display:flex;flex-wrap:wrap;gap:4px 24px;font-size:15px}
+footer a{color:var(--paper);opacity:.72;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+footer a:hover{opacity:1}
+footer a[aria-current]{opacity:1;color:var(--lamp)}
