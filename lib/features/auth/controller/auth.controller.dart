@@ -73,17 +73,54 @@ class AuthController extends _$AuthController {
   Future<bool> signInWithGoogle() =>
       _counted(SignInMethod.google, _auth.signInWithGoogle);
 
-  Future<void> sendEmailCode(String email) async {
-    await _counted(SignInMethod.email, () => _auth.sendEmailCode(email));
-    unawaited(_analytics.capture(AnalyticsEvents.emailCodeSent));
+  Future<EmailSignIn> signInWithPassword({
+    required String email,
+    required String password,
+  }) => _codeCounted(
+    _counted(
+      SignInMethod.email,
+      () => _auth.signInWithPassword(email: email, password: password),
+    ),
+  );
+
+  Future<EmailSignIn> createAccount({
+    required String email,
+    required String password,
+  }) => _codeCounted(
+    _counted(
+      SignInMethod.email,
+      () => _auth.createAccount(email: email, password: password),
+    ),
+  );
+
+  /// Counts the six-digit code going out when a step asks for one.
+  Future<EmailSignIn> _codeCounted(Future<EmailSignIn> step) async {
+    final EmailSignIn result = await step;
+    if (result == EmailSignIn.needsCode) {
+      unawaited(_analytics.capture(AnalyticsEvents.emailCodeSent));
+    }
+    return result;
   }
 
-  Future<void> verifyEmailCode({required String email, required String code}) =>
+  /// The second step of a new account; its start was counted at the first.
+  Future<void> confirmEmail({required String email, required String code}) =>
       _counted(
         SignInMethod.email,
-        () => _auth.verifyEmailCode(email: email, code: code),
+        () => _auth.confirmEmail(email: email, code: code),
         started: false,
       );
+
+  Future<void> resendConfirmation(String email) =>
+      _auth.resendConfirmation(email);
+
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordReset(email);
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => _auth.resetPassword(email: email, code: code, newPassword: newPassword);
 
   Future<void> signOut() async {
     await _auth.signOut();

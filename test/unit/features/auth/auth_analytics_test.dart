@@ -104,8 +104,11 @@ void main() {
     container = start(FakeAuthRepository());
     await settle();
 
-    await controller().sendEmailCode('me@example.com');
-    await controller().verifyEmailCode(email: 'me@example.com', code: '123456');
+    await controller().createAccount(
+      email: 'me@example.com',
+      password: 'longenough',
+    );
+    await controller().confirmEmail(email: 'me@example.com', code: '123456');
     await settle();
 
     expect(analytics.eventNames, <String>[

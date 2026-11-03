@@ -36,6 +36,9 @@ class FakeAuthRepository implements AuthRepository {
   /// The sheet was closed: sign-ins return `false` and change nothing.
   bool cancel = false;
 
+  /// The address never got its code: a password sign-in asks for one.
+  bool unconfirmed = false;
+
   final List<String> calls = <String>[];
 
   @override
@@ -76,20 +79,62 @@ class FakeAuthRepository implements AuthRepository {
   Future<bool> signInWithGoogle() => _signIn('google', SignInMethod.google);
 
   @override
-  Future<void> sendEmailCode(String email) async {
-    calls.add('send $email');
+  Future<EmailSignIn> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    calls.add('sign in $email $password');
+    await _maybeFail();
+    if (unconfirmed) return EmailSignIn.needsCode;
+    _signInByEmail(email);
+    return EmailSignIn.signedIn;
+  }
+
+  @override
+  Future<EmailSignIn> createAccount({
+    required String email,
+    required String password,
+  }) async {
+    calls.add('create $email $password');
+    await _maybeFail();
+    return EmailSignIn.needsCode;
+  }
+
+  @override
+  Future<void> confirmEmail({
+    required String email,
+    required String code,
+  }) async {
+    calls.add('confirm $email $code');
+    await _maybeFail();
+    _signInByEmail(email);
+  }
+
+  @override
+  Future<void> resendConfirmation(String email) async {
+    calls.add('resend $email');
     await _maybeFail();
   }
 
   @override
-  Future<void> verifyEmailCode({
+  Future<void> sendPasswordReset(String email) async {
+    calls.add('forgot $email');
+    await _maybeFail();
+  }
+
+  @override
+  Future<void> resetPassword({
     required String email,
     required String code,
+    required String newPassword,
   }) async {
-    calls.add('verify $email $code');
+    calls.add('reset $email $code $newPassword');
     await _maybeFail();
-    _set(nextAccount.copyWith(email: email, method: SignInMethod.email));
+    _signInByEmail(email);
   }
+
+  void _signInByEmail(String email) =>
+      _set(nextAccount.copyWith(email: email, method: SignInMethod.email));
 
   @override
   Future<void> signOut() async {

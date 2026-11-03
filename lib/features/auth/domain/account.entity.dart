@@ -7,7 +7,7 @@ enum SignInMethod {
   apple,
   google,
 
-  /// A six-digit code sent to their address.
+  /// Their address and a password.
   email,
 }
 
