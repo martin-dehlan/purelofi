@@ -33,8 +33,8 @@ Content lives in Supabase.
 | PostHog analytics (usage, sign-in and Pro funnel — #82) | |
 
 Offline caching (Drift — `docs/04`) is built, content cache and file cache
-both, and favourite tracks with it. They ship as **0.2.0** and **0.3.0** on
-the next store uploads (`docs/11`).
+both, and favourite tracks with it. They ship together with accounts and
+Pro as **0.1.0+2**, the second store upload (`docs/11`).
 
 **PureLofi Pro (#16)** — `purchases_flutter`, monthly and yearly. The first
 two scenes (by `sort_order`) are free; Pro opens the rest. Without
@@ -47,7 +47,7 @@ RevenueCat's public keys in `.env`, Pro is off and every scene is free.
 | `01_core_architecture.md` | Yes — Supabase is the source of truth, Drift the mirror |
 | `02_file_naming_conventions.md` | Yes, verbatim |
 | `03_responsive_ui_rules.md` | Yes, verbatim |
-| `04_drift_database_rules.md` | Yes — active since 0.2.0 |
+| `04_drift_database_rules.md` | Yes — active since 0.1.0 |
 | `05_riverpod_patterns.md` | Yes |
 | `06_code_generation.md` | Yes (Freezed + Riverpod + Drift) |
 | `07_error_handling.md` | Yes (network is the main error path; optional sign-in is the second) |

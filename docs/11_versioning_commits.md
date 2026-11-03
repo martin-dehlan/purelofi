@@ -97,6 +97,7 @@ Before `git push`:
   background (lock-screen controls), random track selection, scene switcher, BTS
   modal, PostHog wired (`app_opened`, `track_played`, `bts_opened`,
   `scene_switched`).
-- Bump to `0.1.0+1` only on the first TestFlight / Play Internal upload.
-- Phase 2 batches (later): offline caching (`0.2.0`), favorites (`0.3.0`),
-  RevenueCat paywall (→ `1.0.0`).
+- Store uploads so far: `0.0.1+1` (Play Internal, the player alone), then
+  `0.1.0+2` — offline cache, favourites, accounts, library and Pro together.
+- Every upload raises the build number after `+`; the stores refuse a
+  number they have seen. `1.0.0` is the public release.
