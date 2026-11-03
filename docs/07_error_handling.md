@@ -187,6 +187,27 @@ class ErrorState extends StatelessWidget {
 
 ---
 
+## Error Tracking
+
+Errors go to PostHog's error tracking, next to the usage events
+(`lib/common/analytics/analytics.service.dart`):
+
+- **By itself:** what nothing caught. Flutter framework errors,
+  `PlatformDispatcher` errors and native Android/iOS exceptions. Switched on
+  in `PostHogAnalyticsService.create()`.
+- **By hand:** what a controller caught and lived with, through
+  `AnalyticsService.error(error, where: '…')`. Today: `playback`, `tracks`,
+  `purchase`, `restore` and `sign_in`. An `UnknownError` is unwrapped to
+  its cause and trace.
+- **Left out:** `NetworkError` and `AuthError`. A lost connection or a wrong
+  password is not a bug.
+- **Scrubbed:** `PrivateDataScrubber` takes email addresses and the
+  listener's own audio files out of every event before it is sent.
+
+New `catch` that swallows a failure the listener would notice? Report it.
+
+---
+
 ## Rules Checklist
 
 - [ ] All exceptions caught in the repository and mapped via `ErrorMapper`

@@ -100,6 +100,22 @@ void main() {
     });
   });
 
+  test(
+    'a failure goes to error tracking too, with where it happened',
+    () async {
+      final AppError failure = AppError.unknown(cause: StateError('broken'));
+      container = start(FakeAuthRepository()..failWith = failure);
+      await settle();
+
+      await expectLater(
+        controller().signInWithGoogle(),
+        throwsA(isA<AppError>()),
+      );
+
+      expect(analytics.errors, <(Object, String)>[(failure, 'sign_in')]);
+    },
+  );
+
   test('email: the code sent, then the sign-in it completes', () async {
     container = start(FakeAuthRepository());
     await settle();

@@ -50,6 +50,11 @@ class PlayerController extends _$PlayerController {
           audio.nextRequests.listen((_) => unawaited(playNext())),
           audio.errors.listen((AppError error) {
             state = state.copyWith(error: error, isPlaying: false);
+            unawaited(
+              ref
+                  .read(analyticsServiceProvider)
+                  .error(error, where: 'playback'),
+            );
           }),
           audio.positionStream.listen((Duration position) {
             state = state.copyWith(position: position);
@@ -241,11 +246,14 @@ class PlayerController extends _$PlayerController {
     try {
       tracks = await _tracksFor(source);
     } on Object catch (error, stackTrace) {
+      final AppError failure = ErrorMapper.fromException(error, stackTrace);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .error(failure, where: 'tracks', stackTrace: stackTrace),
+      );
       if (surfaceErrors) {
-        state = state.copyWith(
-          error: ErrorMapper.fromException(error, stackTrace),
-          isPlaying: false,
-        );
+        state = state.copyWith(error: failure, isPlaying: false);
       }
       return;
     }

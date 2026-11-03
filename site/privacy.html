@@ -28,6 +28,7 @@
   <li>music you add from your own device. It never leaves your device and is never uploaded.</li>
 </ul>
 <p>To count how the app is used, it sends anonymous usage events to PostHog (see below), for example that the app was opened, which track or scene was played or that the Pro page was viewed. These events carry no name, no email and no free text.</p>
+<p>When the app crashes or something fails that should not (a track that will not play, a purchase that breaks), it sends an error report to PostHog: what went wrong, where in the app's code, the device model, the system and app version. Email addresses and the names of your own music files are removed from reports before they leave your device.</p>
 
 <h2>With an account (optional)</h2>
 <p>If you sign in, we store your email address, how you signed in (Apple, Google or email code) and, if Apple or Google provides it, your name. Apple may give us a private relay address instead of your real one. We use this only to keep your account and your favorites the same on all your devices. Your favorites are then stored with your account as well.</p>
@@ -39,7 +40,7 @@
 <h2>Services we use</h2>
 <ul>
   <li><strong>Supabase</strong> — database, file storage and sign-in. Region: EU (Frankfurt, Germany).</li>
-  <li><strong>PostHog</strong> — anonymous and account-linked usage statistics, hosted in the EU.</li>
+  <li><strong>PostHog</strong> — anonymous and account-linked usage statistics and error reports, hosted in the EU.</li>
   <li><strong>RevenueCat</strong> — subscription status for PureLofi Pro.</li>
   <li><strong>Resend</strong> — sends the sign-in code email.</li>
   <li><strong>Apple and Google</strong> — sign-in (only if you choose them) and in-app purchases.</li>
@@ -50,7 +51,7 @@
 <p>We process account and purchase data to provide the service you asked for (Art. 6(1)(b) GDPR). Usage statistics are based on our legitimate interest in understanding and improving the app (Art. 6(1)(f) GDPR).</p>
 
 <h2>How long we keep it</h2>
-<p>Account data and favorites are kept until you delete your account. Usage statistics are kept for 12 months. Purchase records are kept as long as the law requires.</p>
+<p>Account data and favorites are kept until you delete your account. Usage statistics and error reports are kept for 12 months. Purchase records are kept as long as the law requires.</p>
 
 <h2>Deleting your data</h2>
 <p>In the app, open the menu → <strong>Account</strong> → <strong>Delete account</strong>. This deletes your account and your favorites immediately. You can also email us and we will do it for you. A subscription is cancelled in your App Store or Google Play settings, not by deleting the account.</p>

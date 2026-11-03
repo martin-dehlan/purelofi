@@ -156,6 +156,7 @@ class AuthController extends _$AuthController {
           },
         }),
       );
+      unawaited(_analytics.error(error, where: 'sign_in'));
       rethrow;
     }
   }
