@@ -70,18 +70,11 @@ enum _MenuPage { room, sleepTimer, settings }
 class _MenuSheetState extends ConsumerState<MenuSheet> {
   _MenuPage? _page;
 
-  /// Which way the last change went, so the page slides the right way.
-  bool _forward = true;
+  static const Duration _slide = Duration(milliseconds: 280);
 
-  void _open(_MenuPage page) => setState(() {
-    _forward = true;
-    _page = page;
-  });
+  void _open(_MenuPage page) => setState(() => _page = page);
 
-  void _back() => setState(() {
-    _forward = false;
-    _page = null;
-  });
+  void _back() => setState(() => _page = null);
 
   @override
   Widget build(BuildContext context) {
@@ -92,36 +85,61 @@ class _MenuSheetState extends ConsumerState<MenuSheet> {
       onPopInvokedWithResult: (bool didPop, Object? _) {
         if (!didPop) _back();
       },
-      // The sheet grows and shrinks to what is in it; the pages slide.
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        alignment: Alignment.bottomCenter,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            final bool incoming = child.key == ValueKey<_MenuPage?>(page);
-            final double from = (incoming == _forward) ? 0.3 : -0.3;
-
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: Offset(from, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
+      // The sheet keeps the menu's height the whole time, the way a phone's
+      // settings push a page inside the same frame: the menu stays laid out
+      // underneath and sets the size, the page slides in over it from the
+      // right and fills it, scrolling if it has more. Nothing jumps.
+      child: ClipRect(
+        child: Stack(
+          children: <Widget>[
+            IgnorePointer(
+              ignoring: page != null,
+              child: ExcludeSemantics(
+                excluding: page != null,
+                child: AnimatedSlide(
+                  offset: Offset(page == null ? 0 : -0.25, 0),
+                  duration: _slide,
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: page == null ? 1 : 0,
+                    duration: _slide,
+                    curve: Curves.easeOutCubic,
+                    child: _main(context),
+                  ),
+                ),
               ),
-            );
-          },
-          layoutBuilder: (Widget? current, List<Widget> previous) => Stack(
-            alignment: Alignment.bottomCenter,
-            children: <Widget>[...previous, ?current],
-          ),
-          child: KeyedSubtree(
-            key: ValueKey<_MenuPage?>(page),
-            child: page == null ? _main(context) : _sub(context, page),
-          ),
+            ),
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                duration: _slide,
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder:
+                    (Widget child, Animation<double> animation) =>
+                        FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.3, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                layoutBuilder: (Widget? current, List<Widget> previous) =>
+                    Stack(
+                      fit: StackFit.expand,
+                      children: <Widget>[...previous, ?current],
+                    ),
+                child: page == null
+                    ? const SizedBox.shrink(key: ValueKey<String>('none'))
+                    : KeyedSubtree(
+                        key: ValueKey<_MenuPage>(page),
+                        child: _sub(context, page),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -137,7 +155,6 @@ class _MenuSheetState extends ConsumerState<MenuSheet> {
         if ((details.primaryVelocity ?? 0) > 300) _back();
       },
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
@@ -174,7 +191,8 @@ class _MenuSheetState extends ConsumerState<MenuSheet> {
               ],
             ),
           ),
-          Flexible(
+          // Fills the menu's height; a longer page scrolls inside it.
+          Expanded(
             child: switch (page) {
               _MenuPage.room => const SceneSwitcherSheet(),
               _MenuPage.sleepTimer => const SleepTimerSheet(),
