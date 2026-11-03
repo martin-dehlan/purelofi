@@ -11,13 +11,14 @@ import '../../controller/playback_source.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
+import 'artist_list.widget.dart';
 import 'music_sheet.dart';
 import 'track_tile.widget.dart';
 import 'up_next.widget.dart';
 
-/// What the sheet shows: what plays next, one of the two sides, or the
-/// marked tracks.
-enum LibraryFilter { upNext, catalogue, local, favorites }
+/// What the sheet shows: what plays next, one of the two sides, the
+/// artists behind PureLofi's side, or the marked tracks.
+enum LibraryFilter { upNext, catalogue, artists, local, favorites }
 
 /// All the music in one lean sheet, the way a music app's library looks: a
 /// row of pills, and a list of tracks with round covers.
@@ -44,6 +45,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
   static const Map<LibraryFilter, String> _names = <LibraryFilter, String>{
     LibraryFilter.upNext: 'Up next',
     LibraryFilter.catalogue: 'PureLofi',
+    LibraryFilter.artists: 'Artists',
     LibraryFilter.local: 'My music',
     LibraryFilter.favorites: 'Favorites',
   };
@@ -99,6 +101,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet> {
                   const <TrackEntity>[],
               empty: 'No tracks yet.',
             ),
+            LibraryFilter.artists => const ArtistList(),
             LibraryFilter.local => const MyMusic(),
             LibraryFilter.favorites => _Tracks(
               tracks: ref.watch(favoriteTracksProvider),

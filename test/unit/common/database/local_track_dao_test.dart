@@ -101,7 +101,7 @@ void main() {
         final File file = File('${dir.path}/db.sqlite');
 
         // Build today's schema, then take it back to what 0.3.0 shipped:
-        // no library, user_version 2.
+        // no library, no artists, user_version 2.
         final AppDatabase current = AppDatabase.forTesting(
           DatabaseConnection(NativeDatabase(file)),
         );
@@ -116,6 +116,13 @@ void main() {
           ),
         ]);
         await current.customStatement('DROP TABLE local_tracks');
+        await current.customStatement('DROP TABLE artists');
+        await current.customStatement(
+          'ALTER TABLE tracks DROP COLUMN artist_id',
+        );
+        await current.customStatement(
+          'ALTER TABLE tracks DROP COLUMN cover_url',
+        );
         await current.customStatement('PRAGMA user_version = 2');
         await current.close();
 

@@ -16,6 +16,7 @@ import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
 import 'library_sheet.widget.dart';
+import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport —
@@ -185,6 +186,32 @@ class _Progress extends ConsumerWidget {
             // PureLofi's tracks, so the listener's own carry none.
             if (track != null && track!.source == TrackSource.catalogue)
               FavoriteButton(trackId: track!.id, size: context.fontM),
+            // The rest of what can be done with it — sharing it among them —
+            // one tap further, as the rows in the library have it.
+            if (track != null)
+              Semantics(
+                button: true,
+                label: 'More: ${track!.title}',
+                excludeSemantics: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () =>
+                      unawaited(showTrackActionsSheet(context, track!)),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints.tightFor(
+                      width: context.screenWidth * 0.11,
+                      height: context.screenWidth * 0.11,
+                    ),
+                    child: Center(
+                      child: AppIcon(
+                        AppGlyph.more,
+                        size: context.fontL,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
         SizedBox(height: context.spaceS),

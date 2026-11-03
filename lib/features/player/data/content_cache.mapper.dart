@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/scene.dao.dart';
+import '../domain/artist.entity.dart';
 import '../domain/scene.entity.dart';
 import '../domain/scene_layer.entity.dart';
 import '../domain/track.entity.dart';
@@ -13,13 +14,17 @@ import '../domain/track.entity.dart';
 /// added to the mirror has exactly one place that has to learn about it.
 
 extension TrackRowX on TrackTableData {
-  TrackEntity toEntity() => TrackEntity(
+  /// [artist] is the name for [artistId], when the artist is known.
+  TrackEntity toEntity({String? artist}) => TrackEntity(
     id: id,
     title: title,
     audioUrl: audioUrl,
     createdAt: createdAt,
     btsVideoUrl: btsVideoUrl,
     durationSeconds: durationSeconds,
+    artistId: artistId,
+    artist: artist,
+    coverUrl: coverUrl,
   );
 }
 
@@ -31,7 +36,31 @@ extension TrackEntityX on TrackEntity {
         audioUrl: Value<String>(audioUrl),
         btsVideoUrl: Value<String?>(btsVideoUrl),
         durationSeconds: Value<int?>(durationSeconds),
+        artistId: Value<String?>(artistId),
+        coverUrl: Value<String?>(coverUrl),
         createdAt: Value<DateTime>(createdAt),
+        updatedAt: Value<DateTime>(now),
+      );
+}
+
+extension ArtistRowX on ArtistTableData {
+  ArtistEntity toEntity() => ArtistEntity(
+    id: id,
+    name: name,
+    bio: bio,
+    avatarUrl: avatarUrl,
+    linkUrl: linkUrl,
+  );
+}
+
+extension ArtistEntityX on ArtistEntity {
+  ArtistTableCompanion toCompanion({required DateTime now}) =>
+      ArtistTableCompanion(
+        id: Value<String>(id),
+        name: Value<String>(name),
+        bio: Value<String?>(bio),
+        avatarUrl: Value<String?>(avatarUrl),
+        linkUrl: Value<String?>(linkUrl),
         updatedAt: Value<DateTime>(now),
       );
 }

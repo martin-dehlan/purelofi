@@ -5,10 +5,13 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/database/app_database.dart';
+import 'package:purelofi/common/database/daos/artist.dao.dart';
 import 'package:purelofi/common/database/daos/scene.dao.dart';
 import 'package:purelofi/common/database/daos/track.dao.dart';
 import 'package:purelofi/common/errors/app_error.dart';
+import 'package:purelofi/features/player/data/artist.model.dart';
 import 'package:purelofi/features/player/data/content.repository.impl.dart';
+import 'package:purelofi/features/player/domain/artist.entity.dart';
 import 'package:purelofi/features/player/data/scene.model.dart';
 import 'package:purelofi/features/player/data/scene_layer.model.dart';
 import 'package:purelofi/features/player/data/track.model.dart';
@@ -31,11 +34,13 @@ void main() {
       DatabaseConnection(NativeDatabase.memory()),
     );
     addTearDown(database.close);
+    when(() => mockApi.fetchArtists()).thenAnswer((_) async => <ArtistModel>[]);
 
     repository = ContentRepositoryImpl(
       api: mockApi,
       trackDao: TrackDao(database),
       sceneDao: SceneDao(database),
+      artistDao: ArtistDao(database),
     );
   });
 
@@ -193,6 +198,7 @@ void main() {
         api: mockApi,
         trackDao: TrackDao(database),
         sceneDao: SceneDao(database),
+        artistDao: ArtistDao(database),
         patience: const Duration(milliseconds: 20),
       );
       when(
@@ -212,6 +218,7 @@ void main() {
         api: mockApi,
         trackDao: TrackDao(database),
         sceneDao: SceneDao(database),
+        artistDao: ArtistDao(database),
         // Long enough that the test would time out on it.
         patience: const Duration(hours: 1),
         patienceWithCache: const Duration(milliseconds: 20),
@@ -272,6 +279,60 @@ void main() {
       final List<SceneEntity> result = await repository.getScenes();
 
       expect(result.single.layers, hasLength(1));
+    });
+  });
+
+  group('artists', () {
+    const ArtistModel ada = ArtistModel(
+      id: 'artist-1',
+      name: 'Ada Tapes',
+      bio: 'Late nights, warm tape.',
+      linkUrl: 'https://example.com/ada',
+    );
+
+    test('each track carries its artist\'s name', () async {
+      when(
+        () => mockApi.fetchArtists(),
+      ).thenAnswer((_) async => <ArtistModel>[ada]);
+      when(() => mockApi.fetchTracks()).thenAnswer(
+        (_) async => <TrackModel>[
+          makeTrackModel('track-1').copyWith(artistId: 'artist-1'),
+          makeTrackModel('track-2'),
+        ],
+      );
+
+      final List<TrackEntity> tracks = await repository.getTracks();
+
+      expect(tracks.first.artistId, 'artist-1');
+      expect(tracks.first.artist, 'Ada Tapes');
+      expect(tracks.last.artist, isNull);
+    });
+
+    test('the artists failing costs the names, not the tracks', () async {
+      when(() => mockApi.fetchArtists()).thenThrow(Exception('offline'));
+      when(() => mockApi.fetchTracks()).thenAnswer(
+        (_) async => <TrackModel>[
+          makeTrackModel('track-1').copyWith(artistId: 'artist-1'),
+        ],
+      );
+
+      final List<TrackEntity> tracks = await repository.getTracks();
+
+      expect(tracks.single.artistId, 'artist-1');
+      expect(tracks.single.artist, isNull);
+    });
+
+    test('getArtists maps and caches them', () async {
+      when(
+        () => mockApi.fetchArtists(),
+      ).thenAnswer((_) async => <ArtistModel>[ada]);
+      await repository.getArtists();
+      when(() => mockApi.fetchArtists()).thenThrow(Exception('offline'));
+
+      final List<ArtistEntity> artists = await repository.getArtists();
+
+      expect(artists.single.name, 'Ada Tapes');
+      expect(artists.single.linkUrl, 'https://example.com/ada');
     });
   });
 }

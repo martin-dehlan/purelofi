@@ -5,7 +5,8 @@ import 'app_icon.widget.dart';
 
 /// One line of a [MenuGroup]: a glyph, what it does, and what it is set to.
 ///
-/// [onTap] `null` greys it out. Built on Material's list tile, so it reads
+/// [onTap] `null` greys it out; [danger] sets it in the error colour, for a
+/// row that reports or removes something. Built on Material's list tile, so it reads
 /// and behaves the way a phone's menus do.
 class MenuRow extends StatelessWidget {
   const MenuRow({
@@ -14,6 +15,7 @@ class MenuRow extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.trailing,
+    this.danger = false,
     super.key,
   });
 
@@ -22,11 +24,13 @@ class MenuRow extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool enabled = onTap != null;
+    final Color tint = danger ? cs.error : cs.onSurfaceVariant;
 
     return ListTile(
       enabled: enabled,
@@ -34,11 +38,15 @@ class MenuRow extends StatelessWidget {
       leading: AppIcon(
         glyph,
         size: context.fontL,
-        color: enabled
-            ? cs.onSurfaceVariant
-            : cs.onSurfaceVariant.withValues(alpha: 0.38),
+        color: enabled ? tint : tint.withValues(alpha: 0.38),
       ),
-      title: Text(title, style: TextStyle(fontSize: context.fontM)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: context.fontM,
+          color: danger ? cs.error : null,
+        ),
+      ),
       subtitle: subtitle == null
           ? null
           : Text(subtitle!, style: TextStyle(fontSize: context.fontS)),

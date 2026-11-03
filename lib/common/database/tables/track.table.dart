@@ -22,6 +22,11 @@ class TrackTable extends Table {
   TextColumn get btsVideoUrl => text().nullable()();
   IntColumn get durationSeconds => integer().nullable()();
 
+  /// Who made it; their name and page are in `artists`.
+  TextColumn get artistId => text().nullable()();
+
+  TextColumn get coverUrl => text().nullable()();
+
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get createdAt => dateTime()();
