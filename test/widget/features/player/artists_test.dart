@@ -121,7 +121,7 @@ void main() {
     await openAda(tester);
 
     final Finder page = find.byType(ArtistSheet);
-    // The channels float at the foot of the page; no bio anywhere.
+    // The channels stand beside the picture; no bio anywhere.
     expect(find.byType(ArtistLinksBar), findsOneWidget);
     expect(find.text('Late nights, warm tape.'), findsNothing);
     // Every channel, by the name of the place.
