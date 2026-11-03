@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/widgets/app_icon.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/sleep_timer_sheet.widget.dart';
 
@@ -46,6 +49,29 @@ void main() {
     await openMenu(tester);
   }
 
+  testWidgets('the room, the timer and the settings open inside the menu', (
+    tester,
+  ) async {
+    await start(tester);
+
+    await tapMenuEntry(tester, 'Settings');
+    // In the menu's sheet, not one of its own on top.
+    expect(
+      find.descendant(
+        of: find.byType(MenuSheet),
+        matching: find.byType(SettingsSheet),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Share PureLofi'), findsNothing);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsSheet), findsNothing);
+    expect(find.text('Share PureLofi'), findsOneWidget);
+  });
+
   group('sleep timer', () {
     testWidgets('is off until set, then says when it stops', (tester) async {
       await start(tester);
@@ -57,14 +83,16 @@ void main() {
 
       await tester.tap(find.text('30 minutes'));
       await tester.pumpAndSettle();
-      await openMenu(tester);
 
+      // The page stays open and says when the music stops.
+      expect(find.byType(SleepTimerSheet), findsOneWidget);
       expect(find.textContaining('Stops at'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Sleep timer');
       await tapMenuEntry(tester, 'Turn off');
-      await openMenu(tester);
+      expect(find.text('Turn off'), findsNothing);
 
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
       expect(find.text('Off'), findsOneWidget);
     });
   });
@@ -103,5 +131,20 @@ void main() {
   test('sizes read in whole megabytes, then gigabytes', () {
     expect(SettingsSheet.sizeLabel(84 * 1024 * 1024), '84 MB');
     expect(SettingsSheet.sizeLabel(1288490189), '1.2 GB');
+  });
+
+  testWidgets('the menu button is a gear', (tester) async {
+    await tester.pumpRoutedApp(overrides: overrides());
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(MenuButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) => w is AppIcon && w.glyph == AppGlyph.settings,
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 }

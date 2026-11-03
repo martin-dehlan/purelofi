@@ -7,10 +7,14 @@ import 'package:flutter/material.dart';
 /// above it, behind a light scrim, because the room is half of what the app
 /// is. [builder] gets the scroll controller the sheet's list must use, so
 /// dragging the list and dragging the sheet are one gesture.
+///
+/// [initialSize] is how far it comes up: the library opens all the way, as
+/// a page of its own; the queue opens most of the way.
 Future<void> showMusicSheet(
   BuildContext context,
-  Widget Function(BuildContext context, ScrollController controller) builder,
-) {
+  Widget Function(BuildContext context, ScrollController controller) builder, {
+  double initialSize = 0.75,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -19,7 +23,7 @@ Future<void> showMusicSheet(
     barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.25),
     builder: (BuildContext context) => DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.75,
+      initialChildSize: initialSize,
       minChildSize: 0.4,
       maxChildSize: 0.92,
       snap: true,

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/utils/app_fonts.dart';
 import '../../domain/artist.entity.dart';
+import 'cached_picture.widget.dart';
 
 /// An artist's picture in a circle, or the first letter of their name until
-/// there is one — and whenever the picture will not load.
+/// there is one — and whenever the picture will not load. While it loads,
+/// the circle breathes.
 class ArtistAvatar extends StatelessWidget {
   const ArtistAvatar({required this.artist, required this.size, super.key});
 
@@ -36,10 +38,11 @@ class ArtistAvatar extends StatelessWidget {
         dimension: size,
         child: url == null
             ? initial
-            : Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => initial,
+            : CachedPicture(
+                url: url,
+                decodeWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                    .round(),
+                fallback: initial,
               ),
       ),
     );

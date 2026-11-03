@@ -7,7 +7,8 @@ import 'package:purelofi/features/player/domain/artist.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/artist_sheet.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/search_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/search_results.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_library.repository.dart';
@@ -64,7 +65,7 @@ void main() {
   }
 
   Finder inSearch(Finder f) =>
-      find.descendant(of: find.byType(SearchSheet), matching: f);
+      find.descendant(of: find.byType(SearchResults), matching: f);
 
   testWidgets('an artist\'s name finds them and their tracks', (tester) async {
     await openSearch(tester);
@@ -86,7 +87,7 @@ void main() {
     expect(inSearch(find.text('Kitchen Demo')), findsOneWidget);
   });
 
-  testWidgets('a track found plays and goes back to the room', (tester) async {
+  testWidgets('a track found plays and the library stays open', (tester) async {
     await openSearch(tester);
     await tester.enterText(find.byType(SearchBar), 'travel');
     await tester.pumpAndSettle();
@@ -94,7 +95,7 @@ void main() {
     await tester.tap(inSearch(find.text('Travel Lofi')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(SearchSheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsOneWidget);
     expect(fakeAudio.playedTracks.last.id, 'b');
   });
 
@@ -116,5 +117,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nothing matches "zzz".'), findsOneWidget);
+  });
+
+  testWidgets('search stays in the library, and Cancel closes it', (
+    tester,
+  ) async {
+    await openSearch(tester);
+
+    // The library's own sheet, not one on top of it.
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Your Library'), findsNothing);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SearchResults), findsNothing);
+    expect(find.text('Your Library'), findsOneWidget);
   });
 }

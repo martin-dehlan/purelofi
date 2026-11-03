@@ -120,18 +120,19 @@ void main() {
     expect(rainy.dy, lessThan(night.dy));
   });
 
-  testWidgets('picking a scene switches the background and closes the sheet', (
-    tester,
-  ) async {
-    await openSwitcher(tester);
-    expect(find.text('scene scene-a'), findsOneWidget);
+  testWidgets(
+    'picking a scene switches the background and the list stays open',
+    (tester) async {
+      await openSwitcher(tester);
+      expect(find.text('scene scene-a'), findsOneWidget);
 
-    await tester.tap(find.text('Night Bus'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Night Bus'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SceneSwitcherSheet), findsNothing);
-    expect(find.text('scene scene-b'), findsOneWidget);
-  });
+      expect(find.byType(SceneSwitcherSheet), findsOneWidget);
+      expect(find.text('scene scene-b'), findsOneWidget);
+    },
+  );
 
   testWidgets('switching scenes leaves the audio alone', (tester) async {
     await openSwitcher(tester);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,7 +7,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../controller/artist.controller.dart';
 import '../../domain/artist.entity.dart';
 import 'artist_avatar.widget.dart';
-import 'artist_sheet.widget.dart';
+import 'library_scope.widget.dart';
 
 /// The library's artists pill: everyone with music in PureLofi, by name.
 /// Tapping one opens their page.
@@ -69,7 +71,7 @@ class ArtistList extends ConsumerWidget {
               fontSize: context.fontS,
             ),
           ),
-          onTap: () => showArtistSheet(context, artist.id),
+          onTap: () => unawaited(openArtistPage(context, artist.id)),
         );
       },
     );

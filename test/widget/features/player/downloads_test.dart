@@ -70,7 +70,7 @@ void main() {
 
   Future<void> openTrackMenu(WidgetTester tester, String title) async {
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: $title'));
     await tester.pumpAndSettle();
   }
@@ -130,7 +130,7 @@ void main() {
     await start(tester, withPro());
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
-    await tester.tap(find.text('massomusicofficial'));
+    await tester.tap(find.widgetWithText(ListTile, 'massomusicofficial'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Download all'));

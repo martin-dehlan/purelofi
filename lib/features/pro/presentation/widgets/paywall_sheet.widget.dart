@@ -5,6 +5,8 @@ import '../../../../common/errors/app_error.dart';
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/loading_dots.widget.dart';
+import '../../../../common/widgets/skeleton.widget.dart';
 import '../../../auth/controller/auth.provider.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../player/controller/scene.controller.dart';
@@ -175,13 +177,20 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
               future: _plans,
               builder: (BuildContext context, AsyncSnapshot<List<ProPlan>> snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: context.spaceL),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
+                  // The two plans' places, breathing until the prices come.
+                  return Column(
+                    children: <Widget>[
+                      for (int i = 0; i < 2; i++) ...<Widget>[
+                        Skeleton(
+                          width: double.infinity,
+                          height: context.screenHeight * 0.08,
+                          borderRadius: BorderRadius.circular(
+                            context.cardBorderRadius,
+                          ),
+                        ),
+                        SizedBox(height: context.spaceS),
+                      ],
+                    ],
                   );
                 }
                 final List<ProPlan> plans = snap.data ?? const <ProPlan>[];
@@ -240,12 +249,9 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                           shape: const StadiumBorder(),
                         ),
                         child: _busy
-                            ? SizedBox.square(
-                                dimension: context.fontL,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: context.fontL * 0.12,
-                                  color: cs.surface,
-                                ),
+                            ? LoadingDots(
+                                size: context.fontL,
+                                color: cs.surface,
                               )
                             : Text(
                                 trial != null

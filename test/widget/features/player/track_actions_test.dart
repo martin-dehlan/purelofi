@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
@@ -53,6 +54,7 @@ void main() {
 
   Future<void> openFromLibrary(WidgetTester tester, String title) async {
     await openLibrary(tester);
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: $title'));
     await tester.pumpAndSettle();
   }
@@ -101,7 +103,9 @@ void main() {
 
     await tester.tap(find.text('Add to queue'));
     await tester.pumpAndSettle();
-    await tapPill(tester, 'Up next');
+    Navigator.of(tester.element(find.byType(LibrarySheet))).pop();
+    await tester.pumpAndSettle();
+    await openQueue(tester);
 
     expect(find.text('Next in queue'), findsOneWidget);
   });

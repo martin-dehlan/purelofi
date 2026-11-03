@@ -13,6 +13,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
+import '../widgets/library_button.widget.dart';
 import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
@@ -90,6 +91,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
     return Scaffold(
       backgroundColor: cs.surface,
+      // The room stays put when the keyboard comes up for a search in a
+      // sheet; only the sheet makes room for it.
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -127,9 +131,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               duration: const Duration(milliseconds: 250),
               child: IgnorePointer(
                 ignoring: !controlsVisible,
-                child: const Align(
-                  alignment: Alignment.topRight,
-                  child: SafeArea(child: MenuButton()),
+                // The menu top left, the library top right, as music apps
+                // hold them; the queue stays with the controls.
+                child: const SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[MenuButton(), LibraryButton()],
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../domain/track.entity.dart';
+import 'cached_picture.widget.dart';
 import 'now_playing_bars.widget.dart';
 
 /// A track's cover at the start of its row: a square with softened
@@ -64,16 +65,9 @@ class TrackCover extends StatelessWidget {
                 errorBuilder: (_, _, _) => record,
               )
             else if (url != null)
-              Image.network(
-                url,
-                fit: BoxFit.cover,
-                cacheWidth: pixels,
-                // The record stands in while it loads, and for good if it
-                // will not.
-                frameBuilder: (_, Widget child, int? frame, bool sync) =>
-                    sync || frame != null ? child : record,
-                errorBuilder: (_, _, _) => record,
-              )
+              // A skeleton while it loads, the record for good if it will
+              // not.
+              CachedPicture(url: url, decodeWidth: pixels, fallback: record)
             else
               record,
             if (isCurrent)

@@ -23,6 +23,9 @@ enum AppGlyph {
   check,
   dropDown,
   queue,
+  library,
+  close,
+  globe,
   more,
   account,
   remove,
@@ -33,6 +36,7 @@ enum AppGlyph {
   flag,
   download,
   chevron,
+  back,
   eye,
   storage,
 
@@ -90,8 +94,11 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.flag,
     AppGlyph.download,
     AppGlyph.chevron,
+    AppGlyph.back,
     AppGlyph.eye,
     AppGlyph.storage,
+    AppGlyph.close,
+    AppGlyph.globe,
   };
 
   @override
@@ -216,6 +223,32 @@ class _GlyphPainter extends CustomPainter {
           ..addRRect(_bar(4, 10.2, 16, 2.6))
           ..addRRect(_bar(4, 15.4, 8, 2.6))
           ..addPath(_triangle(15, 14, 20.5, 17.2, 15, 20.4), Offset.zero);
+      case AppGlyph.library:
+        // Two records on the shelf and a third leaning on them.
+        p
+          ..addRRect(_bar(4, 4, 2.8, 16))
+          ..addRRect(_bar(9, 4, 2.8, 16))
+          ..addPolygon(const <Offset>[
+            Offset(13.6, 5.2),
+            Offset(16.2, 4.3),
+            Offset(20.6, 19),
+            Offset(18, 19.9),
+          ], true);
+      case AppGlyph.close:
+        p
+          ..moveTo(6.5, 6.5)
+          ..lineTo(17.5, 17.5)
+          ..moveTo(17.5, 6.5)
+          ..lineTo(6.5, 17.5);
+      case AppGlyph.globe:
+        // An artist's own site: a globe, its meridian and equator.
+        p
+          ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 8.5))
+          ..addOval(
+            Rect.fromCenter(center: const Offset(12, 12), width: 8, height: 17),
+          )
+          ..moveTo(3.5, 12)
+          ..lineTo(20.5, 12);
       case AppGlyph.more:
         for (final double x in <double>[5.5, 12, 18.5]) {
           p.addOval(Rect.fromCircle(center: Offset(x, 12), radius: 2));
@@ -297,6 +330,12 @@ class _GlyphPainter extends CustomPainter {
           ..moveTo(9.5, 5.5)
           ..lineTo(16, 12)
           ..lineTo(9.5, 18.5);
+      case AppGlyph.back:
+        // Back the way a page came in.
+        p
+          ..moveTo(14.5, 5.5)
+          ..lineTo(8, 12)
+          ..lineTo(14.5, 18.5);
       case AppGlyph.eye:
         // Whether the controls stay in view.
         p

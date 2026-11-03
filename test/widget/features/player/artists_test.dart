@@ -9,6 +9,7 @@ import 'package:purelofi/features/player/domain/artist.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/screens/player.screen.dart';
+import 'package:purelofi/features/player/presentation/widgets/artist_links_bar.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/artist_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
 
@@ -76,7 +77,7 @@ void main() {
   Future<void> openAda(WidgetTester tester) async {
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
-    await tester.tap(find.text('Ada Tapes'));
+    await tester.tap(find.widgetWithText(ListTile, 'Ada Tapes'));
     await tester.pumpAndSettle();
   }
 
@@ -90,7 +91,7 @@ void main() {
     await openLibrary(tester);
     await tapPill(tester, 'Artists');
 
-    expect(find.text('Ada Tapes'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Ada Tapes'), findsOneWidget);
     expect(find.text('2 tracks'), findsOneWidget);
     expect(find.text('No Tracks Yet'), findsNothing);
   });
@@ -100,9 +101,9 @@ void main() {
   ) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
 
-    final Finder sheet = find.byType(LibrarySheet);
+    final Finder sheet = find.byType(CustomScrollView);
     expect(
       find.descendant(of: sheet, matching: find.text('Ada Tapes')),
       findsNWidgets(2),
@@ -120,13 +121,12 @@ void main() {
     await openAda(tester);
 
     final Finder page = find.byType(ArtistSheet);
-    expect(
-      find.descendant(of: page, matching: find.text('Late nights, warm tape.')),
-      findsOneWidget,
-    );
+    // The channels float at the foot of the page; no bio anywhere.
+    expect(find.byType(ArtistLinksBar), findsOneWidget);
+    expect(find.text('Late nights, warm tape.'), findsNothing);
     // Every channel, by the name of the place.
-    expect(find.text('YouTube'), findsOneWidget);
-    expect(find.text('Website'), findsOneWidget);
+    expect(find.byTooltip('YouTube'), findsOneWidget);
+    expect(find.byTooltip('Website'), findsOneWidget);
     expect(
       find.descendant(of: page, matching: find.text('Dusk Tape')),
       findsOneWidget,
@@ -144,7 +144,7 @@ void main() {
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ArtistSheet), findsNothing);
+    expect(find.byType(ArtistSheet), findsOneWidget);
     expect(fakeAudio.playedTracks.last.id, 'a');
     expect(
       container(
@@ -154,10 +154,33 @@ void main() {
     );
   });
 
+  testWidgets('an artist slides in over the library, and Back slides out', (
+    tester,
+  ) async {
+    await start(tester);
+    await openAda(tester);
+
+    // One sheet: the page is inside the library, not on top of it.
+    expect(find.byType(LibrarySheet), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(LibrarySheet),
+        matching: find.byType(ArtistSheet),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ArtistSheet), findsNothing);
+    expect(find.widgetWithText(ListTile, 'Ada Tapes'), findsOneWidget);
+  });
+
   testWidgets('a track\'s menu goes to its artist', (tester) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: Slow Bass'));
     await tester.pumpAndSettle();
 
@@ -171,7 +194,7 @@ void main() {
   testWidgets('an uncredited track has no way to an artist', (tester) async {
     await start(tester);
     await openLibrary(tester);
-    await tapPill(tester, 'PureLofi');
+    await tapPill(tester, 'Tracks');
     await tester.tap(find.byTooltip('More: Uncredited'));
     await tester.pumpAndSettle();
 
