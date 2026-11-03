@@ -9,7 +9,8 @@
 Public, minimalist pixel-art lo-fi player. A fullscreen looping pixel-art
 video (the *scene*) sits behind a continuous audio stream of **real** tracks
 (guitar/bass, not AI). Content lives in Supabase Storage; the same tracks feed
-a companion YouTube channel. **No login** — public content consumption. Audio
+a companion YouTube channel. **Login is optional**: public content, and an
+account is never needed to listen (#38). Audio
 plays in the background with lock-screen controls. Architecture follows rules
 `01`–`11`, with the deviations below.
 
@@ -17,9 +18,9 @@ plays in the background with lock-screen controls. Architecture follows rules
 
 | Area | Decision | Why |
 |---|---|---|
-| **Auth** | None for MVP | Public content; nothing user-owned to protect. Drops the auth guard/redirect from rule `08`. |
-| **Drift local-first** (rule `04`) | Deferred → Phase 2 | Streaming app; source of truth is Supabase, not local. Add Drift only for offline playback + favorites. |
-| **RevenueCat / paywall** | Deferred → Phase 2 | No product to gate yet. Ship the player first. |
+| **Auth** | Optional, additive (#38) | Native Apple (iOS), native Google (iOS + Android), email with a password confirmed by a 6-digit code; the browser only as Google's fallback. Nothing is gated, so rule `08`'s auth guard/redirect stays dropped. |
+| **Drift local-first** (rule `04`) | Built, ships as 0.2.0 / 0.3.0 | Supabase stays the source of truth; Drift mirrors it for the content cache, the file cache and favourites. |
+| **RevenueCat / paywall** | PureLofi Pro for 1.0.0 (#16) | Monthly and yearly. The first two scenes (by `sort_order`) are free, Pro opens the rest. Without RevenueCat keys in `.env`, Pro is off and every scene is free. |
 | **PostHog** | MVP, minimal events | Lightweight; validates that people actually open + listen. |
 | **PixelLab (AI visuals)** | OK | Stylistic choice. The "human lo-fi" selling point is the audio, not the art. |
 | **Application layer** (rule `01`) | Skipped | No cross-feature workflow yet. Repository → controller is enough. |
@@ -58,14 +59,15 @@ Storage buckets (public read): `scenes`, `tracks`, `bts`.
 - **Framework:** Flutter
 - **State:** `flutter_riverpod` + `riverpod_annotation` (code-gen, per rule `05`/`06`)
 - **Codegen models:** `freezed` + `json_serializable` (per rule `06`)
-- **Backend:** `supabase_flutter` (Storage + DB read only — no auth)
+- **Backend:** `supabase_flutter` (Storage + DB read; optional Supabase Auth)
+- **Sign-in:** `sign_in_with_apple`, `google_sign_in` (native sheets, ID token → `signInWithIdToken`)
+- **Pro:** `purchases_flutter` (RevenueCat)
+- **Local mirror:** `drift` (per rule `04`)
 - **Audio:** `just_audio` + `audio_service` (background + lock-screen controls)
 - **Video:** `video_player` (looping scene background, `BoxFit.cover`)
-- **Nav:** `go_router` (per rule `08`, but no redirect/auth guard)
+- **Nav:** `go_router` (per rule `08`, but no redirect/auth guard, because sign-in gates nothing)
 - **Analytics:** `posthog_flutter`
 - **Test:** `mocktail` + `flutter_test` (per rule `10`)
-
-**Not in MVP:** `drift`, `purchases_flutter`.
 
 Platform config to remember: `audio_service` needs the Android foreground
 service + `<uses-permission>` entries, and iOS `UIBackgroundModes: audio`.
@@ -121,5 +123,9 @@ and tracks land.
 **MVP (v0.1.0)** — player works end to end: scenes loop, audio streams in the
 background, scene switch, BTS modal, PostHog wired.
 
-**Phase 2** — offline caching via Drift (rule `04`) for travel; favorites;
-RevenueCat gate (e.g. extra scenes / offline as the paid tier); more scenes.
+**0.2.0 / 0.3.0** — offline caching via Drift (rule `04`) and favourites.
+
+**1.0.0** — PureLofi Pro via RevenueCat (#16): every scene and downloads for
+offline listening.
+
+**Later** — more scenes.
