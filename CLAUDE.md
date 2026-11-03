@@ -10,8 +10,10 @@
 
 A public, minimalist **pixel-art lo-fi music player** built with Flutter.
 A fullscreen looping pixel-art video (the *scene*) sits behind a continuous
-audio stream of **real** guitar/bass tracks (not AI-generated). Content lives
-in Supabase; the same tracks feed a companion YouTube channel.
+audio stream of **real** music by lo-fi musicians, never AI-generated. The
+tracks come from different artists, so copy never names instruments or
+claims who played a track. The artists publish on their own platforms.
+Content lives in Supabase.
 
 - **Login is optional.** Public content; an account is never needed to listen,
   and nothing is gated behind one (#38).
