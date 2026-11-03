@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../domain/account.entity.dart';
+import '../../domain/member_since.dart';
 import 'auth_button.widget.dart';
+import 'profile_avatar.widget.dart';
 
-/// Who is signed in, and the two ways out: signing out, and deleting the
-/// account — the stores require that the second is in the app.
+/// The profile (#96): who is signed in, since when, and the two ways out —
+/// signing out, and deleting the account, which the stores require in the
+/// app.
 class SignedInAccount extends StatelessWidget {
   const SignedInAccount({
     required this.account,
@@ -33,34 +36,47 @@ class SignedInAccount extends StatelessWidget {
     // The address under the name, unless it already is the headline or
     // Apple kept it private.
     final String? address = account.name != null ? account.email : null;
+    final DateTime? since = account.memberSince;
+    final TextStyle quiet = TextStyle(
+      color: cs.onSurfaceVariant,
+      fontSize: context.fontS,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          headline,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: cs.onSurface,
-            fontSize: context.fontL,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        if (address != null)
-          Text(
-            address,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: cs.onSurfaceVariant,
-              fontSize: context.fontS,
+        Row(
+          children: <Widget>[
+            ProfileAvatar(account: account, size: context.fontXxl * 1.8),
+            SizedBox(width: context.spaceM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    headline,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: context.fontL,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (address != null)
+                    Text(
+                      address,
+                      overflow: TextOverflow.ellipsis,
+                      style: quiet,
+                    ),
+                ],
+              ),
             ),
-          ),
-        SizedBox(height: context.spaceXs),
-        Text(
-          methodLabel(account.method),
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
+          ],
         ),
+        SizedBox(height: context.spaceM),
+        if (since != null) Text(memberSinceLabel(since), style: quiet),
+        Text(methodLabel(account.method), style: quiet),
         SizedBox(height: context.spaceL),
         AuthButton(
           label: 'Sign out',

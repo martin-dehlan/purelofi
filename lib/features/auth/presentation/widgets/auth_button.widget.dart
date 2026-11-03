@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/loading_dots.widget.dart';
 
-/// One way to sign in: a full-width pill, the same shape and height as
-/// Apple's own button beside it, so the three read as one set.
+/// One way to sign in: a full-width pill. Apple's is the [primary] one,
+/// white with its logo, as Apple's guidelines ask of a custom button; the
+/// others share its shape, height and type so the three read as one set.
 class AuthButton extends StatelessWidget {
   const AuthButton({
     required this.label,
     required this.onPressed,
     this.leading,
     this.busy = false,
+    this.primary = false,
     super.key,
   });
 
@@ -21,6 +24,9 @@ class AuthButton extends StatelessWidget {
 
   /// This one is the sign-in under way: a small spinner instead of the mark.
   final bool busy;
+
+  /// The white one: the first way in.
+  final bool primary;
 
   static double heightFor(BuildContext context) => context.screenHeight * 0.06;
 
@@ -36,21 +42,20 @@ class AuthButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           shape: const StadiumBorder(),
-          backgroundColor: cs.surfaceContainerHigh,
-          foregroundColor: cs.onSurface,
-          side: BorderSide(color: cs.outlineVariant),
+          backgroundColor: primary ? cs.onSurface : cs.surfaceContainerHigh,
+          foregroundColor: primary ? cs.surface : cs.onSurface,
+          side: primary
+              ? BorderSide.none
+              : BorderSide(color: cs.outlineVariant),
           padding: EdgeInsets.symmetric(horizontal: context.spaceM),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             if (busy)
-              SizedBox.square(
-                dimension: mark,
-                child: CircularProgressIndicator(
-                  strokeWidth: mark * 0.12,
-                  color: cs.onSurfaceVariant,
-                ),
+              LoadingDots(
+                size: mark,
+                color: primary ? cs.surface : cs.onSurfaceVariant,
               )
             else
               ?leading,

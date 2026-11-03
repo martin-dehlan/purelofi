@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/widgets/legal_links.widget.dart';
 import 'package:purelofi/features/auth/domain/account.entity.dart';
 import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
@@ -37,17 +38,17 @@ void main() {
     ),
   ];
 
-  testWidgets('signed out, the menu offers it as optional', (tester) async {
+  testWidgets('signed out, the menu offers sign-in', (tester) async {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openMenu(tester);
 
-    expect(find.text('Optional — sign in if you like'), findsOneWidget);
+    expect(find.text('Apple, Google or email'), findsOneWidget);
 
-    await tapMenuEntry(tester, 'Account');
+    await tapMenuEntry(tester, 'Sign in');
 
     expect(find.byType(AccountSheet), findsOneWidget);
-    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 
   testWidgets('signed in, the menu says who', (tester) async {
@@ -65,6 +66,39 @@ void main() {
     await openMenu(tester);
 
     expect(find.text('me@example.com'), findsOneWidget);
+    expect(find.text('Sign in'), findsNothing);
+  });
+
+  testWidgets('the room row names the room playing', (tester) async {
+    await tester.pumpRoutedApp(overrides: overrides());
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+
+    expect(find.text('Change room'), findsOneWidget);
+    expect(find.text(makeScene('scene-1').title), findsOneWidget);
+  });
+
+  testWidgets('behind the scenes is gone from the menu', (tester) async {
+    await tester.pumpRoutedApp(overrides: overrides());
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+
+    expect(find.text('Behind the scenes'), findsNothing);
+    expect(find.text('Sleep timer'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Share PureLofi'), findsOneWidget);
+    expect(find.text('Send feedback'), findsOneWidget);
+  });
+
+  testWidgets('the legal pages are links at the bottom', (tester) async {
+    await tester.pumpRoutedApp(overrides: overrides());
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+
+    expect(find.byType(LegalLinks), findsOneWidget);
+    expect(find.text('Privacy'), findsOneWidget);
+    expect(find.text('Terms'), findsOneWidget);
+    expect(find.text('Imprint'), findsOneWidget);
   });
 
   testWidgets('the music plays the same signed out', (tester) async {

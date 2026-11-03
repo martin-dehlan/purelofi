@@ -41,72 +41,7 @@ void main() {
     btsVideoBuilderProvider.overrideWithValue((String url) => Text('bts $url')),
   ];
 
-  group('from the player chrome', () {
-    testWidgets('opens as a bottom sheet and plays the clip', (tester) async {
-      await tester.pumpRoutedApp(overrides: overrides());
-      await tester.pumpAndSettle();
-
-      await openMenu(tester);
-      await openFootage(tester);
-
-      expect(find.byType(BtsModal), findsOneWidget);
-      expect(find.text('bts https://example.com/a-bts.mp4'), findsOneWidget);
-      expect(find.text('Dusk Tape'), findsWidgets);
-    });
-
-    testWidgets('pauses the music while the footage plays', (tester) async {
-      await tester.pumpRoutedApp(overrides: overrides());
-      await tester.pumpAndSettle();
-      expect(fakeAudio.playedTracks, hasLength(1));
-
-      await openMenu(tester);
-      await openFootage(tester);
-
-      expect(fakeAudio.pauseCalls, 1);
-    });
-
-    testWidgets('dismissing it leaves the audio playing', (tester) async {
-      await tester.pumpRoutedApp(overrides: overrides());
-      await tester.pumpAndSettle();
-
-      await openMenu(tester);
-      await openFootage(tester);
-      Navigator.of(tester.element(find.byType(BtsModal))).pop();
-      await tester.pumpAndSettle();
-
-      expect(find.byType(BtsModal), findsNothing);
-      expect(fakeAudio.playCalls, 1);
-    });
-
-    testWidgets('is not offered before anything is playing', (tester) async {
-      when(() => mockRepo.getTracks()).thenAnswer((_) async => <TrackEntity>[]);
-
-      await tester.pumpRoutedApp(overrides: overrides());
-      await tester.pumpAndSettle();
-
-      await openMenu(tester);
-      expect(tester.widget<ListTile>(footageEntry).enabled, isFalse);
-      await tester.tap(footageEntry);
-      await tester.pumpAndSettle();
-      expect(find.byType(BtsModal), findsNothing);
-    });
-  });
-
   group('a track without footage', () {
-    testWidgets('greys out the footage entry', (tester) async {
-      when(() => mockRepo.getTracks()).thenAnswer(
-        (_) async => <TrackEntity>[makeTrack('a', title: 'No Clip Yet')],
-      );
-
-      await tester.pumpRoutedApp(overrides: overrides());
-      await tester.pumpAndSettle();
-
-      await openMenu(tester);
-
-      expect(tester.widget<ListTile>(footageEntry).enabled, isFalse);
-      expect(find.text('No footage for this track'), findsOneWidget);
-    });
-
     testWidgets('a deep link to it still explains itself', (tester) async {
       // Nothing stops someone opening purelofi://app/track/<id> for a track
       // that was never filmed, so the modal keeps its message.

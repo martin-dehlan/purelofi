@@ -6,7 +6,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../controller/auth.controller.dart';
 import '../../domain/account.entity.dart';
 import 'delete_account_dialog.dart';
-import 'email_code_form.widget.dart';
+import 'email_password_form.widget.dart';
 import 'sign_in_options.widget.dart';
 import 'signed_in_account.widget.dart';
 
@@ -15,8 +15,19 @@ import 'signed_in_account.widget.dart';
 /// Optional from top to bottom: no onboarding, nothing gated, the music
 /// plays the same either way (#38). Signed out it offers the ways in;
 /// signed in it says who, and how to leave.
+///
+/// As the [welcome] on a first launch it carries a way past it, and closes
+/// itself once someone is signed in.
 class AccountSheet extends ConsumerStatefulWidget {
-  const AccountSheet({super.key});
+  const AccountSheet({this.reason, this.welcome = false, super.key});
+
+  /// Why an account is asked for here, said under the title — the sheet
+  /// was opened on the way to something (Pro, #108), so it closes the
+  /// moment the sign-in lands and that something carries on.
+  final String? reason;
+
+  /// The one-time offer on the first launch, with a way to skip it.
+  final bool welcome;
 
   @override
   ConsumerState<AccountSheet> createState() => _AccountSheetState();
@@ -71,6 +82,18 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final Account? account = ref.watch(authControllerProvider).value;
     final AuthController auth = ref.read(authControllerProvider.notifier);
+    final String? reason = widget.reason;
+    // On the way to something, or as the welcome: done once signed in.
+    if (reason != null || widget.welcome) {
+      ref.listen<AsyncValue<Account?>>(authControllerProvider, (
+        AsyncValue<Account?>? previous,
+        AsyncValue<Account?> next,
+      ) {
+        if (previous?.value == null && next.value != null) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
 
     final Widget body;
     if (account != null) {
@@ -81,7 +104,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
         onDelete: _delete,
       );
     } else if (_email) {
-      body = EmailCodeForm(onBack: () => setState(() => _email = false));
+      body = EmailPasswordForm(onBack: () => setState(() => _email = false));
     } else {
       body = SignInOptions(
         showApple: auth.canUseApple,
@@ -98,7 +121,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
 
     return SafeArea(
       child: SingleChildScrollView(
-        // The keyboard comes up for the email and the code; the sheet rises
+        // The keyboard comes up for the email, password and code; the sheet rises
         // with it rather than hiding the field.
         padding: EdgeInsets.fromLTRB(
           context.horizontalPadding,
@@ -112,29 +135,48 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
           children: <Widget>[
             if (account == null) ...<Widget>[
               Text(
-                'Sign in',
+                widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
                 style: TextStyle(
                   color: cs.onSurface,
                   fontSize: context.fontL,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: context.spaceXs),
-              Text(
-                'Optional. The music never needs it.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.fontS,
+              if (reason != null) ...<Widget>[
+                SizedBox(height: context.spaceXs),
+                Text(
+                  reason,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: context.fontS,
+                    height: 1.4,
+                  ),
                 ),
-              ),
+              ],
               SizedBox(height: context.spaceL),
             ],
             body,
+            if (widget.welcome && account == null && !_email) ...<Widget>[
+              SizedBox(height: context.spaceS),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(foregroundColor: cs.onSurface),
+                  child: Text(
+                    'Not now',
+                    style: TextStyle(fontSize: context.fontM),
+                  ),
+                ),
+              ),
+            ],
             if (_error != null) ...<Widget>[
               SizedBox(height: context.spaceM),
-              Text(
-                _error!,
-                style: TextStyle(color: cs.error, fontSize: context.fontS),
+              Center(
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.error, fontSize: context.fontS),
+                ),
               ),
             ],
           ],
@@ -144,12 +186,23 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
   }
 }
 
-/// Opens the account sheet.
-Future<void> showAccountSheet(BuildContext context) {
+/// Opens the account sheet. With a [reason] it is a step on the way to
+/// something else and closes once signed in.
+Future<void> showAccountSheet(BuildContext context, {String? reason}) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (BuildContext context) => const AccountSheet(),
+    builder: (BuildContext context) => AccountSheet(reason: reason),
+  );
+}
+
+/// Opens the account sheet as the first launch's welcome.
+Future<void> showWelcomeSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (BuildContext context) => const AccountSheet(welcome: true),
   );
 }

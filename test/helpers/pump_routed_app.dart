@@ -3,20 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
 import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
+import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
+import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
 import 'fake_playback_preferences.dart';
+import 'fake_pro.repository.dart';
 import 'fake_track_picker.dart';
+import 'fake_welcome_preferences.dart';
 
 /// Favourites in memory, so no widget test opens a database.
 ///
@@ -39,6 +43,24 @@ Override _fakeAuth(FakeAuthRepository? repository) {
   return authRepositoryProvider.overrideWithValue(fake);
 }
 
+/// Pro in memory. Not for sale unless [repository] says otherwise, which is
+/// how a build without RevenueCat's keys behaves: nothing is locked.
+Override _fakePro(FakeProRepository? repository) {
+  final FakeProRepository fake =
+      repository ?? FakeProRepository(available: false);
+  addTearDown(fake.dispose);
+
+  return proRepositoryProvider.overrideWithValue(fake);
+}
+
+/// The first launch is behind every test unless it says otherwise, so the
+/// welcome does not cover the player.
+Override _fakeWelcome(FakeWelcomePreferences? preferences) {
+  return welcomePreferencesProvider.overrideWithValue(
+    preferences ?? FakeWelcomePreferences(),
+  );
+}
+
 /// The listener's library and the file picker, in memory, for the same
 /// reason as the favourites: no widget test opens a database or a dialog
 /// it cannot answer.
@@ -54,6 +76,7 @@ List<Override> _fakeLibrary(
     trackPickerProvider.overrideWithValue(picker ?? FakeTrackPicker()),
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
+    displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
   ];
 }
 
@@ -85,6 +108,8 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
+    FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -93,6 +118,8 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
+          _fakeWelcome(welcome),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
@@ -117,6 +144,8 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakeAuthRepository? auth,
+    FakeProRepository? pro,
+    FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -125,6 +154,8 @@ extension PumpRouted on WidgetTester {
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
           _fakeAuth(auth),
+          _fakePro(pro),
+          _fakeWelcome(welcome),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
@@ -144,7 +175,7 @@ extension PumpRouted on WidgetTester {
 /// Opens the menu top right and waits for the sheet: the scene, the
 /// footage, the account.
 Future<void> openMenu(WidgetTester tester) async {
-  await tester.tap(find.byType(SettingsButton));
+  await tester.tap(find.byType(MenuButton));
   await tester.pumpAndSettle();
 }
 
@@ -160,8 +191,7 @@ Future<void> openLibrary(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Taps one of the library's pills, found by name — the favourites one is a
-/// heart without a word on it.
+/// Taps one of the library's filters, found by name.
 Future<void> tapPill(WidgetTester tester, String label) async {
   final Finder pill = find.byWidgetPredicate(
     (Widget w) => w is ChoiceChip && w.tooltip == label,
@@ -172,17 +202,19 @@ Future<void> tapPill(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
-/// Opens the library on its "Up next" pill: the queue.
-Future<void> openQueue(WidgetTester tester) async {
-  await openLibrary(tester);
-  await tapPill(tester, 'Up next');
+/// Opens the favourites, pinned on top of the library's overview.
+Future<void> openFavorites(WidgetTester tester) async {
+  final Finder all = find.byTooltip('All');
+  if (all.evaluate().isNotEmpty) {
+    await tester.tap(all);
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(find.widgetWithText(ListTile, 'Favorites'));
+  await tester.pumpAndSettle();
 }
 
-/// The menu's entry for the playing track's behind-the-scenes clip.
-final Finder footageEntry = find.widgetWithText(ListTile, 'Behind the scenes');
-
-/// Opens the footage from the open menu.
-Future<void> openFootage(WidgetTester tester) async {
-  await tester.tap(footageEntry);
+/// Opens the queue, from its button beside the library's.
+Future<void> openQueue(WidgetTester tester) async {
+  await tester.tap(find.bySemanticsLabel('Queue'));
   await tester.pumpAndSettle();
 }

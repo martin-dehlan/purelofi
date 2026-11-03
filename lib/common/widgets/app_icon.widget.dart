@@ -23,9 +23,25 @@ enum AppGlyph {
   check,
   dropDown,
   queue,
+  library,
+  close,
+  globe,
   more,
   account,
   remove,
+  timer,
+  settings,
+  share,
+  mail,
+  flag,
+  download,
+  chevron,
+  back,
+  eye,
+  storage,
+
+  /// A Pro scene not open yet (#16).
+  lock,
 }
 
 /// One of the app's icons, drawn as paths rather than loaded as an image.
@@ -71,6 +87,18 @@ class _GlyphPainter extends CustomPainter {
     AppGlyph.search,
     AppGlyph.check,
     AppGlyph.heartOutline,
+    AppGlyph.timer,
+    AppGlyph.settings,
+    AppGlyph.share,
+    AppGlyph.mail,
+    AppGlyph.flag,
+    AppGlyph.download,
+    AppGlyph.chevron,
+    AppGlyph.back,
+    AppGlyph.eye,
+    AppGlyph.storage,
+    AppGlyph.close,
+    AppGlyph.globe,
   };
 
   @override
@@ -195,6 +223,32 @@ class _GlyphPainter extends CustomPainter {
           ..addRRect(_bar(4, 10.2, 16, 2.6))
           ..addRRect(_bar(4, 15.4, 8, 2.6))
           ..addPath(_triangle(15, 14, 20.5, 17.2, 15, 20.4), Offset.zero);
+      case AppGlyph.library:
+        // Two records on the shelf and a third leaning on them.
+        p
+          ..addRRect(_bar(4, 4, 2.8, 16))
+          ..addRRect(_bar(9, 4, 2.8, 16))
+          ..addPolygon(const <Offset>[
+            Offset(13.6, 5.2),
+            Offset(16.2, 4.3),
+            Offset(20.6, 19),
+            Offset(18, 19.9),
+          ], true);
+      case AppGlyph.close:
+        p
+          ..moveTo(6.5, 6.5)
+          ..lineTo(17.5, 17.5)
+          ..moveTo(17.5, 6.5)
+          ..lineTo(6.5, 17.5);
+      case AppGlyph.globe:
+        // An artist's own site: a globe, its meridian and equator.
+        p
+          ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 8.5))
+          ..addOval(
+            Rect.fromCenter(center: const Offset(12, 12), width: 8, height: 17),
+          )
+          ..moveTo(3.5, 12)
+          ..lineTo(20.5, 12);
       case AppGlyph.more:
         for (final double x in <double>[5.5, 12, 18.5]) {
           p.addOval(Rect.fromCircle(center: Offset(x, 12), radius: 2));
@@ -208,6 +262,109 @@ class _GlyphPainter extends CustomPainter {
           ..close();
       case AppGlyph.remove:
         p.addRRect(_bar(4, 10.7, 16, 2.6));
+      case AppGlyph.timer:
+        // A stopwatch: a face, one hand, the button on top.
+        p
+          ..addOval(Rect.fromCircle(center: const Offset(12, 13.5), radius: 7))
+          ..moveTo(12, 13.5)
+          ..lineTo(12, 10)
+          ..moveTo(10, 3.5)
+          ..lineTo(14, 3.5);
+      case AppGlyph.settings:
+        // Two sliders, set differently.
+        p
+          ..moveTo(4, 8)
+          ..lineTo(6.5, 8)
+          ..addOval(Rect.fromCircle(center: const Offset(9, 8), radius: 2.5))
+          ..moveTo(11.5, 8)
+          ..lineTo(20, 8)
+          ..moveTo(4, 16)
+          ..lineTo(12.5, 16)
+          ..addOval(Rect.fromCircle(center: const Offset(15, 16), radius: 2.5))
+          ..moveTo(17.5, 16)
+          ..lineTo(20, 16);
+      case AppGlyph.share:
+        // An arrow leaving an open box.
+        p
+          ..moveTo(12, 14)
+          ..lineTo(12, 3.5)
+          ..moveTo(8.5, 7)
+          ..lineTo(12, 3.5)
+          ..lineTo(15.5, 7)
+          ..moveTo(8.5, 10.5)
+          ..lineTo(5.5, 10.5)
+          ..lineTo(5.5, 20)
+          ..lineTo(18.5, 20)
+          ..lineTo(18.5, 10.5)
+          ..lineTo(15.5, 10.5);
+      case AppGlyph.mail:
+        p
+          ..addRRect(_bar(3.5, 5.5, 17, 13, radius: 2))
+          ..moveTo(4.5, 7.5)
+          ..lineTo(12, 13)
+          ..lineTo(19.5, 7.5);
+      case AppGlyph.flag:
+        // A pennant on a pole: something to point out.
+        p
+          ..moveTo(6, 21)
+          ..lineTo(6, 3.5)
+          ..lineTo(18.5, 3.5)
+          ..lineTo(15.5, 8.5)
+          ..lineTo(18.5, 13.5)
+          ..lineTo(6, 13.5);
+      case AppGlyph.download:
+        // An arrow coming down into a tray.
+        p
+          ..moveTo(12, 3.5)
+          ..lineTo(12, 14.5)
+          ..moveTo(7.5, 10)
+          ..lineTo(12, 14.5)
+          ..lineTo(16.5, 10)
+          ..moveTo(4.5, 15.5)
+          ..lineTo(4.5, 19.5)
+          ..lineTo(19.5, 19.5)
+          ..lineTo(19.5, 15.5);
+      case AppGlyph.chevron:
+        // Where a row leads: on, to another sheet.
+        p
+          ..moveTo(9.5, 5.5)
+          ..lineTo(16, 12)
+          ..lineTo(9.5, 18.5);
+      case AppGlyph.back:
+        // Back the way a page came in.
+        p
+          ..moveTo(14.5, 5.5)
+          ..lineTo(8, 12)
+          ..lineTo(14.5, 18.5);
+      case AppGlyph.eye:
+        // Whether the controls stay in view.
+        p
+          ..moveTo(2.5, 12)
+          ..quadraticBezierTo(12, 2.5, 21.5, 12)
+          ..quadraticBezierTo(12, 21.5, 2.5, 12)
+          ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 3));
+      case AppGlyph.storage:
+        // A box with a lid: what is kept on the phone.
+        p
+          ..addRRect(_bar(3.5, 4.5, 17, 4.5, radius: 1.2))
+          ..addRRect(_bar(5, 9, 14, 10.5, radius: 1.2))
+          ..moveTo(10, 12.5)
+          ..lineTo(14, 12.5);
+      case AppGlyph.lock:
+        // The shackle is a ring with the body over its lower half.
+        final Path shackle = Path.combine(
+          PathOperation.difference,
+          Path()..addRRect(_bar(7, 2.5, 10, 13)),
+          Path()..addRRect(_bar(9.4, 4.9, 5.2, 10)),
+        );
+        p
+          ..addPath(shackle, Offset.zero)
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              const Rect.fromLTWH(4.5, 10, 15, 11.5),
+              const Radius.circular(2.5),
+            ),
+          );
     }
     return p;
   }

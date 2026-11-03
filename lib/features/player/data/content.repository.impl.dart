@@ -1,11 +1,14 @@
 import '../../../common/database/app_database.dart';
+import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../../../common/errors/app_error.dart';
 import '../../../common/errors/error_mapper.dart';
+import '../domain/artist.entity.dart';
 import '../domain/content.repository.dart';
 import '../domain/scene.entity.dart';
 import '../domain/track.entity.dart';
+import 'artist.model.dart';
 import 'content.api.dart';
 import 'content_cache.mapper.dart';
 import 'scene.model.dart';
@@ -24,17 +27,20 @@ class ContentRepositoryImpl implements ContentRepository {
     required ContentApi api,
     required TrackDao trackDao,
     required SceneDao sceneDao,
+    required ArtistDao artistDao,
     DateTime Function()? now,
     this.patience = const Duration(seconds: 15),
     this.patienceWithCache = const Duration(seconds: 3),
   }) : _api = api,
        _trackDao = trackDao,
        _sceneDao = sceneDao,
+       _artistDao = artistDao,
        _now = now ?? DateTime.now;
 
   final ContentApi _api;
   final TrackDao _trackDao;
   final SceneDao _sceneDao;
+  final ArtistDao _artistDao;
   final DateTime Function() _now;
 
   /// How long a fetch may take when there is nothing to fall back on. A
@@ -82,25 +88,74 @@ class ContentRepositoryImpl implements ContentRepository {
   @override
   Future<List<TrackEntity>> getTracks() async {
     final bool cachedBefore = await _has(_trackDao.getTracks);
-    final AppError? failure = await _refresh(cached: cachedBefore, () async {
-      final List<TrackModel> models = await _api.fetchTracks();
-      final DateTime now = _now();
+    // The artists come along so every track can show who made it. Their
+    // fetch failing costs the names, never the music.
+    final (AppError? failure, _) = await (
+      _refresh(cached: cachedBefore, () async {
+        final List<TrackModel> models = await _api.fetchTracks();
+        final DateTime now = _now();
 
-      await _trackDao.replaceTracks(<TrackTableCompanion>[
-        for (final TrackModel model in models)
-          model.toEntity().toCompanion(now: now),
-      ]);
+        await _trackDao.replaceTracks(<TrackTableCompanion>[
+          for (final TrackModel model in models)
+            model.toEntity().toCompanion(now: now),
+        ]);
+      }),
+      _refresh(cached: cachedBefore, _refreshArtists),
+    ).wait;
+
+    final List<TrackEntity> cached = await _read(() async {
+      final Map<String, String> names = await _artistNames();
+      return (await _trackDao.getTracks())
+          .map(
+            (TrackTableData row) => row.toEntity(artist: names[row.artistId]),
+          )
+          .toList();
     });
 
-    final List<TrackEntity> cached = await _read(
-      () async => (await _trackDao.getTracks())
-          .map((TrackTableData row) => row.toEntity())
+    if (cached.isEmpty && failure != null) throw failure;
+
+    return cached;
+  }
+
+  @override
+  Future<List<ArtistEntity>> getArtists() async {
+    final bool cachedBefore = await _has(_artistDao.getArtists);
+    final AppError? failure = await _refresh(
+      cached: cachedBefore,
+      _refreshArtists,
+    );
+
+    final List<ArtistEntity> cached = await _read(
+      () async => (await _artistDao.getArtists())
+          .map((ArtistTableData row) => row.toEntity())
           .toList(),
     );
 
     if (cached.isEmpty && failure != null) throw failure;
 
     return cached;
+  }
+
+  Future<void> _refreshArtists() async {
+    final List<ArtistModel> models = await _api.fetchArtists();
+    final DateTime now = _now();
+
+    await _artistDao.replaceArtists(<ArtistTableCompanion>[
+      for (final ArtistModel model in models)
+        model.toEntity().toCompanion(now: now),
+    ]);
+  }
+
+  /// Each cached artist's name by id. A broken table is no names.
+  Future<Map<String, String>> _artistNames() async {
+    try {
+      return <String, String>{
+        for (final ArtistTableData row in await _artistDao.getArtists())
+          row.id: row.name,
+      };
+    } on Object {
+      return const <String, String>{};
+    }
   }
 
   @override
@@ -122,7 +177,7 @@ class ContentRepositoryImpl implements ContentRepository {
 
     if (row == null && failure != null) throw failure;
 
-    return row?.toEntity();
+    return row?.toEntity(artist: (await _artistNames())[row.artistId]);
   }
 
   /// Runs a fetch-and-cache, and hands back what went wrong instead of

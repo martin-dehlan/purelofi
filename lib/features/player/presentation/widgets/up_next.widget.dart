@@ -19,7 +19,8 @@ import 'track_tile.widget.dart';
 /// the next random picks, drawn ahead so they can be shown here. Only what
 /// will really play is listed: a track that comes round again is marked on
 /// its own row, not listed twice. Tapping
-/// any of them jumps to it; a queued one can be swiped away.
+/// any of them jumps to it; a queued one can be swiped away, or held and
+/// dragged to another place in the queue.
 ///
 /// A group of slivers, so it scrolls as part of the sheet.
 class UpNext extends ConsumerWidget {
@@ -63,19 +64,31 @@ class UpNext extends ConsumerWidget {
               ),
           ],
         ),
-        SliverList.builder(
+        SliverReorderableList(
           itemCount: state.queue.length,
+          onReorderItem: player.moveInQueue,
+          proxyDecorator: (Widget child, int index, Animation<double> _) =>
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(context.cardBorderRadius),
+                child: child,
+              ),
           itemBuilder: (BuildContext context, int index) {
             final TrackEntity track = state.queue[index];
-            return Dismissible(
-              // The index is part of the key: the same track may be queued
-              // twice, and each row must still be its own.
-              key: ValueKey<String>('queued-$index-${track.id}'),
-              onDismissed: (_) => player.removeFromQueue(index),
-              child: TrackTile(
-                track: track,
-                markCurrent: false,
-                onTap: () => unawaited(player.skipToQueued(index)),
+            final Key key = ValueKey<String>(
+              'queued-${track.id}-${_copy(state.queue, index)}',
+            );
+            return ReorderableDelayedDragStartListener(
+              key: key,
+              index: index,
+              child: Dismissible(
+                key: key,
+                onDismissed: (_) => player.removeFromQueue(index),
+                child: TrackTile(
+                  track: track,
+                  markCurrent: false,
+                  onTap: () => unawaited(player.skipToQueued(index)),
+                ),
               ),
             );
           },
@@ -93,6 +106,17 @@ class UpNext extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Which copy of its track the row at [index] is. The same track may be
+/// queued twice, and each row must keep its own key as rows move, so the
+/// key follows the track and the count, not the position.
+int _copy(List<TrackEntity> queue, int index) {
+  int copy = 0;
+  for (int i = 0; i < index; i++) {
+    if (queue[i].id == queue[index].id) copy++;
+  }
+  return copy;
 }
 
 class _Heading extends StatelessWidget {

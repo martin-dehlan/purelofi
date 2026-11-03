@@ -6,17 +6,23 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/cache/media_cache.service.dart';
 import '../../../common/config/supabase.provider.dart';
 import '../../../common/database/app_database.dart';
+import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/cached_file.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
+import '../data/device_favorites.impl.dart';
+import '../data/favorites.api.dart';
+import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
+import '../domain/display_preferences.service.dart';
 import '../domain/favorites.repository.dart';
+import '../domain/favorites_sync.dart';
 import '../domain/playback_preferences.service.dart';
 import '../domain/track.entity.dart';
 import '../domain/scene.entity.dart';
@@ -61,6 +67,14 @@ MediaCache? mediaCache(Ref ref) => null;
 Future<File?> sceneCover(Ref ref, String url) async =>
     ref.watch(mediaCacheProvider)?.store(url);
 
+/// Any picture on this device — a track's cover, an artist's photo:
+/// downloaded the first time it is shown, then read from disk, so the
+/// second time it is there at once. `null` without a cache or when the
+/// download failed; the picture then comes from the network.
+@Riverpod(keepAlive: true)
+Future<File?> pictureFile(Ref ref, String url) async =>
+    ref.watch(mediaCacheProvider)?.store(url);
+
 @Riverpod(keepAlive: true)
 SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
 
@@ -68,17 +82,34 @@ SceneDao sceneDao(Ref ref) => SceneDao(ref.watch(appDatabaseProvider));
 FavoritesRepository favoritesRepository(Ref ref) =>
     FavoritesRepositoryImpl(dao: ref.watch(trackDaoProvider));
 
+/// The account's favorites (#78). Only ever called while signed in.
+@Riverpod(keepAlive: true)
+AccountFavorites accountFavorites(Ref ref) =>
+    FavoritesApi(ref.watch(supabaseClientProvider));
+
+@Riverpod(keepAlive: true)
+DeviceFavorites deviceFavorites(Ref ref) =>
+    DeviceFavoritesImpl(ref.watch(trackDaoProvider));
+
 @Riverpod(keepAlive: true)
 ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
   api: ref.watch(contentApiProvider),
   trackDao: ref.watch(trackDaoProvider),
   sceneDao: ref.watch(sceneDaoProvider),
+  artistDao: ref.watch(artistDaoProvider),
 );
+
+@Riverpod(keepAlive: true)
+ArtistDao artistDao(Ref ref) => ArtistDao(ref.watch(appDatabaseProvider));
 
 /// Where shuffle and repeat are remembered. Overridden in tests with one in
 /// memory.
 @Riverpod(keepAlive: true)
 PlaybackPreferences playbackPreferences(Ref ref) => PlaybackPreferencesImpl();
+
+/// Where the player's look is kept: for now, whether the controls hide.
+@Riverpod(keepAlive: true)
+DisplayPreferences displayPreferences(Ref ref) => DisplayPreferencesImpl();
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);

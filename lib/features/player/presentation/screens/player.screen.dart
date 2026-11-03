@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/controller/welcome.controller.dart';
+import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/scene_touch.controller.dart';
@@ -13,7 +15,8 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
-import '../widgets/settings_button.widget.dart';
+import '../widgets/library_button.widget.dart';
+import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
@@ -35,6 +38,28 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _started = false;
   bool _deepLinkHandled = false;
 
+  /// Whether the first launch's welcome is still to come. Unknown until the
+  /// stored flag is read; the music waits for the answer, and while the
+  /// welcome is due or up it waits for that too, so a first launch is not
+  /// sound and a sheet at once.
+  bool? _welcomeDue;
+  bool _welcomeShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A deep link has somewhere to be; the welcome is not offered then.
+    if (widget.deepLinkTrackId != null) {
+      _welcomeDue = false;
+      return;
+    }
+    unawaited(
+      ref.read(welcomeControllerProvider.notifier).claim().then((bool due) {
+        if (mounted) setState(() => _welcomeDue = due);
+      }),
+    );
+  }
+
   /// Opens the BTS modal once, for the track the deep link named.
   void _handleDeepLink() {
     final String? trackId = widget.deepLinkTrackId;
@@ -52,14 +77,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     );
   }
 
+  /// Offers the sign-in over the room; however it closes, the music starts.
+  Future<void> _welcome() async {
+    await showWelcomeSheet(context);
+    if (mounted) setState(() => _welcomeDue = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // The stream starts itself once the tracks are known; after that the
-    // player advances on its own as each track ends.
+    // The stream starts itself once the tracks are known and no welcome is
+    // waiting; after that the player advances on its own as each track ends.
     final List<TrackEntity>? tracks = ref
         .watch(trackListControllerProvider)
         .value;
-    if (!_started && tracks != null && tracks.isNotEmpty) {
+    if (!_started &&
+        _welcomeDue == false &&
+        tracks != null &&
+        tracks.isNotEmpty) {
       _started = true;
       unawaited(
         Future<void>.microtask(
@@ -85,11 +119,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         ref.read(controlsVisibilityControllerProvider.notifier).reveal();
       }
     });
+    // The welcome waits for the room, so it opens over the scene it
+    // introduces and not over the start screen.
+    if (!starting && _welcomeDue == true && !_welcomeShown) {
+      _welcomeShown = true;
+      unawaited(Future<void>.microtask(_welcome));
+    }
     final bool controlsVisible =
         !starting && ref.watch(controlsVisibilityControllerProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
+      // The room stays put when the keyboard comes up for a search in a
+      // sheet; only the sheet makes room for it.
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -127,9 +170,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               duration: const Duration(milliseconds: 250),
               child: IgnorePointer(
                 ignoring: !controlsVisible,
-                child: const Align(
-                  alignment: Alignment.topRight,
-                  child: SafeArea(child: SettingsButton()),
+                // The menu top left, the library top right, as music apps
+                // hold them; the queue stays with the controls.
+                child: const SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[MenuButton(), LibraryButton()],
+                    ),
+                  ),
                 ),
               ),
             ),

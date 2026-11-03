@@ -6,8 +6,8 @@ import 'package:drift/drift.dart';
 /// that, keyed by URL, because eviction needs a size and a last-used stamp
 /// per file and those belong to the file, not to the track.
 ///
-/// [isFavorite] has no UI yet: it is what the favorites feature will write
-/// to, and the reason this table carries [isSynced] at all.
+/// [isFavorite] is the listener's mark; [isSynced] says whether their
+/// account has seen it yet (#78).
 @DataClassName('TrackTableData')
 class TrackTable extends Table {
   @override
@@ -22,13 +22,18 @@ class TrackTable extends Table {
   TextColumn get btsVideoUrl => text().nullable()();
   IntColumn get durationSeconds => integer().nullable()();
 
+  /// Who made it; their name and page are in `artists`.
+  TextColumn get artistId => text().nullable()();
+
+  TextColumn get coverUrl => text().nullable()();
+
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 
-  /// False when this row holds a local change the server has not seen.
-  /// Content mirrored from Supabase is synced by definition; favorites are
-  /// what will set this to false.
+  /// False when this row holds a mark the account has not seen yet —
+  /// toggled offline, or while signed out. Content mirrored from Supabase is
+  /// synced by definition; only favorites ever set this to false.
   BoolColumn get isSynced => boolean().withDefault(const Constant(true))();
 }
