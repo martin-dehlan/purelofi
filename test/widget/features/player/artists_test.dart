@@ -24,7 +24,10 @@ void main() {
     id: 'ada',
     name: 'Ada Tapes',
     bio: 'Late nights, warm tape.',
-    linkUrl: 'https://example.com/ada',
+    links: <String>[
+      'https://www.youtube.com/@adatapes',
+      'https://example.com/ada',
+    ],
   );
   const ArtistEntity quiet = ArtistEntity(id: 'quiet', name: 'No Tracks Yet');
 
@@ -121,7 +124,9 @@ void main() {
       find.descendant(of: page, matching: find.text('Late nights, warm tape.')),
       findsOneWidget,
     );
-    expect(find.text('More from Ada Tapes'), findsOneWidget);
+    // Every channel, by the name of the place.
+    expect(find.text('YouTube'), findsOneWidget);
+    expect(find.text('Website'), findsOneWidget);
     expect(
       find.descendant(of: page, matching: find.text('Dusk Tape')),
       findsOneWidget,
@@ -160,7 +165,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ArtistSheet), findsOneWidget);
-    expect(find.text('More from Ada Tapes'), findsOneWidget);
+    expect(find.text('Ada Tapes'), findsWidgets);
   });
 
   testWidgets('an uncredited track has no way to an artist', (tester) async {

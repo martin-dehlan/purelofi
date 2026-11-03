@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' show DatabaseConnection, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/common/database/app_database.dart';
+import 'package:purelofi/common/database/daos/artist.dao.dart';
 import 'package:purelofi/common/database/daos/local_track.dao.dart';
 import 'package:purelofi/common/database/daos/track.dao.dart';
 
@@ -145,5 +146,44 @@ void main() {
         expect(tracks.single.isFavorite, isTrue);
       },
     );
+
+    test('a v5 database swaps its one-link artists for the list', () async {
+      final Directory dir = await Directory.systemTemp.createTemp(
+        'purelofi_db',
+      );
+      addTearDown(() => dir.delete(recursive: true));
+      final File file = File('${dir.path}/db.sqlite');
+
+      // Today's schema with the artists table as 0.x shipped it: link_url.
+      final AppDatabase current = AppDatabase.forTesting(
+        DatabaseConnection(NativeDatabase(file)),
+      );
+      await current.customStatement('DROP TABLE artists');
+      await current.customStatement(
+        'CREATE TABLE artists (id TEXT NOT NULL PRIMARY KEY, '
+        'name TEXT NOT NULL, bio TEXT, avatar_url TEXT, link_url TEXT, '
+        'updated_at INTEGER NOT NULL)',
+      );
+      await current.customStatement('PRAGMA user_version = 5');
+      await current.close();
+
+      final AppDatabase upgraded = AppDatabase.forTesting(
+        DatabaseConnection(NativeDatabase(file)),
+      );
+      addTearDown(upgraded.close);
+
+      await ArtistDao(upgraded).replaceArtists(<ArtistTableCompanion>[
+        ArtistTableCompanion(
+          id: const Value<String>('a'),
+          name: const Value<String>('Masso'),
+          links: const Value<String>('https://soundcloud.com/massomusic'),
+          updatedAt: Value<DateTime>(now),
+        ),
+      ]);
+      expect(
+        (await ArtistDao(upgraded).getArtists()).single.links,
+        'https://soundcloud.com/massomusic',
+      );
+    });
   });
 }

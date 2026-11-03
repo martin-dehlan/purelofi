@@ -9,6 +9,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
+import '../../domain/artist_link.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -86,7 +87,7 @@ class ArtistSheet extends ConsumerWidget {
     }
 
     final String? bio = artist.bio;
-    final String? link = artist.linkUrl;
+    final List<String> links = artist.links;
 
     return CustomScrollView(
       controller: controller,
@@ -186,17 +187,33 @@ class ArtistSheet extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (link != null) ...<Widget>[
-                SizedBox(height: context.spaceS),
-                Center(
-                  child: TextButton(
-                    onPressed: () => unawaited(AppLinks.open(Uri.parse(link))),
-                    style: TextButton.styleFrom(foregroundColor: cs.onSurface),
-                    child: Text(
-                      'More from ${artist.name}',
-                      style: TextStyle(fontSize: context.fontM),
-                    ),
-                  ),
+              // Every channel they are on, by name: where to follow them
+              // once a track has done its work.
+              if (links.isNotEmpty) ...<Widget>[
+                SizedBox(height: context.spaceM),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: context.spaceS,
+                  runSpacing: context.spaceS,
+                  children: <Widget>[
+                    for (final String link in links)
+                      ActionChip(
+                        label: Text(artistLinkLabel(link)),
+                        labelStyle: TextStyle(
+                          color: cs.onSurface,
+                          fontSize: context.fontS,
+                        ),
+                        backgroundColor: cs.surfaceContainerHigh,
+                        side: BorderSide.none,
+                        shape: const StadiumBorder(),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.spaceS,
+                          vertical: context.spaceXs,
+                        ),
+                        onPressed: () =>
+                            unawaited(AppLinks.open(Uri.parse(link))),
+                      ),
+                  ],
                 ),
               ],
               SizedBox(height: context.spaceM),

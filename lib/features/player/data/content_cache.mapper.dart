@@ -49,7 +49,10 @@ extension ArtistRowX on ArtistTableData {
     name: name,
     bio: bio,
     avatarUrl: avatarUrl,
-    linkUrl: linkUrl,
+    links: <String>[
+      for (final String link in links.split('\n'))
+        if (link.isNotEmpty) link,
+    ],
   );
 }
 
@@ -60,7 +63,7 @@ extension ArtistEntityX on ArtistEntity {
         name: Value<String>(name),
         bio: Value<String?>(bio),
         avatarUrl: Value<String?>(avatarUrl),
-        linkUrl: Value<String?>(linkUrl),
+        links: Value<String>(links.join('\n')),
         updatedAt: Value<DateTime>(now),
       );
 }
