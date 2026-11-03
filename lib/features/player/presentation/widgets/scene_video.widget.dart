@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../../common/widgets/loading_state.widget.dart';
 import '../../domain/scene.entity.dart';
+import 'startup_screen.widget.dart';
 
 /// Streams one scene's looping video.
 ///
@@ -68,7 +68,7 @@ class _SceneVideoViewState extends State<SceneVideoView> {
   Widget build(BuildContext context) {
     final VideoPlayerController? controller = _controller;
     if (controller == null || !controller.value.isInitialized) {
-      return const LoadingState();
+      return const StartupScreen();
     }
 
     return ColoredBox(

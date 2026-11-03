@@ -69,7 +69,7 @@ void main() {
     test('falls back to a default message per case', () {
       expect(
         const AppError.network().userMessage,
-        'No internet connection. Check your network.',
+        'Can’t reach PureLofi right now. Check your connection and try again.',
       );
       expect(
         const AppError.notFound(resource: 'Track').userMessage,
@@ -82,6 +82,52 @@ void main() {
       expect(
         const AppError.playback(message: 'stream stalled').userMessage,
         'Playback error: stream stalled',
+      );
+    });
+  });
+
+  group('auth', () {
+    AppError map(AuthException error) => ErrorMapper.fromException(error);
+
+    test('known codes become plain sentences', () {
+      expect(
+        map(const AuthException('x', code: 'otp_expired')).userMessage,
+        'That code has expired. Send a new one.',
+      );
+      expect(
+        map(
+          const AuthException('x', code: 'over_email_send_rate_limit'),
+        ).userMessage,
+        'Too many tries. Wait a minute, then try again.',
+      );
+      expect(
+        map(
+          const AuthException('x', code: 'email_address_invalid'),
+        ).userMessage,
+        'That email address does not look right.',
+      );
+    });
+
+    test('a bad code without a code name still reads as a bad code', () {
+      expect(
+        map(const AuthException('Token has expired or is invalid')).userMessage,
+        'That code did not work. Check it, or send a new one.',
+      );
+    });
+
+    test('anything else never shows the server text', () {
+      final AppError result = map(
+        const AuthException('internal: provider secret mismatch'),
+      );
+
+      expect(result, isA<AuthError>());
+      expect(result.userMessage, 'Signing in did not work. Please try again.');
+    });
+
+    test('a dropped connection is still a network error', () {
+      expect(
+        map(const AuthException('SocketException: failed host lookup')),
+        isA<NetworkError>(),
       );
     });
   });

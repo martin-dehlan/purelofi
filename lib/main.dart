@@ -74,6 +74,11 @@ Future<void> main() async {
       // music app does anyway.
       androidNotificationOngoing: false,
       androidStopForegroundOnPause: false,
+      // The cover is a 960 px square; as a bitmap that is 3.7 MB, sent through
+      // the system on every change. No notification or lock screen draws it
+      // that big.
+      artDownscaleWidth: 512,
+      artDownscaleHeight: 512,
     ),
   );
 

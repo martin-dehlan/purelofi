@@ -85,13 +85,15 @@ void main() {
       await tester.pumpAndSettle();
 
       await openMenu(tester);
-      expect(footageCamera, findsNothing);
+      expect(tester.widget<ListTile>(footageEntry).enabled, isFalse);
+      await tester.tap(footageEntry);
+      await tester.pumpAndSettle();
       expect(find.byType(BtsModal), findsNothing);
     });
   });
 
   group('a track without footage', () {
-    testWidgets('shows no camera at all', (tester) async {
+    testWidgets('greys out the footage entry', (tester) async {
       when(() => mockRepo.getTracks()).thenAnswer(
         (_) async => <TrackEntity>[makeTrack('a', title: 'No Clip Yet')],
       );
@@ -101,13 +103,8 @@ void main() {
 
       await openMenu(tester);
 
-      expect(
-        footageCamera,
-        findsNothing,
-        reason:
-            'but no camera is drawn — one that opens no clip is a dead '
-            'button',
-      );
+      expect(tester.widget<ListTile>(footageEntry).enabled, isFalse);
+      expect(find.text('No footage for this track'), findsOneWidget);
     });
 
     testWidgets('a deep link to it still explains itself', (tester) async {

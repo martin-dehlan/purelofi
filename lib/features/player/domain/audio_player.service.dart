@@ -1,4 +1,5 @@
 import '../../../common/errors/app_error.dart';
+import 'playback_mode.dart';
 import 'track.entity.dart';
 
 /// Plays the audio stream. The implementation wraps `just_audio` and
@@ -11,6 +12,11 @@ abstract class AudioPlayerService {
   /// Emits when the player wants the next track: the current one finished, or
   /// someone pressed skip on the lock screen.
   Stream<void> get nextRequests;
+
+  /// Emits when the play order is changed outside the app — the
+  /// notification, the lock screen, a watch or a car — with the mode the
+  /// listener asked for. The controller decides; [setPlaybackMode] follows.
+  Stream<PlaybackMode> get modeRequests;
 
   /// Playback failures, already mapped to `AppError.playback`.
   Stream<AppError> get errors;
@@ -29,7 +35,13 @@ abstract class AudioPlayerService {
   /// Set from the scene, because that is what the listener is actually
   /// looking at. Without it both platforms draw a black rectangle where the
   /// cover belongs.
-  Future<void> setArtwork(Uri? artUri);
+  ///
+  /// [room] is the scene's name, shown beside the track as its album.
+  Future<void> setArtwork(Uri? artUri, {String? room});
+
+  /// Loops the current track in [PlaybackMode.repeatOne], and shows the mode
+  /// wherever the platform draws media controls.
+  Future<void> setPlaybackMode(PlaybackMode mode);
 
   Future<void> play();
 

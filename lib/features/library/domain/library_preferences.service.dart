@@ -1,6 +1,6 @@
 import 'library_view.dart';
 
-/// Where the library's order and sort are kept between launches.
+/// Where the library's sort is kept between launches.
 abstract class LibraryPreferences {
   Future<LibraryView> load();
 

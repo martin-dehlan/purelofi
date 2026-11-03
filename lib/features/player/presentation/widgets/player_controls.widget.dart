@@ -7,14 +7,19 @@ import '../../../../common/errors/app_error.dart';
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../controller/playback_mode.controller.dart';
 import '../../controller/playback_source.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
+import '../../domain/playback_mode.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
+import 'favorite_button.widget.dart';
+import 'library_sheet.widget.dart';
 import 'waveform.widget.dart';
 
-/// The bar along the bottom: the track, its waveform, and the transport.
+/// The bar along the bottom: the track, its waveform, and the transport —
+/// the play order on its left, the way into the music on its right.
 ///
 /// The waveform is both the progress indicator and the scrubber, so there is
 /// no separate slider competing with it.
@@ -38,6 +43,8 @@ class PlayerControls extends ConsumerWidget {
     final AsyncValue<List<TrackEntity>> tracks = ref.watch(
       trackListControllerProvider,
     );
+    final PlaybackMode mode =
+        ref.watch(playbackModeControllerProvider).value ?? PlaybackMode.shuffle;
 
     // A transport that cannot play anything is worse than none: it looks
     // broken. Say what is actually going on instead.
@@ -64,7 +71,7 @@ class PlayerControls extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _Progress(title: track?.title ?? '', seed: track?.id ?? 'purelofi'),
+          _Progress(track: track),
           const _BackToPureLofi(),
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
@@ -75,20 +82,22 @@ class PlayerControls extends ConsumerWidget {
             ),
           ],
           SizedBox(height: context.spaceM),
+          // Settings at the ends, kept apart from the buttons that move the
+          // stream: how it goes on, and where its music lives.
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              _ModeButton(
+                mode: mode,
+                onTap: ref.read(playbackModeControllerProvider.notifier).cycle,
+              ),
+              const Spacer(),
               _TransportButton(
                 glyph: AppGlyph.previous,
-                // Only the listener's own music has an order to go back
-                // through; PureLofi's stream starts the track again.
-                label: track?.source == TrackSource.local
-                    ? 'Previous track'
-                    : 'Start over',
+                label: 'Previous track',
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).previous,
               ),
-              SizedBox(width: context.spaceXl),
+              SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: isPlaying ? AppGlyph.pause : AppGlyph.play,
                 label: isPlaying ? 'Pause' : 'Play',
@@ -97,12 +106,18 @@ class PlayerControls extends ConsumerWidget {
                     .read(playerControllerProvider.notifier)
                     .togglePlayPause,
               ),
-              SizedBox(width: context.spaceXl),
+              SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: AppGlyph.next,
                 label: 'Next track',
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
+              ),
+              const Spacer(),
+              _SheetButton(
+                glyph: AppGlyph.queue,
+                label: 'Library',
+                onTap: () => showLibrarySheet(context),
               ),
             ],
           ),
@@ -123,10 +138,9 @@ class PlayerControls extends ConsumerWidget {
 /// The clock and the waveform: the only parts that follow the position, so
 /// the only parts that rebuild while a track runs.
 class _Progress extends ConsumerWidget {
-  const _Progress({required this.title, required this.seed});
+  const _Progress({required this.track});
 
-  final String title;
-  final String seed;
+  final TrackEntity? track;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -162,16 +176,20 @@ class _Progress extends ConsumerWidget {
             SizedBox(width: context.spaceM),
             Expanded(
               child: Text(
-                title,
+                track?.title ?? '',
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
               ),
             ),
+            // Beside the title, as in every player. Favourites are marks on
+            // PureLofi's tracks, so the listener's own carry none.
+            if (track != null && track!.source == TrackSource.catalogue)
+              FavoriteButton(trackId: track!.id, size: context.fontM),
           ],
         ),
         SizedBox(height: context.spaceS),
         Waveform(
-          seed: seed,
+          seed: track?.id ?? 'purelofi',
           progress: progress,
           height: context.screenHeight * 0.06,
           onSeek: (double fraction) {
@@ -213,6 +231,105 @@ class _TransportButton extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(context.spaceS),
           child: AppIcon(glyph, size: size),
+        ),
+      ),
+    );
+  }
+}
+
+/// The play order, as one button that steps on through its three states:
+/// shuffle, repeat track, in order. The first two are tinted and carry a dot
+/// under them, as a setting that is on; in order is the plain one. The dot's
+/// room is kept throughout, so stepping does not nudge the icon.
+class _ModeButton extends StatelessWidget {
+  const _ModeButton({required this.mode, required this.onTap});
+
+  final PlaybackMode mode;
+  final Future<void> Function() onTap;
+
+  static const Map<PlaybackMode, (AppGlyph, String)> _looks =
+      <PlaybackMode, (AppGlyph, String)>{
+        PlaybackMode.shuffle: (AppGlyph.shuffle, 'Shuffle'),
+        PlaybackMode.repeatOne: (AppGlyph.repeatOne, 'Repeat track'),
+        PlaybackMode.inOrder: (AppGlyph.inOrder, 'In order'),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final double size = context.screenWidth * 0.055;
+    final double dot = size * 0.18;
+    final bool marked = mode != PlaybackMode.inOrder;
+    final (AppGlyph glyph, String name) = _looks[mode]!;
+
+    return Semantics(
+      button: true,
+      label: 'Play order',
+      value: name,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => unawaited(onTap()),
+        child: Padding(
+          padding: EdgeInsets.all(context.spaceS),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox(height: dot * 2),
+              AppIcon(
+                glyph,
+                size: size,
+                color: marked ? cs.primary : cs.onSurfaceVariant,
+              ),
+              SizedBox(height: dot),
+              SizedBox.square(
+                dimension: dot,
+                child: marked
+                    ? DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: cs.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The way into the music — library and what plays next, in one sheet. As
+/// quiet as the play order opposite it, and the same size.
+class _SheetButton extends StatelessWidget {
+  const _SheetButton({
+    required this.glyph,
+    required this.label,
+    required this.onTap,
+  });
+
+  final AppGlyph glyph;
+  final String label;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => unawaited(onTap()),
+        child: Padding(
+          padding: EdgeInsets.all(context.spaceS),
+          child: AppIcon(
+            glyph,
+            size: context.screenWidth * 0.055,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );

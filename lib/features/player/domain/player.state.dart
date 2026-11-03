@@ -17,6 +17,14 @@ abstract class PlayerState with _$PlayerState {
     @Default(Duration.zero) Duration position,
     Duration? duration,
     AppError? error,
+
+    /// What the listener lined up themselves, played before anything else
+    /// and in the order they added it.
+    @Default(<TrackEntity>[]) List<TrackEntity> queue,
+
+    /// What the stream will play after the queue: the next tracks in order,
+    /// or the next random picks — drawn ahead, so they can be shown.
+    @Default(<TrackEntity>[]) List<TrackEntity> upNext,
   }) = _PlayerState;
 
   const PlayerState._();

@@ -20,6 +20,12 @@ Golden Rules:
 > a read-through cache, not a second master: a fetch fills it, and it is what
 > the repository reads from afterwards.
 >
+> **Accounts (#38)** are optional. The account itself is the first thing
+> that belongs to a listener rather than to PureLofi; it lives in Supabase
+> Auth and is deleted from inside the app (`delete_account()`). Anything
+> tied to it later (favorites, #78) needs its own RLS policies scoped to
+> `auth.uid()`. Nothing in the app may require one.
+>
 > **The exception is the listener's own music (#66).** Files they import
 > live only on the device, in `local_tracks` and `library/`, and are never
 > synced — there is no account to sync them to, and they are theirs, not

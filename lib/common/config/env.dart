@@ -16,6 +16,12 @@ abstract final class Env {
   static const String posthogApiKeyEnv = 'POSTHOG_API_KEY';
   static const String posthogHostEnv = 'POSTHOG_HOST';
 
+  /// Google OAuth client IDs for native sign-in (#38). Public by design:
+  /// they name the app to Google, they unlock nothing. Optional — without
+  /// them the Google button is simply not shown.
+  static const String googleWebClientIdEnv = 'GOOGLE_WEB_CLIENT_ID';
+  static const String googleIosClientIdEnv = 'GOOGLE_IOS_CLIENT_ID';
+
   /// Keys that must never reach a build.
   ///
   /// The service role key bypasses row-level security entirely, and the

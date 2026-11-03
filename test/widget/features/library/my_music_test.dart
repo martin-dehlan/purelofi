@@ -6,8 +6,7 @@ import 'package:purelofi/features/library/presentation/widgets/my_music.widget.d
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
-import 'package:purelofi/features/player/presentation/widgets/settings_sheet.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/track_list.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_library.repository.dart';
@@ -44,6 +43,11 @@ void main() {
   ];
 
   Future<void> start(WidgetTester tester) async {
+    // A phone, not the default 800×600 landscape box: the sheet's list is
+    // lazy, and rows below its fold are never built.
+    tester.view.physicalSize = const Size(1179, 2556);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     await tester.pumpRoutedApp(
       overrides: overrides(),
       library: library,
@@ -53,16 +57,19 @@ void main() {
   }
 
   Future<void> openMyMusic(WidgetTester tester) async {
-    await openMenu(tester);
-    await tester.tap(find.text('My music'));
-    await tester.pumpAndSettle();
+    await openLibrary(tester);
+    await tapPill(tester, 'My music');
   }
 
-  testWidgets('the menu opens on PureLofi\'s music', (tester) async {
-    await start(tester);
-    await openMenu(tester);
+  bool chipSelected(WidgetTester tester, String label) => tester
+      .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
+      .selected;
 
-    expect(find.byType(TrackList), findsOneWidget);
+  testWidgets('the library opens on PureLofi\'s music', (tester) async {
+    await start(tester);
+    await openLibrary(tester);
+
+    expect(chipSelected(tester, 'PureLofi'), isTrue);
     expect(find.byType(MyMusic), findsNothing);
   });
 
@@ -112,7 +119,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(audio.playedTracks.last.id, 'mine');
-    expect(find.byType(SettingsSheet), findsNothing);
+    expect(find.byType(LibrarySheet), findsNothing);
     expect(
       find.textContaining('Back to PureLofi', findRichText: true),
       findsOneWidget,
@@ -129,7 +136,7 @@ void main() {
     );
   });
 
-  testWidgets('the menu opens on the side that is playing', (tester) async {
+  testWidgets('the library opens on the side that is playing', (tester) async {
     library = FakeLibraryRepository(<TrackEntity>[
       makeLocalTrack('mine', title: 'Kitchen Demo'),
     ]);
@@ -138,8 +145,9 @@ void main() {
     await tester.tap(find.text('Kitchen Demo'));
     await tester.pumpAndSettle();
 
-    await openMenu(tester);
+    await openLibrary(tester);
 
+    expect(chipSelected(tester, 'My music'), isTrue);
     expect(find.byType(MyMusic), findsOneWidget);
   });
 
@@ -192,7 +200,7 @@ void main() {
     });
   });
 
-  group('order, sort and search', () {
+  group('sort and search', () {
     List<TrackEntity> named(List<String> titles) => <TrackEntity>[
       for (final String title in titles) makeLocalTrack(title, title: title),
     ];
@@ -206,38 +214,28 @@ void main() {
               (Widget w) =>
                   w is Text &&
                   w.data != null &&
-                  w.style?.fontWeight == FontWeight.w500,
+                  w.style?.fontWeight == FontWeight.w600,
             ),
           ),
         )
         .map((Text t) => t.data!)
         .toList();
 
-    testWidgets('play order switches between shuffle and in order', (
+    testWidgets('the sort chip opens the orders, and title reorders', (
       tester,
     ) async {
-      library = FakeLibraryRepository(named(<String>['Bravo', 'Alpha']));
-      await start(tester);
-      await openMyMusic(tester);
-
-      expect(find.bySemanticsLabel('Play order: Shuffle'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Play order: Shuffle'));
-      await tester.pumpAndSettle();
-
-      expect(find.bySemanticsLabel('Play order: In order'), findsOneWidget);
-    });
-
-    testWidgets('sorting by title reorders the list', (tester) async {
       library = FakeLibraryRepository(
         named(<String>['Charlie', 'Alpha', 'Bravo']),
       );
       await start(tester);
       await openMyMusic(tester);
 
-      await tester.tap(find.bySemanticsLabel('Sort by: Recently added'));
+      await tester.tap(find.widgetWithText(ActionChip, 'Recently added'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(MenuItemButton, 'Title'));
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Sort by: Title'), findsOneWidget);
+      expect(find.widgetWithText(ActionChip, 'Title'), findsOneWidget);
       expect(shown(tester), <String>['Alpha', 'Bravo', 'Charlie']);
     });
 

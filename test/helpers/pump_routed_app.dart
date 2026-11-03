@@ -3,17 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
+import 'package:purelofi/features/auth/controller/auth.provider.dart';
 import 'package:purelofi/features/library/controller/library.provider.dart';
 
+import 'fake_auth.repository.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
+import 'fake_playback_preferences.dart';
 import 'fake_track_picker.dart';
 
 /// Favourites in memory, so no widget test opens a database.
@@ -26,6 +28,15 @@ Override _fakeFavorites(FakeFavoritesRepository? repository) {
   addTearDown(fake.dispose);
 
   return favoritesRepositoryProvider.overrideWithValue(fake);
+}
+
+/// Accounts in memory. Signed out unless [repository] says otherwise:
+/// accounts are optional, so a test that is not about them never needs one.
+Override _fakeAuth(FakeAuthRepository? repository) {
+  final FakeAuthRepository fake = repository ?? FakeAuthRepository();
+  addTearDown(fake.dispose);
+
+  return authRepositoryProvider.overrideWithValue(fake);
 }
 
 /// The listener's library and the file picker, in memory, for the same
@@ -42,8 +53,19 @@ List<Override> _fakeLibrary(
     libraryRepositoryProvider.overrideWithValue(fake),
     trackPickerProvider.overrideWithValue(picker ?? FakeTrackPicker()),
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
+    playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
   ];
 }
+
+/// Reduced motion, as a listener can ask for in the system settings.
+///
+/// The playing track's bars bounce for as long as it plays, and an endless
+/// animation never lets `pumpAndSettle` return. Tests that are about the
+/// motion pump an app of their own.
+Widget _stillMotion(BuildContext context, Widget? child) => MediaQuery(
+  data: MediaQuery.of(context).copyWith(disableAnimations: true),
+  child: child!,
+);
 
 extension PumpRouted on WidgetTester {
   /// Pumps [child] inside a themed `MaterialApp` and a `ProviderScope` with
@@ -62,6 +84,7 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakeAuthRepository? auth,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -69,11 +92,13 @@ extension PumpRouted on WidgetTester {
         overrides: <Override>[
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
+          _fakeAuth(auth),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
+          builder: _stillMotion,
           home: child,
         ),
       ),
@@ -81,12 +106,17 @@ extension PumpRouted on WidgetTester {
   }
 
   /// Pumps the real router, so deep links can be exercised end to end.
+  ///
+  /// [theme] defaults to plain Material dark; pass the app's own to see the
+  /// chrome as a listener does.
   Future<void> pumpRoutedApp({
     String initialRoute = '/',
+    ThemeData? theme,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakeAuthRepository? auth,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     return pumpWidget(
@@ -94,11 +124,13 @@ extension PumpRouted on WidgetTester {
         overrides: <Override>[
           _fakeFavorites(favorites),
           ..._fakeLibrary(library, picker),
+          _fakeAuth(auth),
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
-          theme: ThemeData.dark(useMaterial3: true),
+          theme: theme ?? ThemeData.dark(useMaterial3: true),
+          builder: _stillMotion,
           routerConfig: GoRouter(
             initialLocation: initialRoute,
             routes: playerRoutes,
@@ -109,10 +141,8 @@ extension PumpRouted on WidgetTester {
   }
 }
 
-/// Opens the menu and waits for the sheet.
-///
-/// Scene switching, the track list and the footage live in there, so tests
-/// reach them the same way a listener does.
+/// Opens the menu top right and waits for the sheet: the scene, the
+/// footage, the account.
 Future<void> openMenu(WidgetTester tester) async {
   await tester.tap(find.byType(SettingsButton));
   await tester.pumpAndSettle();
@@ -124,13 +154,35 @@ Future<void> tapMenuEntry(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
-/// The camera on a track's row in the open menu: its behind-the-scenes clip.
-final Finder footageCamera = find.byWidgetPredicate(
-  (Widget w) => w is AppIcon && w.glyph == AppGlyph.camera,
-);
+/// Opens the library from the right of the transport.
+Future<void> openLibrary(WidgetTester tester) async {
+  await tester.tap(find.bySemanticsLabel('Library'));
+  await tester.pumpAndSettle();
+}
 
-/// Opens the footage from the track list, as a listener would since #67.
+/// Taps one of the library's pills, found by name — the favourites one is a
+/// heart without a word on it.
+Future<void> tapPill(WidgetTester tester, String label) async {
+  final Finder pill = find.byWidgetPredicate(
+    (Widget w) => w is ChoiceChip && w.tooltip == label,
+  );
+  await tester.ensureVisible(pill);
+  await tester.pumpAndSettle();
+  await tester.tap(pill);
+  await tester.pumpAndSettle();
+}
+
+/// Opens the library on its "Up next" pill: the queue.
+Future<void> openQueue(WidgetTester tester) async {
+  await openLibrary(tester);
+  await tapPill(tester, 'Up next');
+}
+
+/// The menu's entry for the playing track's behind-the-scenes clip.
+final Finder footageEntry = find.widgetWithText(ListTile, 'Behind the scenes');
+
+/// Opens the footage from the open menu.
 Future<void> openFootage(WidgetTester tester) async {
-  await tester.tap(footageCamera.first);
+  await tester.tap(footageEntry);
   await tester.pumpAndSettle();
 }

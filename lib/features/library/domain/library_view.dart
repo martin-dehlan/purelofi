@@ -1,38 +1,25 @@
 import '../../player/domain/track.entity.dart';
 
-/// How the stream moves through the listener's own music.
-enum LibraryOrder {
-  /// Down the list as sorted, then round again.
-  inOrder,
-
-  /// Any track but the one just played.
-  shuffle,
-}
-
-/// How the list is sorted, which is also the order [LibraryOrder.inOrder]
-/// plays in.
+/// How the list is sorted, which is also the order the listener's music
+/// plays in with shuffle off.
 enum LibrarySort { recent, title, artist }
 
 /// The listener's choices for their library. Remembered across launches,
-/// unlike which side is playing (#66).
+/// unlike which side is playing (#66). Shuffle is not here: it belongs to
+/// the transport and covers both sides (`PlaybackMode`).
 class LibraryView {
-  const LibraryView({
-    this.order = LibraryOrder.shuffle,
-    this.sort = LibrarySort.recent,
-  });
+  const LibraryView({this.sort = LibrarySort.recent});
 
-  final LibraryOrder order;
   final LibrarySort sort;
 
-  LibraryView copyWith({LibraryOrder? order, LibrarySort? sort}) =>
-      LibraryView(order: order ?? this.order, sort: sort ?? this.sort);
+  LibraryView copyWith({LibrarySort? sort}) =>
+      LibraryView(sort: sort ?? this.sort);
 
   @override
-  bool operator ==(Object other) =>
-      other is LibraryView && other.order == order && other.sort == sort;
+  bool operator ==(Object other) => other is LibraryView && other.sort == sort;
 
   @override
-  int get hashCode => Object.hash(order, sort);
+  int get hashCode => sort.hashCode;
 }
 
 /// [tracks] in [sort] order. Titles and artists compare without case, and a

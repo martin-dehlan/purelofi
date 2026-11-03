@@ -55,6 +55,8 @@ dependencies:
   audio_metadata_reader: ^1.8.0
   uuid: ^4.6.0
   shared_preferences: ^2.5.5
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.2.0
 
 dev_dependencies:
   flutter_test:

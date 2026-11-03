@@ -7,9 +7,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/widgets/error_state.widget.dart';
-import '../../../../common/widgets/loading_state.widget.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene_touch.controller.dart';
+import '../../controller/startup.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../data/sprite_loader.service.dart';
@@ -17,6 +17,8 @@ import '../../domain/playback_clock.dart';
 import '../../domain/scene.entity.dart';
 import '../../domain/scene_event.scheduler.dart';
 import '../../domain/scene_layer.entity.dart';
+import '../../domain/startup_progress.dart';
+import 'startup_screen.widget.dart';
 
 /// The smallest whole-number scale, in DEVICE pixels, that still covers
 /// [viewport].
@@ -208,6 +210,9 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
 
   bool _loading = true;
 
+  /// How many strips have landed, for the start screen's bar.
+  int _loaded = 0;
+
   /// What went wrong while fetching the sprites, if every one of them failed.
   ///
   /// A scene missing one layer is still a scene, so a single failure is
@@ -233,6 +238,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
       _sprites.clear();
       _events = SceneEventScheduler(layers: widget.scene.layers);
       _loading = true;
+      _loaded = 0;
       unawaited(_loadSprites());
     }
   }
@@ -252,13 +258,18 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
     await Future.wait(
       widget.scene.layers.map((SceneLayerEntity layer) async {
         try {
-          final ui.Image image = await loader.load(layer.spriteUrl);
+          final ui.Image image = await loader
+              .load(layer.spriteUrl)
+              .timeout(_spritePatience);
           if (mounted) _sprites[layer.spriteUrl] = image;
         } on Object catch (error) {
           // A sprite that will not load costs us that layer, not the scene —
           // unless it costs us every layer, which is the case below.
           lastFailure = error;
         }
+        // A failed strip still moves the bar: it is done, one way or the
+        // other, and the bar measures what is left to wait for.
+        if (mounted) setState(() => _loaded++);
       }),
     );
 
@@ -268,7 +279,14 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
       _loading = false;
       _spriteError = _sprites.isEmpty ? lastFailure : null;
     });
+    // Drawn, or failed in a way the room can say: either way the start is
+    // over and the transport may come up.
+    ref.read(startupControllerProvider.notifier).finish();
   }
+
+  /// How long one strip may take. The image pipeline sets no deadline, and a
+  /// strip that never arrives would hold the start screen up for good.
+  static const Duration _spritePatience = Duration(seconds: 20);
 
   void _onTick(Duration elapsed) {
     final Duration delta = elapsed - _lastFadeTick;
@@ -314,7 +332,14 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   Widget build(BuildContext context) {
     _reactToTrackChange();
 
-    if (_loading) return const LoadingState();
+    if (_loading) {
+      return StartupScreen(
+        progress: startupFraction(
+          spritesLoaded: _loaded,
+          spritesTotal: widget.scene.layers.length,
+        ),
+      );
+    }
 
     final Object? error = _spriteError;
     if (error != null) {
@@ -323,6 +348,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
         onRetry: () {
           setState(() {
             _loading = true;
+            _loaded = 0;
             _spriteError = null;
           });
           unawaited(_loadSprites());

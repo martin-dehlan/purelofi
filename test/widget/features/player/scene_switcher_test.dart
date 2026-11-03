@@ -1,9 +1,14 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/cache/media_cache.service.dart';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/common/widgets/error_state.widget.dart';
+import 'package:purelofi/common/widgets/skeleton.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
@@ -50,6 +55,61 @@ void main() {
     await openMenu(tester);
     await tapMenuEntry(tester, 'Change scene');
   }
+
+  testWidgets('shows rows in the shape of the list while it loads', (
+    tester,
+  ) async {
+    final Completer<List<SceneEntity>> pending = Completer<List<SceneEntity>>();
+    when(() => mockRepo.getScenes()).thenAnswer((_) => pending.future);
+
+    await tester.pumpProviderApp(
+      child: const Scaffold(body: SceneSwitcherSheet()),
+      overrides: overrides(),
+    );
+    await tester.pump();
+
+    // A thumbnail and a title bar for each of the four rows.
+    expect(find.byType(Skeleton), findsNWidgets(8));
+    expect(find.bySemanticsLabel('Loading scenes'), findsOneWidget);
+
+    pending.complete(scenes);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Skeleton), findsNothing);
+    expect(find.text('Rainy Room'), findsOneWidget);
+  });
+
+  testWidgets('a cover still on its way holds its place with a skeleton', (
+    tester,
+  ) async {
+    final _GatedCache cache = _GatedCache();
+    when(() => mockRepo.getScenes()).thenAnswer(
+      (_) async => <SceneEntity>[
+        makeScene('scene-a', thumbnailUrl: 'https://example.com/a.png'),
+      ],
+    );
+
+    await tester.pumpProviderApp(
+      child: const Scaffold(body: SceneSwitcherSheet()),
+      overrides: <Override>[
+        ...overrides(),
+        mediaCacheProvider.overrideWithValue(cache),
+      ],
+    );
+    await tester.pump();
+
+    // The title is there; its picture is a skeleton, not a gap.
+    expect(find.text('Rainy Room'), findsOneWidget);
+    expect(find.byType(Skeleton), findsOneWidget);
+
+    final File cover = File('${Directory.systemTemp.path}/cover.png');
+    cache.release(cover);
+    await tester.pump();
+
+    // From the disk, never the network.
+    final Image image = tester.widget<Image>(find.byType(Image));
+    expect((image.image as ResizeImage).imageProvider, FileImage(cover));
+  });
 
   testWidgets('lists the active scenes in sort_order', (tester) async {
     await openSwitcher(tester);
@@ -110,4 +170,23 @@ void main() {
     );
     expect(active.selected, isTrue);
   });
+}
+
+/// A cache whose downloads wait for [release].
+class _GatedCache implements MediaCache {
+  final Completer<File?> _gate = Completer<File?>();
+
+  void release(File? file) => _gate.complete(file);
+
+  @override
+  Future<File?> fileFor(String url) => _gate.future;
+
+  @override
+  Future<File?> store(String url) => _gate.future;
+
+  @override
+  Future<int> sizeInBytes() async => 0;
+
+  @override
+  Future<void> evict() async {}
 }

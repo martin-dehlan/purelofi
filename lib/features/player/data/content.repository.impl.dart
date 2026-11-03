@@ -25,6 +25,8 @@ class ContentRepositoryImpl implements ContentRepository {
     required TrackDao trackDao,
     required SceneDao sceneDao,
     DateTime Function()? now,
+    this.patience = const Duration(seconds: 15),
+    this.patienceWithCache = const Duration(seconds: 3),
   }) : _api = api,
        _trackDao = trackDao,
        _sceneDao = sceneDao,
@@ -35,9 +37,20 @@ class ContentRepositoryImpl implements ContentRepository {
   final SceneDao _sceneDao;
   final DateTime Function() _now;
 
+  /// How long a fetch may take when there is nothing to fall back on. A
+  /// server that never answers would otherwise leave the room loading
+  /// forever: the client sets no deadline of its own.
+  final Duration patience;
+
+  /// How long a fetch may take when the last one is on disk. Short, because
+  /// the room is already there to open; a fetch that runs over still lands
+  /// in the cache for the next start, it just is not waited for.
+  final Duration patienceWithCache;
+
   @override
   Future<List<SceneEntity>> getScenes() async {
-    final AppError? failure = await _refresh(() async {
+    final bool cachedBefore = await _has(_sceneDao.getScenes);
+    final AppError? failure = await _refresh(cached: cachedBefore, () async {
       final List<SceneModel> models = await _api.fetchScenes();
       final List<SceneEntity> scenes = models
           .map((SceneModel model) => model.toEntity())
@@ -68,7 +81,8 @@ class ContentRepositoryImpl implements ContentRepository {
 
   @override
   Future<List<TrackEntity>> getTracks() async {
-    final AppError? failure = await _refresh(() async {
+    final bool cachedBefore = await _has(_trackDao.getTracks);
+    final AppError? failure = await _refresh(cached: cachedBefore, () async {
       final List<TrackModel> models = await _api.fetchTracks();
       final DateTime now = _now();
 
@@ -113,12 +127,25 @@ class ContentRepositoryImpl implements ContentRepository {
 
   /// Runs a fetch-and-cache, and hands back what went wrong instead of
   /// throwing — the caller decides whether the cache makes it survivable.
-  Future<AppError?> _refresh(Future<void> Function() body) async {
+  Future<AppError?> _refresh(
+    Future<void> Function() body, {
+    bool cached = false,
+  }) async {
     try {
-      await body();
+      await body().timeout(cached ? patienceWithCache : patience);
       return null;
     } on Object catch (error, stackTrace) {
       return ErrorMapper.fromException(error, stackTrace);
+    }
+  }
+
+  /// Whether the cache holds anything yet. A broken database counts as
+  /// empty: the fetch then gets its full time.
+  Future<bool> _has(Future<List<Object>> Function() read) async {
+    try {
+      return (await read()).isNotEmpty;
+    } on Object {
+      return false;
     }
   }
 

@@ -6,8 +6,12 @@ modal. go_router is kept anyway for one reason: deep linking (from the YouTube
 channel / `purelofi.app`) works out of the box and Phase 2 will add routes.
 
 > **MVP deviation from the wine-app lineage:** the wine app had splash/login/
-> register + a 3-tab shell. PureLofi has none of that — no login, one screen.
-> Do not build an `AppShell`, `NavigationBar`, or auth `redirect`.
+> register + a 3-tab shell. PureLofi has none of that — one screen. Sign-in
+> (#38) is an optional sheet off the menu, not a route and not a gate.
+> Do not build an `AppShell`, `NavigationBar`, or auth `redirect`. The one
+> auth route, `/auth-callback`, only shows the player again: it is where the
+> browser fallback for Google lands, and supabase_flutter reads the session
+> out of the link itself.
 
 ---
 
@@ -77,7 +81,7 @@ GoRouter appRouter(Ref ref) {
   return GoRouter(
     initialLocation: AppRoutes.player,
     debugLogDiagnostics: true,
-    // NO redirect — public app, no auth.
+    // NO redirect — sign-in is optional and gates nothing (#38).
     routes: [
       ...playerRoutes,
     ],
@@ -98,8 +102,19 @@ context.pop();
 ```
 
 Most in-app navigation is **not** routing at all — switching scenes and tracks
-mutates player state (see `docs/05`), it does not push routes. The BTS view is a
-modal bottom sheet (`showModalBottomSheet`), not a route.
+mutates player state (see `docs/05`), it does not push routes. Everything else
+is a modal bottom sheet (`showModalBottomSheet`), not a route:
+
+| Sheet | Opened from | Holds |
+|---|---|---|
+| Library | the button right of the transport | pills Up next · PureLofi · My music · Favorites; track rows with `⋯` |
+| Menu | top-right button | Change scene · Behind the scenes · Account · version |
+| Account | Menu → Account | Signed out: Apple (iOS) · Google · email code. Signed in: who, sign out, delete account. Optional — gates nothing (#38). |
+| BTS | a track's `⋯`, the menu, or the deep link | the footage |
+
+The library — the queue is its "Up next" pill — is a tall draggable sheet
+(`showMusicSheet`) that never covers the whole screen: a strip of the scene
+stays visible above it.
 
 ---
 
@@ -173,5 +188,5 @@ class PureLofiApp extends ConsumerWidget {
 - [ ] The player feature owns its `player.routes.dart`
 - [ ] **No** auth `redirect`, **no** `ShellRoute`, **no** `NavigationBar`
 - [ ] Scene/track switching mutates state — it does not push routes
-- [ ] BTS is a modal bottom sheet, not a route
+- [ ] BTS, library and menu are modal bottom sheets, not routes
 - [ ] Deep link scheme is `purelofi` (not the old app's scheme)

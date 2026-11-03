@@ -22,7 +22,19 @@ class SceneListController extends _$SceneListController {
     // any build that does not ask for it.
     if (DevTestScene.enabled) return <SceneEntity>[await DevTestScene.load()];
 
-    return ref.watch(contentRepositoryProvider).getScenes();
+    final List<SceneEntity> scenes = await ref
+        .watch(contentRepositoryProvider)
+        .getScenes();
+
+    // Every cover onto the disk now, while the listener is still looking at
+    // the room: by the time they open the scene list, the pictures are
+    // already there instead of loading row by row under their titles.
+    for (final SceneEntity scene in scenes) {
+      final String? url = scene.thumbnailUrl;
+      if (url != null) ref.read(sceneCoverProvider(url).future).ignore();
+    }
+
+    return scenes;
   }
 }
 
