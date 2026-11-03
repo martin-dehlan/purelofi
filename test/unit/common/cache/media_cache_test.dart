@@ -225,4 +225,82 @@ void main() {
       expect(await cache.sizeInBytes(), 200);
     });
   });
+
+  group('clear', () {
+    test('throws away every file and row', () async {
+      final FileMediaCache cache = cacheWith(
+        client: serving(size: 100),
+        maxBytes: 1000,
+      );
+
+      await cache.store('https://x/one.mp3');
+      await cache.store('https://x/two.mp3');
+      await cache.clear();
+
+      expect(await cache.sizeInBytes(), 0);
+      expect(await cache.fileFor('https://x/one.mp3'), isNull);
+      expect(directory.listSync(), isEmpty);
+    });
+  });
+
+  group('downloads', () {
+    test('are kept however full the cache gets', () async {
+      final FileMediaCache cache = cacheWith(
+        client: serving(size: 400),
+        maxBytes: 500,
+      );
+
+      await cache.download('https://x/kept.mp3');
+      clock = clock.add(const Duration(minutes: 1));
+      await cache.store('https://x/one.mp3');
+      clock = clock.add(const Duration(minutes: 1));
+      await cache.store('https://x/two.mp3');
+
+      expect(await cache.fileFor('https://x/kept.mp3'), isNotNull);
+      expect(await cache.downloadedUrls(), <String>{'https://x/kept.mp3'});
+      expect(await cache.downloadedBytes(), 400);
+      // Only the rest counts against the limit: one of the two fits.
+      expect(await cache.sizeInBytes(), 400);
+    });
+
+    test('survive the settings\' clear', () async {
+      final FileMediaCache cache = cacheWith(client: serving(size: 100));
+
+      await cache.download('https://x/kept.mp3');
+      await cache.store('https://x/other.mp3');
+      await cache.clear();
+
+      expect(await cache.fileFor('https://x/kept.mp3'), isNotNull);
+      expect(await cache.fileFor('https://x/other.mp3'), isNull);
+    });
+
+    test('taken back, become ordinary files that can go', () async {
+      final FileMediaCache cache = cacheWith(
+        client: serving(size: 400),
+        maxBytes: 500,
+      );
+
+      await cache.download('https://x/kept.mp3');
+      clock = clock.add(const Duration(minutes: 1));
+      await cache.store('https://x/one.mp3');
+      await cache.removeDownload('https://x/kept.mp3');
+
+      expect(await cache.downloadedUrls(), isEmpty);
+      expect(await cache.fileFor('https://x/kept.mp3'), isNull);
+      expect(await cache.fileFor('https://x/one.mp3'), isNotNull);
+    });
+
+    test(
+      'a file already cached is downloaded without fetching it again',
+      () async {
+        final FileMediaCache cache = cacheWith(client: serving(size: 100));
+
+        await cache.store('https://x/one.mp3');
+        await cache.download('https://x/one.mp3');
+
+        expect(requested, hasLength(1));
+        expect(await cache.downloadedUrls(), <String>{'https://x/one.mp3'});
+      },
+    );
+  });
 }

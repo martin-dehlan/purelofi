@@ -58,7 +58,7 @@ extension AppErrorX on AppError {
 > Added `playback` for `just_audio` / `video_player` failures (a real,
 > streaming-specific case), and `auth` for sign-in (#38): `ErrorMapper` turns
 > Supabase's `AuthException` codes into one plain sentence each
-> (`otp_expired`, rate limits, a bad code) and never shows the server's text.
+> (`invalid_credentials`, `weak_password`, `otp_expired`, rate limits, a bad code) and never shows the server's text.
 > A listener closing Apple's or Google's own sheet is not an error at all.
 
 ---

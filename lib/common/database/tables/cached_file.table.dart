@@ -30,6 +30,11 @@ class CachedFileTable extends Table {
   /// What eviction sorts by: the least recently played track goes first.
   DateTimeColumn get lastUsedAt => dateTime()();
 
+  /// Downloaded on purpose, for listening offline: never evicted, and not
+  /// thrown away by the settings' "Clear" either. Only taking the download
+  /// back lets it go.
+  BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
+
   /// Always true — nothing here is a local change the server has not seen.
   /// Kept for the shape every table in `docs/04` has.
   BoolColumn get isSynced => boolean().withDefault(const Constant(true))();

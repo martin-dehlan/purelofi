@@ -3,13 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../domain/track.entity.dart';
+import 'cached_picture.widget.dart';
 import 'now_playing_bars.widget.dart';
 
-/// A track's round cover at the start of its row.
+/// A track's cover at the start of its row: a square with softened
+/// corners, as artwork is made and as music apps show it. Cutting it round
+/// would lose the corners, and the signature often sits there.
 ///
-/// The listener's own files show the cover from their tags. Anything
-/// without artwork — PureLofi's tracks, where the scene is the picture, and
-/// files with no cover tagged — shows a record. Not a waveform: bars are
+/// PureLofi's tracks show the artwork their artist made for them, the
+/// listener's own files the cover from their tags. Anything without
+/// artwork shows a record. Not a waveform: bars are
 /// what marks the track that is playing, and a cover drawn the same way
 /// would make every row look like it was. The one playing is marked on top.
 class TrackCover extends StatelessWidget {
@@ -27,32 +30,46 @@ class TrackCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Widget record = CustomPaint(
-      painter: _RecordPainter(
-        disc: cs.surfaceContainerHighest,
-        grooves: cs.onSurfaceVariant.withValues(alpha: 0.25),
-        label: cs.primary.withValues(alpha: 0.8),
-        hole: cs.surface,
+    // A record on a sleeve: the stand-in sits on the same square, so a list
+    // with and without artwork keeps one shape.
+    final Widget record = ColoredBox(
+      color: cs.surfaceContainerHigh,
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.08),
+        child: CustomPaint(
+          painter: _RecordPainter(
+            disc: cs.surfaceContainerHighest,
+            grooves: cs.onSurfaceVariant.withValues(alpha: 0.25),
+            label: cs.primary.withValues(alpha: 0.8),
+            hole: cs.surface,
+          ),
+        ),
       ),
     );
     final String? path = track.coverPath;
+    final String? url = track.coverUrl;
+    final int pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
-    return ClipOval(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.12),
       child: SizedBox.square(
         dimension: size,
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            if (path == null)
-              record
-            else
+            if (path != null)
               Image.file(
                 File(path),
                 fit: BoxFit.cover,
-                cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                    .round(),
+                cacheWidth: pixels,
                 errorBuilder: (_, _, _) => record,
-              ),
+              )
+            else if (url != null)
+              // A skeleton while it loads, the record for good if it will
+              // not.
+              CachedPicture(url: url, decodeWidth: pixels, fallback: record)
+            else
+              record,
             if (isCurrent)
               ColoredBox(
                 color: cs.scrim.withValues(alpha: 0.6),
@@ -68,8 +85,8 @@ class TrackCover extends StatelessWidget {
 }
 
 /// A record seen from above: the disc, a few grooves, the label and the
-/// hole. Every PureLofi track gets the same one — they have no artwork, and
-/// a made-up picture per track would be decoration pretending to be content.
+/// hole. Every track without artwork gets the same one — a made-up picture
+/// per track would be decoration pretending to be content.
 class _RecordPainter extends CustomPainter {
   _RecordPainter({
     required this.disc,

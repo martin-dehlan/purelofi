@@ -9,8 +9,10 @@ import 'google_mark.widget.dart';
 /// The ways in, stacked: Apple (where there is a native Apple sheet), Google
 /// (where it is set up), and email, which always works.
 ///
-/// Apple's button is Apple's own, as its guidelines ask; the other two take
-/// its shape and height so the three read as one set.
+/// Apple's is drawn here rather than taken from the plugin: its own button
+/// sets the label at nearly half the button's height, which put it a size
+/// above the two under it. Apple allows a custom button that keeps the logo,
+/// the wording and a white or black fill.
 class SignInOptions extends StatelessWidget {
   const SignInOptions({
     required this.showApple,
@@ -41,13 +43,19 @@ class SignInOptions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (showApple) ...<Widget>[
-          SignInWithAppleButton(
-            text: 'Continue with Apple',
-            height: AuthButton.heightFor(context),
-            style: SignInWithAppleButtonStyle.white,
-            borderRadius: BorderRadius.circular(
-              AuthButton.heightFor(context) / 2,
+          AuthButton(
+            label: 'Continue with Apple',
+            primary: true,
+            leading: SizedBox(
+              width: context.fontL * (25 / 31),
+              height: context.fontL,
+              child: CustomPaint(
+                painter: AppleLogoPainter(
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+              ),
             ),
+            busy: busy == SignInMethod.apple,
             onPressed: idle ? onApple : null,
           ),
           SizedBox(height: gap),

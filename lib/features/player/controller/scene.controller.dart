@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../common/analytics/analytics.provider.dart';
 
 import '../dev/test_scene.dart';
+import '../../pro/controller/pro.controller.dart';
 import '../domain/scene.entity.dart';
 import 'player.provider.dart';
 
@@ -53,13 +54,36 @@ class ActiveSceneController extends _$ActiveSceneController {
         .value;
     if (scenes == null || scenes.isEmpty) return null;
 
-    return scenes.reduce(
-      (SceneEntity a, SceneEntity b) => a.sortOrder <= b.sortOrder ? a : b,
-    );
+    // Pro ran out — an expiry, a refund — while a Pro scene was showing:
+    // back to the first room, which is always free. The music plays on.
+    ref.listen<Set<String>>(lockedScenesProvider, (_, Set<String> locked) {
+      final SceneEntity? showing = state;
+      if (showing != null && locked.contains(showing.id)) {
+        state = _first(scenes);
+      }
+    });
+
+    return _first(scenes);
   }
 
-  void switchTo(SceneEntity scene) {
+  static SceneEntity _first(List<SceneEntity> scenes) => scenes.reduce(
+    (SceneEntity a, SceneEntity b) => a.sortOrder <= b.sortOrder ? a : b,
+  );
+
+  /// Shows [scene], unless it is a Pro scene this listener cannot open yet
+  /// (#16) — then nothing changes and it returns `false`, for the caller to
+  /// offer Pro instead.
+  ///
+  /// [justBought] is the paywall saying the purchase went through: the new
+  /// status is on its way through RevenueCat's stream, and the room the
+  /// listener paid for should not have to wait for it.
+  bool switchTo(SceneEntity scene, {bool justBought = false}) {
+    if (!justBought && ref.read(lockedScenesProvider).contains(scene.id)) {
+      return false;
+    }
+
     state = scene;
     unawaited(ref.read(analyticsServiceProvider).sceneSwitched(scene.id));
+    return true;
   }
 }

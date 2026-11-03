@@ -11,7 +11,7 @@ import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/player_controls.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_background.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/settings_button.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
@@ -100,7 +100,7 @@ void main() {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
 
-      expect(find.byType(SettingsButton), findsOneWidget);
+      expect(find.byType(MenuButton), findsOneWidget);
     });
 
     testWidgets('a track list that loads normally still shows the button', (
