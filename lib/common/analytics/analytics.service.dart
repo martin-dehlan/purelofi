@@ -76,6 +76,9 @@ abstract final class AnalyticsEvents {
   static const String purchaseFailed = 'purchase_failed';
   static const String restoreTapped = 'restore_tapped';
   static const String restoreCompleted = 'restore_completed';
+
+  // The focus timer (#137): whether people use it, and which plan.
+  static const String focusStarted = 'focus_started';
 }
 
 /// Sends events to PostHog.

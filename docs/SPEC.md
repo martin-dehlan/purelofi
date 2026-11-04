@@ -105,7 +105,10 @@ common/
 - `just_audio` streams tracks continuously; random next-track selection.
 - Pixel play/pause overlay (`play_icon.png` / `pause_icon.png`).
 - Controls auto-hide after 4s of inactivity; tap to reveal.
-- Room page (the gear) → the rooms as covers to pick, sleep timer, settings and the account, all on one page.
+- Room page (the gear) → the rooms as covers to pick, focus timer, sleep timer, settings and the account, all on one page.
+- Focus timer (#137): 25/5 or 50/10, a chime at each switch, the music steps back to 40% during a break.
+- Sleep timer fades the music out over its last 30 s before it pauses (#138).
+- Soft transitions (#139): a track fades out over its last 4 s, the one after it comes in over 2 s; skips and repeat-one never fade. Off in the settings.
 - Info/camera icon (`camera_icon.png`) → BTS modal.
 
 **BTS modal**

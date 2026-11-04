@@ -15,6 +15,7 @@ import '../../domain/playback_mode.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
+import 'focus_status.widget.dart';
 import 'queue_sheet.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
@@ -74,6 +75,7 @@ class PlayerControls extends ConsumerWidget {
         children: <Widget>[
           _Progress(track: track),
           const _BackToPureLofi(),
+          const FocusStatus(),
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
