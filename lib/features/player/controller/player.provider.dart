@@ -8,12 +8,14 @@ import '../../../common/config/supabase.provider.dart';
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/cached_file.dao.dart';
+import '../../../common/database/daos/followed_artist.dao.dart';
 import '../../../common/database/daos/mood.dao.dart';
 import '../../../common/database/daos/playlist.dao.dart';
 import '../../../common/database/daos/play_event.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
+import '../data/follows.impl.dart';
 import '../data/mix_preferences.service.impl.dart';
 import '../data/mood.repository.impl.dart';
 import '../data/playlist.repository.impl.dart';
@@ -131,6 +133,16 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// The artists the listener follows, on the device (#147).
+@Riverpod(keepAlive: true)
+DeviceFollows deviceFollows(Ref ref) =>
+    DeviceFollows(FollowedArtistDao(ref.watch(appDatabaseProvider)));
+
+/// The account's follows (#147).
+@Riverpod(keepAlive: true)
+AccountFavorites accountFollows(Ref ref) =>
+    FollowsApi(ref.watch(supabaseClientProvider));
 
 /// PureLofi's moods (#141), with an offline copy.
 @Riverpod(keepAlive: true)

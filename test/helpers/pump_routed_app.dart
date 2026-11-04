@@ -15,6 +15,7 @@ import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
 import 'fake_collections.dart';
+import 'fake_follows.dart';
 import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
@@ -85,6 +86,8 @@ List<Override> _fakeLibrary(
   final FakePlaylistRepository playlists =
       playlistStore ?? FakePlaylistRepository();
   addTearDown(playlists.dispose);
+  final FakeDeviceFollows follows = FakeDeviceFollows();
+  addTearDown(follows.dispose);
   final FakeNewContentRepository seen =
       newContent ?? FakeNewContentRepository();
   addTearDown(seen.dispose);
@@ -102,6 +105,8 @@ List<Override> _fakeLibrary(
     playlistRepositoryProvider.overrideWithValue(playlists),
     devicePlaylistsProvider.overrideWithValue(playlists),
     accountPlaylistsProvider.overrideWithValue(FakeAccountPlaylists()),
+    deviceFollowsProvider.overrideWithValue(follows),
+    accountFollowsProvider.overrideWithValue(FakeAccountFollows()),
   ];
 }
 
