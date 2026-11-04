@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:purelofi/common/errors/app_error.dart';
 import 'package:purelofi/features/player/domain/ambient_loop.dart';
 import 'package:purelofi/features/player/domain/audio_player.service.dart';
+import 'package:purelofi/features/player/domain/media_library.dart';
 import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/domain/volume_layer.dart';
@@ -126,6 +127,12 @@ class FakeAudioPlayerService implements AudioPlayerService {
       softTransitions = enabled;
 
   int chimes = 0;
+
+  /// What media browsers were handed.
+  MediaLibrary? library;
+
+  @override
+  void setLibrary(MediaLibrary library) => this.library = library;
 
   /// The room's sounds last handed over.
   List<AmbientLoop> ambience = const <AmbientLoop>[];

@@ -6,6 +6,7 @@ import 'common/utils/app_fonts.dart';
 import 'features/player/controller/collections.controller.dart';
 import 'features/player/controller/favorites_sync.controller.dart';
 import 'features/player/controller/follows.controller.dart';
+import 'features/player/controller/media_library.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
 import 'features/player/controller/play_history.controller.dart';
@@ -80,6 +81,8 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(roomMusicProvider);
     // Followed artists follow a signed-in listener too (#147).
     ref.watch(followSyncControllerProvider);
+    // What Android Auto and other media browsers can open (#145).
+    ref.watch(mediaLibraryProvider);
 
     return MaterialApp.router(
       title: 'PureLofi',

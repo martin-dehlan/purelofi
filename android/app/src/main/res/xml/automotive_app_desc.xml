@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto (#145): PureLofi is a media app. Its browse tree comes
+     from audio_service's MediaBrowserService, filled from Dart. -->
+<automotiveApp>
+    <uses name="media"/>
+</automotiveApp>

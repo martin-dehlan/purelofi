@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/data/audio_player.service.impl.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:purelofi/features/player/domain/ambient_loop.dart';
+import 'package:purelofi/features/player/domain/media_library.dart';
 import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/domain/volume_layer.dart';
@@ -13,6 +15,21 @@ import 'package:purelofi/features/player/domain/volume_layer.dart';
 class _MockPlayer extends Mock implements AudioPlayer {}
 
 class _FakeSource extends Fake implements AudioSource {}
+
+class _Library implements MediaLibrary {
+  final List<String> played = <String>[];
+
+  @override
+  Future<List<BrowseNode>> children(String parentId) async =>
+      parentId == BrowseIds.root
+      ? const <BrowseNode>[BrowseNode(id: BrowseIds.rooms, title: 'Rooms')]
+      : const <BrowseNode>[
+          BrowseNode(id: 'room:r', title: 'Rainy Room', playable: true),
+        ];
+
+  @override
+  Future<void> play(String id) async => played.add(id);
+}
 
 /// The audio service's volume (#137, #138, #139): the playhead, the end of a
 /// track and the app's own layers, all reaching the one player.
@@ -247,5 +264,41 @@ void main() {
         verify(loop.dispose).called(1);
       });
     });
+  });
+
+  group('media browsers (#145)', () {
+    test('the root and its folders come from the app\'s library', () async {
+      final _Library library = _Library();
+      service.setLibrary(library);
+
+      final List<MediaItem> top = await service.getChildren(
+        AudioService.browsableRootId,
+      );
+      expect(top.single.title, 'Rooms');
+      expect(top.single.playable, isFalse);
+
+      final List<MediaItem> rooms = await service.getChildren(BrowseIds.rooms);
+      expect(rooms.single.id, 'room:r');
+      expect(rooms.single.playable, isTrue);
+    });
+
+    test('playing an entry is the app\'s to decide', () async {
+      final _Library library = _Library();
+      service.setLibrary(library);
+
+      await service.playFromMediaId('room:r');
+
+      expect(library.played, <String>['room:r']);
+    });
+
+    test(
+      'before the app has handed one over, there is nothing to browse',
+      () async {
+        expect(
+          await service.getChildren(AudioService.browsableRootId),
+          isEmpty,
+        );
+      },
+    );
   });
 }
