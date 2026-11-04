@@ -437,3 +437,10 @@ the room page.
   it to the room in `scene_ambients` with the level it starts at
   (`default_level`, 0–1; rain behind a closed window ≈ 0.4, a fire in the
   room ≈ 0.3).
+
+## The room's mood (#143)
+
+`scene.json` may name a mood by its slug: `"mood": "rainy-evenings"`. The
+upload tool looks it up and fails if it does not exist. With "Music follows
+the room" on in the settings, the stream plays that mood while the listener
+is in the room; a mood or playlist they picked themselves always wins.

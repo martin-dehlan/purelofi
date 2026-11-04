@@ -18,6 +18,7 @@ import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
+import '../../controller/room_music.controller.dart';
 import '../../controller/soft_transitions.controller.dart';
 
 /// The few things about the app a listener may want differently: whether
@@ -139,6 +140,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool softTransitions =
         ref.watch(softTransitionsControllerProvider).value ?? true;
+    final bool followRoom =
+        ref.watch(followRoomControllerProvider).value ?? false;
     final bool hasHistory =
         ref.watch(recentPlaysProvider).value?.isNotEmpty ?? false;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
@@ -183,6 +186,22 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                 ref
                     .read(softTransitionsControllerProvider.notifier)
                     .set(!softTransitions),
+              ),
+            ),
+            MenuRow(
+              glyph: AppGlyph.scene,
+              title: 'Music follows the room',
+              subtitle: 'Each room plays its own mood',
+              trailing: Switch(
+                value: followRoom,
+                onChanged: (bool on) => unawaited(
+                  ref.read(followRoomControllerProvider.notifier).set(on),
+                ),
+              ),
+              onTap: () => unawaited(
+                ref
+                    .read(followRoomControllerProvider.notifier)
+                    .set(!followRoom),
               ),
             ),
             // The log behind "Recently played" (#142): only ever on the

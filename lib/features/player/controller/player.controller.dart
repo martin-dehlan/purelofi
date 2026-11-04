@@ -315,6 +315,16 @@ class PlayerController extends _$PlayerController {
     }
   }
 
+  /// Holds the stream to [scope] from the next track on, without cutting
+  /// the one playing (#143): the room changed, the music follows at the
+  /// next turn. `null` lets go of a room's scope.
+  Future<void> followScope(PlaybackScope? scope) async {
+    if (ref.read(playbackScopeControllerProvider) == scope) return;
+    ref.read(playbackScopeControllerProvider.notifier).select(scope);
+    _played.clear();
+    await replan();
+  }
+
   /// Back from a mood or playlist to everything on the current side.
   /// The side carries on from the track playing: a playlist can end on
   /// one of the listener's own.

@@ -6,7 +6,16 @@ class FakePlaybackPreferences implements PlaybackPreferences {
   FakePlaybackPreferences([
     this.stored = PlaybackMode.shuffle,
     this.softTransitions = true,
+    this.followRoom = false,
   ]);
+
+  bool followRoom;
+
+  @override
+  Future<bool> loadFollowRoom() async => followRoom;
+
+  @override
+  Future<void> saveFollowRoom(bool enabled) async => followRoom = enabled;
 
   bool softTransitions;
 

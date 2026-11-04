@@ -142,9 +142,13 @@ class SceneManifest {
     required this.canvasWidth,
     required this.canvasHeight,
     required this.layers,
+    this.mood,
   });
 
   final String title;
+
+  /// The slug of the mood the room plays (#143), if it names one.
+  final String? mood;
   final int canvasWidth;
   final int canvasHeight;
 
@@ -235,6 +239,7 @@ class SceneManifest {
       canvasWidth: (canvas['width'] as num?)?.toInt() ?? 320,
       canvasHeight: (canvas['height'] as num?)?.toInt() ?? 696,
       layers: layers,
+      mood: json['mood'] as String?,
     );
   }
 }
