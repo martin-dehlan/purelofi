@@ -15,6 +15,15 @@ One page and three legal pages, plain HTML, no build step.
   **drafts**: replace every `[PLACEHOLDER]` and have them reviewed before
   publishing.
 
+- `listen.html`, `listen.css`, `listen.js`: the web player (#150). One room
+  at a time from `scenes.js`, PureLofi's tracks shuffled from Supabase, the
+  system's media keys. No account, no Pro, no downloads: a taste of the app.
+  It needs `config.js` filled in at deploy time with the project URL and
+  the **public anon key** (the same two values as the app's `.env`; never
+  the service-role key). Left empty, the page says it is not on yet.
+  The CSP in `vercel.json` allows `connect-src` and `media-src` to
+  `https://*.supabase.co` for it.
+
 `vercel.json` gives clean URLs (`/privacy` instead of `/privacy.html`).
 Deploy the folder with the Vercel CLI (framework: Other) and point
 `purelofi.app` at it.
