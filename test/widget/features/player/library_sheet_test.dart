@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
+import 'package:purelofi/features/player/domain/play_event.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_sheet.widget.dart';
@@ -11,6 +12,7 @@ import 'package:purelofi/features/player/presentation/widgets/mini_player.widget
 import 'package:purelofi/features/player/presentation/widgets/track_cover.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
+import '../../../helpers/fake_play_history.repository.dart';
 import '../../../helpers/mock_repositories.dart';
 import '../../../helpers/pump_routed_app.dart';
 
@@ -170,5 +172,57 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(LibrarySheet), findsNothing);
+  });
+
+  group('recently played (#142)', () {
+    Future<void> openOverview(
+      WidgetTester tester,
+      FakePlayHistoryRepository history,
+    ) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpRoutedApp(overrides: overrides(), playHistory: history);
+      await tester.pumpAndSettle();
+      await openLibrary(tester);
+    }
+
+    testWidgets('is not offered before anything was heard', (tester) async {
+      await openOverview(tester, FakePlayHistoryRepository());
+
+      expect(find.text('Recently played'), findsNothing);
+    });
+
+    testWidgets('lists what was heard, newest first, each once', (
+      tester,
+    ) async {
+      final DateTime now = DateTime(2026, 11, 4, 20);
+      PlayEventEntity play(int id, String trackId, int minutesAgo) =>
+          PlayEventEntity(
+            id: id,
+            trackId: trackId,
+            source: TrackSource.catalogue,
+            startedAt: now.subtract(Duration(minutes: minutesAgo)),
+            listenedSeconds: 60,
+          );
+      await openOverview(
+        tester,
+        FakePlayHistoryRepository(<PlayEventEntity>[
+          play(1, 'a', 30),
+          play(2, 'b', 20),
+          play(3, 'a', 10),
+        ]),
+      );
+
+      expect(find.text('Recently played'), findsOneWidget);
+
+      await tester.tap(find.text('Recently played'));
+      await tester.pumpAndSettle();
+
+      final double dusk = tester.getTopLeft(row('Dusk Tape')).dy;
+      final double bass = tester.getTopLeft(row('Slow Bass')).dy;
+      expect(dusk, lessThan(bass));
+      expect(row('Dusk Tape'), findsOneWidget);
+    });
   });
 }

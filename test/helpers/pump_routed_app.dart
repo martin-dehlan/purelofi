@@ -17,6 +17,7 @@ import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
+import 'fake_play_history.repository.dart';
 import 'fake_playback_preferences.dart';
 import 'fake_pro.repository.dart';
 import 'fake_track_picker.dart';
@@ -66,10 +67,14 @@ Override _fakeWelcome(FakeWelcomePreferences? preferences) {
 /// it cannot answer.
 List<Override> _fakeLibrary(
   FakeLibraryRepository? library,
-  FakeTrackPicker? picker,
-) {
+  FakeTrackPicker? picker, [
+  FakePlayHistoryRepository? playHistory,
+]) {
   final FakeLibraryRepository fake = library ?? FakeLibraryRepository();
   addTearDown(fake.dispose);
+  final FakePlayHistoryRepository history =
+      playHistory ?? FakePlayHistoryRepository();
+  addTearDown(history.dispose);
 
   return <Override>[
     libraryRepositoryProvider.overrideWithValue(fake),
@@ -77,6 +82,7 @@ List<Override> _fakeLibrary(
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
     displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
+    playHistoryRepositoryProvider.overrideWithValue(history),
   ];
 }
 
@@ -107,6 +113,7 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakePlayHistoryRepository? playHistory,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -116,7 +123,7 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker),
+          ..._fakeLibrary(library, picker, playHistory),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -143,6 +150,7 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakePlayHistoryRepository? playHistory,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -152,7 +160,7 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker),
+          ..._fakeLibrary(library, picker, playHistory),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),

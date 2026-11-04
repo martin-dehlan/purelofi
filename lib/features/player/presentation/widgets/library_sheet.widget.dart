@@ -9,6 +9,7 @@ import '../../../library/presentation/widgets/my_music.widget.dart';
 import '../../controller/artist.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
+import '../../controller/play_history.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -24,12 +25,15 @@ import 'track_tile.widget.dart';
 /// One kind of thing in the library. None chosen is the overview.
 enum LibraryFilter { tracks, artists, downloaded, local }
 
-/// A page that slides in over the library: an artist's, or the favourites.
+/// A page that slides in over the library: an artist's, the favourites, or
+/// what was played lately (#142).
 class _LibraryPage {
-  const _LibraryPage.artist(String this.artistId);
-  const _LibraryPage.favorites() : artistId = null;
+  const _LibraryPage.artist(String this.artistId) : recent = false;
+  const _LibraryPage.favorites() : artistId = null, recent = false;
+  const _LibraryPage.recent() : artistId = null, recent = true;
 
   final String? artistId;
+  final bool recent;
 }
 
 /// "Your Library", the way music apps lay theirs out (#110): a big title
@@ -236,6 +240,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
               : switch (filter) {
                   null => _Overview(
                     onFavorites: () => _open(const _LibraryPage.favorites()),
+                    onRecent: () => _open(const _LibraryPage.recent()),
                   ),
                   LibraryFilter.tracks => _Tracks(
                     tracks: catalogue,
@@ -306,12 +311,15 @@ class _PageFrame extends StatelessWidget {
                     ),
                   ),
                   if (artistId == null)
-                    Text(
-                      'Favorites',
-                      style: TextStyle(
-                        color: cs.onSurface,
-                        fontSize: context.fontXl,
-                        fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Text(
+                        page.recent ? 'Recent' : 'Favorites',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: cs.onSurface,
+                          fontSize: context.fontXl,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                 ],
@@ -320,6 +328,8 @@ class _PageFrame extends StatelessWidget {
             Expanded(
               child: artistId != null
                   ? ArtistSheet(artistId: artistId)
+                  : page.recent
+                  ? const _RecentPage()
                   : const _FavoritesPage(),
             ),
           ],
@@ -349,6 +359,31 @@ class _FavoritesPage extends ConsumerWidget {
             empty:
                 'Nothing marked yet. Tap ⋯ on a track, or the heart '
                 'beside the one playing.',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// What was played lately, each track once, newest first (#142).
+class _RecentPage extends ConsumerWidget {
+  const _RecentPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            context.horizontalPadding,
+            context.spaceS,
+            context.horizontalPadding,
+            context.spaceXl,
+          ),
+          sliver: _Tracks(
+            tracks: ref.watch(recentlyPlayedTracksProvider),
+            empty: 'Nothing played yet.',
           ),
         ),
       ],
@@ -404,15 +439,17 @@ class _SearchField extends StatelessWidget {
 /// Everything at a glance: the favourites pinned on top in the accent, as
 /// music apps set liked songs apart, then every artist.
 class _Overview extends ConsumerWidget {
-  const _Overview({required this.onFavorites});
+  const _Overview({required this.onFavorites, required this.onRecent});
 
   final VoidCallback onFavorites;
+  final VoidCallback onRecent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final int favorites = ref.watch(favoriteTracksProvider).length;
     final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
+    final List<TrackEntity> recent = ref.watch(recentlyPlayedTracksProvider);
 
     return SliverList.list(
       children: <Widget>[
@@ -429,6 +466,21 @@ class _Overview extends ConsumerWidget {
           subtitle: favorites == 1 ? '1 track' : '$favorites tracks',
           onTap: onFavorites,
         ),
+        // Only once something was heard: an empty row is a promise.
+        if (recent.isNotEmpty)
+          _Row(
+            tile: _Tile(
+              background: cs.surfaceContainerHighest,
+              child: AppIcon(
+                AppGlyph.timer,
+                size: context.fontXl,
+                color: cs.onSurface,
+              ),
+            ),
+            title: 'Recently played',
+            subtitle: recent.first.title,
+            onTap: onRecent,
+          ),
         for (final ArtistEntity artist in artists)
           _Row(
             tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
