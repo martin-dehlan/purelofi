@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'common/routes/app_router.dart';
 import 'common/utils/app_fonts.dart';
+import 'features/player/controller/collections.controller.dart';
 import 'features/player/controller/favorites_sync.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
@@ -71,6 +72,8 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(newContentMarkerProvider);
     // The listener's mix, and the room's sounds from the first second (#136).
     ref.watch(mixControllerProvider);
+    // Playlists follow a signed-in listener to every device (#141).
+    ref.watch(playlistSyncControllerProvider);
 
     return MaterialApp.router(
       title: 'PureLofi',
