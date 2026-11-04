@@ -52,7 +52,7 @@ void main() {
 
       expect(auth.calls, <String>['google']);
       expect(find.text('listener@example.com'), findsOneWidget);
-      expect(find.text('Signed in with Google'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'(^|· )Google$')), findsOneWidget);
     });
 
     testWidgets('closing the native sheet shows no error', (tester) async {
@@ -119,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(auth.calls, <String>['sign in me@example.com secret123']);
-      expect(find.text('Signed in with email'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'(^|· )Email$')), findsOneWidget);
     });
 
     testWidgets('a wrong password says so and stays', (tester) async {
@@ -162,7 +162,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(auth.calls.last, 'confirm me@example.com 123456');
-      expect(find.text('Signed in with email'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'(^|· )Email$')), findsOneWidget);
     });
 
     testWidgets('an unconfirmed address goes on to the code', (tester) async {
@@ -209,7 +209,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(auth.calls.last, 'reset me@example.com 654321 new secret');
-      expect(find.text('Signed in with email'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'(^|· )Email$')), findsOneWidget);
     });
   });
 
@@ -226,7 +226,7 @@ void main() {
 
       expect(find.text('Martin'), findsOneWidget);
       expect(find.text('martin@example.com'), findsOneWidget);
-      expect(find.text('Signed in with Apple'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'(^|· )Apple$')), findsOneWidget);
     });
 
     testWidgets('the profile shows an initial and since when', (tester) async {
@@ -238,13 +238,13 @@ void main() {
       );
 
       expect(find.text('M'), findsOneWidget);
-      expect(find.text('Member since October 2026'), findsOneWidget);
+      expect(find.text('Since October 2026 · Apple'), findsOneWidget);
     });
 
     testWidgets('no date known, no member line', (tester) async {
       await open(tester, FakeAuthRepository(signedIn: account));
 
-      expect(find.textContaining('Member since'), findsNothing);
+      expect(find.textContaining('Since'), findsNothing);
     });
 
     testWidgets('signs out', (tester) async {

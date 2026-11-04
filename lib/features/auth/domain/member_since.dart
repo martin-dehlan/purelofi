@@ -21,3 +21,7 @@ String memberSinceLabel(DateTime createdAt) {
   final DateTime local = createdAt.toLocal();
   return 'Member since ${_months[local.month - 1]} ${local.year}';
 }
+
+/// "Since November 2026", for a line that already says whose account it is.
+String sinceLabel(DateTime createdAt) =>
+    memberSinceLabel(createdAt).replaceFirst('Member since', 'Since');

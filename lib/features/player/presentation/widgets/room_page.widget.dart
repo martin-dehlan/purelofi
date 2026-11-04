@@ -12,6 +12,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../common/widgets/legal_links.widget.dart';
 import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
+import '../../../auth/presentation/widgets/account_actions.widget.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_plan.entity.dart';
@@ -24,7 +25,8 @@ import 'sleep_timer_chips.widget.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
-/// to tell someone about it or tell us. The legal links at the foot (#95).
+/// to tell someone about it or tell us. The way out of an account and the
+/// legal links at the foot (#95). No title: the sheet is the room's.
 ///
 /// One sheet with everything open, not a menu of menus: each choice is a
 /// tap where it is shown. It is always the same height, so nothing jumps
@@ -85,25 +87,10 @@ class RoomPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.horizontalPadding,
-              0,
-              context.horizontalPadding,
-              context.spaceM,
-            ),
-            child: Text(
-              'Your room',
-              style: TextStyle(
-                color: cs.onSurface,
-                fontFamily: AppFonts.wordmark,
-                fontSize: context.fontXl,
-              ),
-            ),
-          ),
-          // Who is listening, right here: the ways in, or the account and
-          // the way out. No second sheet to open. Pro is a pill in it, only
-          // where Pro can be bought (#16).
+          // Who is listening, first: the ways in, or who it is. Pro is a
+          // pill at the row's end, only where Pro can be bought (#16). The
+          // ways out are rows at the foot ([AccountActions]).
+          SizedBox(height: context.spaceXs),
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: context.horizontalPadding,
@@ -115,8 +102,9 @@ class RoomPage extends ConsumerWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: Padding(
-                padding: EdgeInsets.all(context.spaceL),
+                padding: EdgeInsets.all(context.spaceM),
                 child: AccountPanel(
+                  actions: false,
                   badge: !sellsPro
                       ? null
                       : ProPill(
@@ -164,6 +152,8 @@ class RoomPage extends ConsumerWidget {
               ),
             ],
           ),
+          SizedBox(height: context.spaceM),
+          const AccountActions(),
           SizedBox(height: context.spaceM),
           const LegalLinks(),
           Text(
