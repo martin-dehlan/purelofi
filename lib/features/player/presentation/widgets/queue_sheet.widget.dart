@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../common/utils/responsive.dart';
 import 'music_sheet.dart';
 import 'up_next.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// What plays now and next, opened from the player the way every music app
 /// keeps its queue beside the controls rather than inside the library.
@@ -25,7 +26,7 @@ class QueueSheet extends StatelessWidget {
           ),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Queue',
+              context.l10n.queue,
               style: TextStyle(
                 fontSize: context.fontXl,
                 fontWeight: FontWeight.w700,

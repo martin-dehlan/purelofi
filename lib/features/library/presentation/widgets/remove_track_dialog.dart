@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../player/domain/track.entity.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Asks before removing one of the listener's own tracks.
 ///
@@ -10,18 +11,16 @@ Future<bool> confirmRemoveTrack(BuildContext context, TrackEntity track) async {
   final bool? remove = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) => AlertDialog(
-      title: Text('Remove "${track.title}"?'),
-      content: const Text(
-        'This deletes the copy in PureLofi. The file on your phone stays.',
-      ),
+      title: Text(context.l10n.removeTrackQuestion(track.title)),
+      content: Text(context.l10n.removeTrackExplain),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keep'),
+          child: Text(context.l10n.keep),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Remove'),
+          child: Text(context.l10n.remove),
         ),
       ],
     ),

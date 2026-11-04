@@ -26,6 +26,7 @@ import 'focus_timer_chips.widget.dart';
 import 'sleep_timer_chips.widget.dart';
 import 'sound_mix.widget.dart';
 import 'week_line.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
@@ -115,13 +116,13 @@ class RoomPage extends ConsumerWidget {
                       : ProPill(
                           label: pro.isPro
                               ? switch (pro.plan) {
-                                  PlanPeriod.yearly => 'Pro · yearly',
-                                  PlanPeriod.monthly => 'Pro · monthly',
+                                  PlanPeriod.yearly => context.l10n.proYearly,
+                                  PlanPeriod.monthly => context.l10n.proMonthly,
                                   null => 'Pro',
                                 }
                               : switch (trial) {
-                                  final int days => '$days days free',
-                                  null => 'Get Pro',
+                                  final int days => context.l10n.daysFree(days),
+                                  null => context.l10n.getPro,
                                 },
                           filled: !pro.isPro,
                           onTap: pro.isPro
@@ -136,24 +137,24 @@ class RoomPage extends ConsumerWidget {
               ),
             ),
           ),
-          heading('Room'),
+          heading(context.l10n.room),
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
           // Only once something was heard this week (#151).
           const WeekLine(),
-          heading('Sound'),
+          heading(context.l10n.sound),
           const MenuGroup(children: <Widget>[SoundMix()]),
-          heading('Focus'),
+          heading(context.l10n.focus),
           const MenuGroup(children: <Widget>[FocusTimerChips()]),
-          heading('Sleep timer'),
+          heading(context.l10n.sleepTimer),
           const MenuGroup(children: <Widget>[SleepTimerChips()]),
           // The room alone on a stand, the screen kept on (#149).
           MenuGroup(
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.scene,
-                title: 'Window mode',
-                subtitle: 'Just the room, the screen stays on',
+                title: context.l10n.windowMode,
+                subtitle: context.l10n.justTheRoomTheScreenStays,
                 onTap: () {
                   Navigator.of(context).pop();
                   ref.read(windowModeControllerProvider.notifier).enter();
@@ -161,20 +162,20 @@ class RoomPage extends ConsumerWidget {
               ),
             ],
           ),
-          heading('Settings'),
+          heading(context.l10n.settings),
           const SettingsSection(),
           SizedBox(height: context.spaceL),
           MenuGroup(
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.share,
-                title: 'Share PureLofi',
+                title: context.l10n.sharePurelofi,
                 onTap: () => unawaited(onShare()),
               ),
               MenuRow(
                 glyph: AppGlyph.mail,
-                title: 'Send feedback',
-                subtitle: 'Ideas, bugs or a hello',
+                title: context.l10n.sendFeedback,
+                subtitle: context.l10n.ideasBugsOrAHello,
                 onTap: () => unawaited(AppLinks.open(AppLinks.feedback)),
               ),
             ],

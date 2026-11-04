@@ -20,6 +20,7 @@ import 'queue_sheet.widget.dart';
 import 'scope_line.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport —
 /// the play order on its left, the way into the music on its right.
@@ -56,7 +57,7 @@ class PlayerControls extends ConsumerWidget {
       return Padding(
         padding: EdgeInsets.all(context.spaceL),
         child: Text(
-          'No tracks yet.',
+          context.l10n.noTracksYet,
           textAlign: TextAlign.center,
           style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontM),
         ),
@@ -81,7 +82,7 @@ class PlayerControls extends ConsumerWidget {
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
-              error.userMessage,
+              error.userMessageIn(context.l10n),
               textAlign: TextAlign.center,
               style: TextStyle(color: cs.error, fontSize: context.fontS),
             ),
@@ -107,14 +108,14 @@ class PlayerControls extends ConsumerWidget {
               ),
               _TransportButton(
                 glyph: AppGlyph.previous,
-                label: 'Previous track',
+                label: context.l10n.previousTrack,
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).previous,
               ),
               SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: isPlaying ? AppGlyph.pause : AppGlyph.play,
-                label: isPlaying ? 'Pause' : 'Play',
+                label: isPlaying ? context.l10n.pause : context.l10n.play,
                 size: context.screenWidth * 0.13,
                 onTap: ref
                     .read(playerControllerProvider.notifier)
@@ -123,7 +124,7 @@ class PlayerControls extends ConsumerWidget {
               SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: AppGlyph.next,
-                label: 'Next track',
+                label: context.l10n.nextTrack,
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
               ),
@@ -132,7 +133,7 @@ class PlayerControls extends ConsumerWidget {
                   alignment: AlignmentDirectional.centerEnd,
                   child: _SheetButton(
                     glyph: AppGlyph.queue,
-                    label: 'Queue',
+                    label: context.l10n.queue,
                     onTap: () => showQueueSheet(context),
                   ),
                 ),
@@ -208,7 +209,7 @@ class _Progress extends ConsumerWidget {
             if (track != null)
               Semantics(
                 button: true,
-                label: 'More: ${track!.title}',
+                label: context.l10n.moreFor(track!.title),
                 excludeSemantics: true,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -308,11 +309,14 @@ class _ModeButton extends StatelessWidget {
   final PlaybackMode mode;
   final Future<void> Function() onTap;
 
-  static const Map<PlaybackMode, (AppGlyph, String)> _looks =
-      <PlaybackMode, (AppGlyph, String)>{
-        PlaybackMode.shuffle: (AppGlyph.shuffle, 'Shuffle'),
-        PlaybackMode.repeatOne: (AppGlyph.repeatOne, 'Repeat track'),
-        PlaybackMode.inOrder: (AppGlyph.inOrder, 'In order'),
+  static (AppGlyph, String) _looks(BuildContext context, PlaybackMode mode) =>
+      switch (mode) {
+        PlaybackMode.shuffle => (AppGlyph.shuffle, context.l10n.shuffle),
+        PlaybackMode.repeatOne => (
+          AppGlyph.repeatOne,
+          context.l10n.repeatTrack,
+        ),
+        PlaybackMode.inOrder => (AppGlyph.inOrder, context.l10n.inOrder),
       };
 
   @override
@@ -321,11 +325,11 @@ class _ModeButton extends StatelessWidget {
     final double size = context.screenWidth * 0.055;
     final double dot = size * 0.18;
     final bool marked = mode != PlaybackMode.inOrder;
-    final (AppGlyph glyph, String name) = _looks[mode]!;
+    final (AppGlyph glyph, String name) = _looks(context, mode);
 
     return Semantics(
       button: true,
-      label: 'Play order',
+      label: context.l10n.playOrder,
       value: name,
       excludeSemantics: true,
       child: GestureDetector(
@@ -413,7 +417,7 @@ class _BackToPureLofi extends ConsumerWidget {
     // One label, not the label and the line read out after it.
     return Semantics(
       button: true,
-      label: 'Back to PureLofi',
+      label: context.l10n.backToPurelofi,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -428,11 +432,11 @@ class _BackToPureLofi extends ConsumerWidget {
             TextSpan(
               children: <InlineSpan>[
                 TextSpan(
-                  text: 'Your music  ·  ',
+                  text: context.l10n.yourMusicPrefix,
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 TextSpan(
-                  text: 'Back to PureLofi',
+                  text: context.l10n.backToPurelofi,
                   style: TextStyle(color: cs.primary),
                 ),
               ],

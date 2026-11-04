@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:purelofi/l10n/l10n.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
@@ -167,6 +168,8 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(useMaterial3: true),
           builder: _stillMotion,
           home: child,
@@ -181,6 +184,7 @@ extension PumpRouted on WidgetTester {
   /// chrome as a listener does.
   Future<void> pumpRoutedApp({
     String initialRoute = '/',
+    Locale? locale,
     ThemeData? theme,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
@@ -214,6 +218,9 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: theme ?? ThemeData.dark(useMaterial3: true),
           builder: _stillMotion,
           routerConfig: GoRouter(

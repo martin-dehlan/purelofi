@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/common/utils/app_links.dart';
 import 'package:purelofi/common/widgets/legal_links.widget.dart';
+import 'package:purelofi/l10n/l10n.dart';
 
 void main() {
   testWidgets('each link opens its page on purelofi.app', (tester) async {
     final List<Uri> opened = <Uri>[];
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: LegalLinks(onOpen: (Uri uri) async => opened.add(uri)),
         ),

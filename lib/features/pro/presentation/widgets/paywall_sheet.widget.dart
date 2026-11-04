@@ -16,6 +16,7 @@ import '../../domain/pro.repository.dart';
 import '../../domain/pro_plan.entity.dart';
 import 'locked_rooms_strip.widget.dart';
 import 'plan_option.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// PureLofi Pro, offered once and plainly (#16): what it opens, the two
 /// plans as the store prices them, one button. No countdowns, no
@@ -61,15 +62,14 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
   /// first. `true` once there is an account to buy for.
   Future<bool> _signIn() async {
     if (_hasAccount) return true;
-    await showAccountSheet(
-      context,
-      reason: 'Pro stays with your account, on every phone you sign in on.',
-    );
+    await showAccountSheet(context, reason: context.l10n.proStaysWithAccount);
 
     return _hasAccount;
   }
 
   Future<void> _buy(ProPlan plan) async {
+    // Read before any await: the context may be gone after one.
+    final AppLocalizations l10n = context.l10n;
     if (!await _signIn() || !mounted) return;
     setState(() {
       _busy = true;
@@ -88,16 +88,18 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
         case PurchaseOutcome.cancelled:
           break;
         case PurchaseOutcome.pending:
-          _say('Waiting for the store to confirm. Pro opens when it does.');
+          _say(l10n.waitingForStore);
       }
     } on AppError catch (error) {
-      _say(error.userMessage, error: true);
+      _say(error.userMessageIn(l10n), error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _restore() async {
+    // Read before any await: the context may be gone after one.
+    final AppLocalizations l10n = context.l10n;
     if (!await _signIn() || !mounted) return;
     setState(() {
       _busy = true;
@@ -107,10 +109,10 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
       if (await _pro.restore()) {
         if (mounted) Navigator.of(context).pop();
       } else {
-        _say('No earlier purchase on this store account.');
+        _say(l10n.noEarlierPurchaseSentence);
       }
     } on AppError catch (error) {
-      _say(error.userMessage, error: true);
+      _say(error.userMessageIn(l10n), error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -151,7 +153,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
             // One big line in the middle and the reason under it, the way
             // the rest of the sheets open now.
             Text(
-              'PureLofi Pro',
+              context.l10n.purelofiPro,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: cs.onSurface,
@@ -162,9 +164,8 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
             SizedBox(height: context.spaceS),
             Text(
               rooms.isEmpty
-                  ? 'Every room, and your music offline.'
-                  : 'Every room, ${rooms.length} more to sit in, '
-                        'and your music offline.',
+                  ? context.l10n.everyRoomAndOffline
+                  : context.l10n.everyRoomMore(rooms.length),
               textAlign: TextAlign.center,
               style: quiet.copyWith(fontSize: context.fontM),
             ),
@@ -197,7 +198,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                             color: cs.primary.withValues(alpha: 0.16),
                           ),
                           child: Text(
-                            '$days days free. Cancel before, pay nothing.',
+                            context.l10n.trialBanner(days),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: cs.primary,
@@ -240,7 +241,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                   return Column(
                     children: <Widget>[
                       Text(
-                        'The plans could not be loaded.',
+                        context.l10n.plansDidNotLoad,
                         style: quiet,
                         textAlign: TextAlign.center,
                       ),
@@ -250,7 +251,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                         onPressed: () => setState(() {
                           _plans = _pro.plans();
                         }),
-                        child: const Text('Try again'),
+                        child: Text(context.l10n.tryAgain),
                       ),
                     ],
                   );
@@ -297,8 +298,8 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                               )
                             : Text(
                                 trial != null
-                                    ? 'Start $trial-day free trial'
-                                    : 'Get Pro',
+                                    ? context.l10n.startTrial(trial)
+                                    : context.l10n.getPro,
                                 style: TextStyle(
                                   fontSize: context.fontM,
                                   fontWeight: FontWeight.w600,
@@ -314,16 +315,14 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                         foregroundColor: cs.onSurface,
                       ),
                       child: Text(
-                        'Not now',
+                        context.l10n.notNow,
                         style: TextStyle(fontSize: context.fontM),
                       ),
                     ),
                     Text(
                       '${trial != null ? 'Free for $trial days, then ${chosen.price} ' : 'Renews at ${chosen.price} '}'
                       '${PlanOption.perFor(chosen.period)}. '
-                      'Cancel any time in your store settings. '
-                      'Pro stays with your PureLofi account, '
-                      'on every phone you sign in on.',
+                      '${context.l10n.paywallFinePrint}',
                       style: quiet,
                       textAlign: TextAlign.center,
                     ),
@@ -348,15 +347,15 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
               children: <Widget>[
                 TextButton(
                   onPressed: _busy ? null : _restore,
-                  child: const Text('Restore purchases'),
+                  child: Text(context.l10n.restorePurchases),
                 ),
                 TextButton(
                   onPressed: () => AppLinks.open(AppLinks.terms),
-                  child: const Text('Terms'),
+                  child: Text(context.l10n.terms),
                 ),
                 TextButton(
                   onPressed: () => AppLinks.open(AppLinks.privacy),
-                  child: const Text('Privacy'),
+                  child: Text(context.l10n.privacy),
                 ),
               ],
             ),

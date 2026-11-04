@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n.dart';
 
 /// Three dots lighting up one after the other: the app at work, where a
 /// button or a line of text waits on it. Never a spinning circle; this
@@ -44,7 +45,7 @@ class _LoadingDotsState extends State<LoadingDots>
     final double dot = widget.size * 0.3;
 
     return Semantics(
-      label: 'Loading',
+      label: context.l10n.loading,
       child: SizedBox(
         height: widget.size,
         child: AnimatedBuilder(

@@ -9,6 +9,7 @@ import '../../../player/domain/track.entity.dart';
 import '../../../player/presentation/widgets/track_tile.widget.dart';
 import '../../controller/library.controller.dart';
 import 'remove_track_dialog.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One of the listener's own tracks: tap to play, swipe to remove (#66).
 /// Removing is in its `⋯` too, for anyone who never thinks to swipe.
@@ -29,7 +30,7 @@ class LocalTrackRow extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: context.spaceM),
         color: cs.errorContainer,
         child: Text(
-          'Remove',
+          context.l10n.remove,
           style: TextStyle(color: cs.onErrorContainer, fontSize: context.fontS),
         ),
       ),

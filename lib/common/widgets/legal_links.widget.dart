@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_links.dart';
 import '../utils/responsive.dart';
+import '../../l10n/l10n.dart';
 
 /// Privacy, terms and imprint as three quiet links to purelofi.app.
 ///
@@ -32,9 +33,9 @@ class LegalLinks extends StatelessWidget {
     return Wrap(
       alignment: WrapAlignment.center,
       children: <Widget>[
-        link('Privacy', AppLinks.privacy),
-        link('Terms', AppLinks.terms),
-        link('Imprint', AppLinks.imprint),
+        link(context.l10n.privacy, AppLinks.privacy),
+        link(context.l10n.terms, AppLinks.terms),
+        link(context.l10n.imprint, AppLinks.imprint),
       ],
     );
   }

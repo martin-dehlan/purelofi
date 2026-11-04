@@ -9,6 +9,7 @@ import '../../domain/scene.entity.dart';
 import 'scene_layers.widget.dart';
 import 'scene_video.widget.dart';
 import 'startup_screen.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The fullscreen looping scene behind everything else.
 ///
@@ -45,7 +46,7 @@ class _ActiveScene extends ConsumerWidget {
     if (scene == null) {
       // Loaded fine, but there is no active scene. Say so: an unexplained
       // black screen is indistinguishable from a broken app.
-      return const EmptyState(message: 'No scenes yet.');
+      return EmptyState(message: context.l10n.noScenesYet);
     }
 
     // A scene with sprite layers is drawn; one without still plays video.

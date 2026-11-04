@@ -25,6 +25,7 @@ import 'artist_sheet.widget.dart';
 import 'support_artist_button.widget.dart';
 import 'library_scope.widget.dart';
 import 'track_cover.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Everything that can be done with one track, in the same grouped cards as
 /// the menu: the track itself on top, then marking and queueing it, then
@@ -145,8 +146,8 @@ class TrackActionsSheet extends ConsumerWidget {
                   MenuRow(
                     glyph: isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
                     title: isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites',
+                        ? context.l10n.removeFromFavorites
+                        : context.l10n.addToFavorites,
                     onTap: then(
                       () => ref
                           .read(favoritesControllerProvider.notifier)
@@ -155,33 +156,33 @@ class TrackActionsSheet extends ConsumerWidget {
                   ),
                 MenuRow(
                   glyph: AppGlyph.next,
-                  title: 'Play next',
+                  title: context.l10n.playNext,
                   onTap: then(() => player.queueNext(track)),
                 ),
                 MenuRow(
                   glyph: AppGlyph.queue,
-                  title: 'Add to queue',
+                  title: context.l10n.addToQueue,
                   onTap: then(() => player.addToQueue(track)),
                 ),
                 MenuRow(
                   glyph: AppGlyph.add,
-                  title: 'Add to playlist',
+                  title: context.l10n.addToPlaylist,
                   onTap: then(
                     () => showAddToPlaylistSheet(navigator.context, track),
                   ),
                 ),
                 if (isCatalogue)
                   if (downloads.isLoading(track))
-                    const MenuRow(
+                    MenuRow(
                       glyph: AppGlyph.download,
-                      title: 'Downloading…',
+                      title: context.l10n.downloading,
                       onTap: null,
                     )
                   else if (downloads.has(track))
                     MenuRow(
                       glyph: AppGlyph.download,
-                      title: 'Remove download',
-                      subtitle: 'Plays offline now',
+                      title: context.l10n.removeDownload,
+                      subtitle: context.l10n.playsOfflineNow,
                       onTap: then(
                         () => downloader.remove(<TrackEntity>[track]),
                       ),
@@ -189,10 +190,10 @@ class TrackActionsSheet extends ConsumerWidget {
                   else
                     MenuRow(
                       glyph: AppGlyph.download,
-                      title: 'Download',
+                      title: context.l10n.download,
                       subtitle: downloadsOpen
-                          ? 'To listen offline'
-                          : 'With Pro',
+                          ? context.l10n.toListenOffline
+                          : context.l10n.withPro,
                       onTap: downloadsOpen
                           ? then(
                               () => downloader.download(<TrackEntity>[track]),
@@ -207,7 +208,7 @@ class TrackActionsSheet extends ConsumerWidget {
                 if (artistId != null)
                   MenuRow(
                     glyph: AppGlyph.account,
-                    title: 'Go to artist',
+                    title: context.l10n.goToArtist,
                     subtitle: track.artist,
                     onTap: then(
                       () => openArtist != null
@@ -219,8 +220,11 @@ class TrackActionsSheet extends ConsumerWidget {
                 if (artist?.supportUrl != null)
                   MenuRow(
                     glyph: AppGlyph.heart,
-                    title: 'Support this artist',
-                    subtitle: 'Opens ${supportPlatform(artist!.supportUrl!)}',
+                    title: context.l10n.supportThisArtist,
+                    subtitle: context.l10n.opensPlatform(
+                      supportPlatform(artist!.supportUrl!) ??
+                          context.l10n.theirPage,
+                    ),
                     onTap: then(() => SupportArtistButton.open(ref, artist)),
                   ),
               ],
@@ -231,12 +235,12 @@ class TrackActionsSheet extends ConsumerWidget {
                 if (isCatalogue) ...<Widget>[
                   MenuRow(
                     glyph: AppGlyph.share,
-                    title: 'Share',
+                    title: context.l10n.share,
                     onTap: () => unawaited(onShare(track)),
                   ),
                   MenuRow(
                     glyph: AppGlyph.flag,
-                    title: 'Report a problem',
+                    title: context.l10n.reportAProblem,
                     danger: true,
                     onTap: () => unawaited(
                       AppLinks.open(
@@ -247,7 +251,7 @@ class TrackActionsSheet extends ConsumerWidget {
                 ] else
                   MenuRow(
                     glyph: AppGlyph.remove,
-                    title: 'Remove from PureLofi',
+                    title: context.l10n.removeFromPurelofi,
                     danger: true,
                     onTap: () async {
                       if (!await confirmRemoveTrack(context, track)) return;

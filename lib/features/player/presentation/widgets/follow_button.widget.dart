@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../controller/follows.controller.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Follow or unfollow an artist (#147). Following is quiet: their new
 /// tracks get the "new" mark like any other, and once push arrives (#97),
@@ -31,7 +32,7 @@ class FollowButton extends ConsumerWidget {
           side: BorderSide(color: following ? cs.outlineVariant : cs.onSurface),
         ),
         child: Text(
-          following ? 'Following' : 'Follow',
+          following ? context.l10n.following : context.l10n.follow,
           style: TextStyle(
             fontSize: context.fontS,
             fontWeight: FontWeight.w600,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/favorites.controller.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The heart that marks a track as a favourite, beside the title of the one
 /// playing. Marked tracks come up more often in shuffle and have their own
@@ -32,7 +33,9 @@ class FavoriteButton extends ConsumerWidget {
     return Semantics(
       button: true,
       toggled: isFavorite,
-      label: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+      label: isFavorite
+          ? context.l10n.removeFromFavorites
+          : context.l10n.addToFavorites,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

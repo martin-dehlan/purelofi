@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The bars of a track's waveform, and the scrubber.
 ///
@@ -97,7 +98,7 @@ class _WaveformState extends State<Waveform> {
         // moved in steps by swiping up or down.
         return Semantics(
           slider: true,
-          label: 'Position',
+          label: context.l10n.position,
           value: valueAt?.call(at) ?? '${(at * 100).round()}%',
           increasedValue: valueAt?.call(up) ?? '${(up * 100).round()}%',
           decreasedValue: valueAt?.call(down) ?? '${(down * 100).round()}%',

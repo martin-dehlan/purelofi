@@ -13,6 +13,7 @@ import '../../domain/playlist.entity.dart';
 import '../../domain/track.entity.dart';
 import 'playlist_name_dialog.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The tracks of [scope] (#141), a mood or one of the listener's playlists:
 /// a Play button, the tracks in order, and for a playlist the means to
@@ -51,25 +52,25 @@ class CollectionPage extends ConsumerWidget {
               size: context.fontM,
               color: tracks.isEmpty ? cs.onSurfaceVariant : cs.onPrimary,
             ),
-            label: const Text('Play'),
+            label: Text(context.l10n.play),
           ),
           const Spacer(),
           if (_isPlaylist) ...<Widget>[
             IconButton(
-              tooltip: 'Rename playlist',
+              tooltip: context.l10n.renamePlaylist,
               onPressed: () async {
                 final String? name = await askPlaylistName(
                   context,
                   initial: scope.title,
-                  title: 'Rename playlist',
-                  action: 'Rename',
+                  title: context.l10n.renamePlaylist,
+                  action: context.l10n.rename,
                 );
                 if (name != null) await playlists.rename(scope.id, name);
               },
               icon: AppIcon(AppGlyph.more, size: context.fontL),
             ),
             IconButton(
-              tooltip: 'Delete playlist',
+              tooltip: context.l10n.deletePlaylist,
               onPressed: () async {
                 if (!await confirmDeletePlaylist(context, scope.title)) return;
                 await playlists.delete(scope.id);
@@ -88,9 +89,7 @@ class CollectionPage extends ConsumerWidget {
         children: <Widget>[
           header,
           Text(
-            _isPlaylist
-                ? 'Nothing here yet. Tap ⋯ on a track to add it.'
-                : 'Nothing in this mood yet.',
+            _isPlaylist ? context.l10n.emptyPlaylist : context.l10n.emptyMood,
             style: TextStyle(
               color: cs.onSurfaceVariant,
               fontSize: context.fontS,

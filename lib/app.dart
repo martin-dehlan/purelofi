@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'common/routes/app_router.dart';
+import 'l10n/l10n.dart';
 import 'common/utils/app_fonts.dart';
 import 'features/player/controller/collections.controller.dart';
 import 'features/player/controller/favorites_sync.controller.dart';
@@ -89,6 +90,9 @@ class PureLofiApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: appTheme,
       routerConfig: ref.watch(appRouterProvider),
+      // Every string the listener reads comes from lib/l10n (#140).
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../domain/account.entity.dart';
 import 'auth_button.widget.dart';
 import 'account_header.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The profile (#96): who is signed in, since when, and the two ways out —
 /// signing out, and deleting the account, which the stores require in the
@@ -31,11 +32,12 @@ class SignedInAccount extends StatelessWidget {
   /// at its foot instead (`AccountActions`).
   final bool actions;
 
-  static String methodLabel(SignInMethod method) => switch (method) {
-    SignInMethod.apple => 'Signed in with Apple',
-    SignInMethod.google => 'Signed in with Google',
-    SignInMethod.email => 'Signed in with email',
-  };
+  static String methodLabel(BuildContext context, SignInMethod method) =>
+      switch (method) {
+        SignInMethod.apple => context.l10n.signedInWithApple,
+        SignInMethod.google => context.l10n.signedInWithGoogle,
+        SignInMethod.email => context.l10n.signedInWithEmail,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +50,7 @@ class SignedInAccount extends StatelessWidget {
         if (actions) ...<Widget>[
           SizedBox(height: context.spaceL),
           AuthButton(
-            label: 'Sign out',
+            label: context.l10n.signOut,
             busy: busy,
             onPressed: busy ? null : onSignOut,
           ),
@@ -56,7 +58,7 @@ class SignedInAccount extends StatelessWidget {
           TextButton(
             onPressed: busy ? null : onDelete,
             style: TextButton.styleFrom(foregroundColor: cs.error),
-            child: const Text('Delete account'),
+            child: Text(context.l10n.deleteAccount),
           ),
         ],
       ],

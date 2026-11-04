@@ -11,6 +11,7 @@ import '../../controller/scene.controller.dart';
 import '../../domain/ambient_sound.entity.dart';
 import '../../domain/mix_preferences.service.dart';
 import '../../domain/scene.entity.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The room page's "Sound" card (#136, #154): the music's level, the room's
 /// sounds on or off with their overall level, and a slider for each sound
@@ -72,14 +73,14 @@ class SoundMix extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           slider(
-            title: 'Music',
+            title: context.l10n.music,
             value: mix.musicLevel,
             onChanged: controller.setMusicLevel,
           ),
           if (sounds.isNotEmpty) ...<Widget>[
             SwitchListTile(
               contentPadding: EdgeInsets.symmetric(horizontal: context.spaceM),
-              title: Text('Room sounds', style: label()),
+              title: Text(context.l10n.roomSounds, style: label()),
               subtitle: Text(
                 sounds.map((AmbientSoundEntity s) => s.title).join(' · '),
                 overflow: TextOverflow.ellipsis,
@@ -93,7 +94,7 @@ class SoundMix extends ConsumerWidget {
             ),
             if (mix.ambienceOn) ...<Widget>[
               slider(
-                title: 'Sounds',
+                title: context.l10n.sounds,
                 value: mix.ambienceLevel,
                 onChanged: controller.setAmbienceLevel,
               ),
@@ -110,7 +111,7 @@ class SoundMix extends ConsumerWidget {
                   trailing: open
                       ? null
                       : ProPill(
-                          label: 'Pro',
+                          label: context.l10n.pro,
                           filled: true,
                           onTap: () => unawaited(
                             showPaywallSheet(context, source: 'mixer'),

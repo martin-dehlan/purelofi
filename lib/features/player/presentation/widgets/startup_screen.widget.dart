@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
+import '../../../../l10n/l10n.dart';
 
 /// What the listener sees while a room is on its way: the wordmark and a
 /// bar of square blocks that fills as the room arrives.
@@ -24,7 +25,7 @@ class StartupScreen extends StatelessWidget {
       color: cs.surface,
       child: Center(
         child: Semantics(
-          label: 'Loading',
+          label: context.l10n.loading,
           value: value == null ? null : '${(value * 100).round()}%',
           child: ExcludeSemantics(
             child: Column(

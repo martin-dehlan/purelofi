@@ -18,6 +18,7 @@ import '../../domain/listening_stats.dart';
 import '../../domain/scene.entity.dart';
 import '../../domain/track.entity.dart';
 import 'recap_card.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The week in more detail (#151): the days as bars, the room, the artist,
 /// the track, the streak, and the recap card to share.
@@ -36,6 +37,8 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
   bool _sharing = false;
 
   Future<void> _share(double width) async {
+    // Read before any await: the context may be gone after one.
+    final String subject = context.l10n.myPurelofiWeek;
     setState(() => _sharing = true);
     try {
       final RenderRepaintBoundary boundary =
@@ -51,10 +54,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
       final File file = File('${temp.path}/purelofi-week.png');
       await file.writeAsBytes(png.buffer.asUint8List(), flush: true);
       await SharePlus.instance.share(
-        ShareParams(
-          files: <XFile>[XFile(file.path)],
-          subject: 'My PureLofi week',
-        ),
+        ShareParams(files: <XFile>[XFile(file.path)], subject: subject),
       );
     } on Object {
       // A share that did not happen is nothing to report.
@@ -114,7 +114,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('This week', style: label()),
+            Text(context.l10n.thisWeek, style: label()),
             Text(
               listeningTimeLabel(stats.total),
               style: TextStyle(
@@ -126,14 +126,16 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
             SizedBox(height: context.spaceM),
             _WeekBars(perDay: stats.perDay),
             SizedBox(height: context.spaceM),
-            fact('Room', room?.title),
-            fact('Artist', stats.topArtist),
-            fact('Track', topTrack),
+            fact(context.l10n.room, room?.title),
+            fact(context.l10n.artist, stats.topArtist),
+            fact(context.l10n.track, topTrack),
             fact(
-              'Streak',
+              context.l10n.streak,
               stats.streak == 0
                   ? null
-                  : (stats.streak == 1 ? '1 day' : '${stats.streak} days'),
+                  : (stats.streak == 1
+                        ? '1 day'
+                        : context.l10n.dayCount(stats.streak)),
             ),
             if (!stats.isEmpty) ...<Widget>[
               SizedBox(height: context.spaceM),
@@ -153,7 +155,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
                 onPressed: _sharing
                     ? null
                     : () => unawaited(_share(recapWidth)),
-                child: const Text('Share your week'),
+                child: Text(context.l10n.shareYourWeek),
               ),
             ],
             SizedBox(height: context.spaceL),

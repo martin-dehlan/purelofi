@@ -9,6 +9,7 @@ import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
 import 'scene_card.widget.dart';
 import 'scene_thumbnail.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The rooms, side by side in `sort_order`, to swipe through and step into.
 ///
@@ -54,7 +55,7 @@ class SceneStrip extends ConsumerWidget {
         if (scenes.isEmpty) {
           return Padding(
             padding: EdgeInsets.symmetric(vertical: context.spaceL),
-            child: const EmptyState(message: 'No scenes to switch to yet.'),
+            child: EmptyState(message: context.l10n.noScenesToSwitchToYet),
           );
         }
         return row(
@@ -67,7 +68,7 @@ class SceneStrip extends ConsumerWidget {
         );
       },
       loading: () => Semantics(
-        label: 'Loading scenes',
+        label: context.l10n.loadingScenes,
         child: ExcludeSemantics(
           child: row(
             placeholders,

@@ -14,6 +14,7 @@ import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'library_scope.widget.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One search over all the music: PureLofi's tracks, the listener's own and
 /// the artists, matched on title or name as it is typed.
@@ -64,7 +65,7 @@ class SearchResults extends ConsumerWidget {
         if (q.isNotEmpty && tracks.isEmpty && artists.isEmpty)
           SliverToBoxAdapter(
             child: Text(
-              'Nothing matches "${query.trim()}".',
+              context.l10n.nothingMatches(query.trim()),
               style: TextStyle(
                 color: cs.onSurfaceVariant,
                 fontSize: context.fontS,
@@ -74,7 +75,7 @@ class SearchResults extends ConsumerWidget {
         if (artists.isNotEmpty)
           SliverList.list(
             children: <Widget>[
-              heading('Artists'),
+              heading(context.l10n.artists),
               for (final ArtistEntity artist in artists)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -92,7 +93,7 @@ class SearchResults extends ConsumerWidget {
                     ),
                   ),
                   subtitle: Text(
-                    'Artist',
+                    context.l10n.artist,
                     style: TextStyle(
                       color: cs.onSurfaceVariant,
                       fontSize: context.fontS,
@@ -103,7 +104,7 @@ class SearchResults extends ConsumerWidget {
             ],
           ),
         if (tracks.isNotEmpty) ...<Widget>[
-          SliverToBoxAdapter(child: heading('Tracks')),
+          SliverToBoxAdapter(child: heading(context.l10n.tracks)),
           SliverList.builder(
             itemCount: tracks.length,
             itemBuilder: (BuildContext context, int index) {

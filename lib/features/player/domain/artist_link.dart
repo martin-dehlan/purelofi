@@ -39,8 +39,9 @@ bool isWebLink(String url) {
 }
 
 /// Where a support link goes, so the button can say so: "Bandcamp",
-/// "Ko-fi". Anything else is the artist's own page: "their page" (#152).
-String supportPlatform(String url) {
+/// "Ko-fi". `null` for anything else: the artist's own page, which the
+/// interface names in the listener's language (#152, #140).
+String? supportPlatform(String url) {
   final String host = (Uri.tryParse(url)?.host ?? '').toLowerCase();
   bool on(String domain) => host == domain || host.endsWith('.$domain');
 
@@ -50,5 +51,5 @@ String supportPlatform(String url) {
   if (on('buymeacoffee.com')) return 'Buy Me a Coffee';
   if (on('paypal.me') || on('paypal.com')) return 'PayPal';
 
-  return 'their page';
+  return null;
 }

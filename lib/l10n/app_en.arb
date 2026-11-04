@@ -1,0 +1,455 @@
+{
+  "@@locale": "en",
+  "addMusic": "Add music",
+  "addToFavorites": "Add to favorites",
+  "addToPlaylist": "Add to playlist",
+  "addToQueue": "Add to queue",
+  "adding": "Adding…",
+  "afterAFewSecondsWithoutA": "After a few seconds without a tap",
+  "all": "All",
+  "artist": "Artist",
+  "artistGone": "This artist is not on PureLofi any more.",
+  "artists": "Artists",
+  "artistsDidNotLoad": "The artists did not load. Check the connection and try again.",
+  "askingTheStore": "Asking the store…",
+  "atLeastCharacters": "At least {count} characters",
+  "@atLeastCharacters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "back": "Back",
+  "backToPurelofi": "Back to PureLofi",
+  "backToSignIn": "Back to sign in",
+  "breakUntil": "Break until {time}",
+  "@breakUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "btsProof": "Played for real, recorded on a phone.",
+  "cancel": "Cancel",
+  "changeOrCancelInYourStore": "Change or cancel in your store",
+  "clear": "Clear",
+  "continueWithApple": "Continue with Apple",
+  "continueWithEmail": "Continue with email",
+  "continueWithGoogle": "Continue with Google",
+  "counting": "Counting…",
+  "create": "Create",
+  "createAccount": "Create account",
+  "createAnAccount": "Create an account",
+  "dayCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@dayCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysFree": "{days} days free",
+  "@daysFree": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "delete": "Delete",
+  "deleteAccount": "Delete account",
+  "deleteAccountExplain": "This removes your account and everything tied to it for good. PureLofi keeps playing — you just will not be signed in.",
+  "deleteNamedQuestion": "Delete \"{name}\"?",
+  "@deleteNamedQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePlaylist": "Delete playlist",
+  "deleteYourAccount": "Delete your account?",
+  "differentEmail": "Different email",
+  "download": "Download",
+  "downloadAll": "Download all",
+  "downloaded": "Downloaded",
+  "downloading": "Downloading…",
+  "downloads": "Downloads",
+  "eachRoomPlaysItsOwnMood": "Each room plays its own mood",
+  "emptyMood": "Nothing in this mood yet.",
+  "emptyPlaylist": "Nothing here yet. Tap ⋯ on a track to add it.",
+  "endOfTrack": "End of track",
+  "errorNetwork": "Can’t reach PureLofi right now. Check your connection and try again.",
+  "errorNotFound": "{what} not found.",
+  "@errorNotFound": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlayback": "Playback error: {detail}",
+  "@errorPlayback": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "errorServer": "Server error ({code}). Try again.",
+  "@errorServer": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUnknown": "Something went wrong. Please try again.",
+  "everyRoomAndOffline": "Every room, and your music offline.",
+  "everyRoomMore": "Every room, {count} more to sit in, and your music offline.",
+  "@everyRoomMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "favorites": "Favorites",
+  "focus": "Focus",
+  "focusUntil": "Focus until {time}",
+  "@focusUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "focusUntilRound": "Focus until {time} · round {round}",
+  "@focusUntilRound": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "follow": "Follow",
+  "following": "Following",
+  "forgotPassword": "Forgot password?",
+  "getPro": "Get Pro",
+  "goToArtist": "Go to artist",
+  "hideControls": "Hide controls",
+  "iHaveAnAccount": "I have an account",
+  "ideasBugsOrAHello": "Ideas, bugs or a hello",
+  "imprint": "Imprint",
+  "inOrder": "In order",
+  "justTheRoomTheScreenStays": "Just the room, the screen stays on",
+  "keep": "Keep",
+  "keepIt": "Keep it",
+  "keptOnThisPhoneOnly": "Kept on this phone only",
+  "leaveWindowMode": "Leave window mode",
+  "library": "Library",
+  "libraryNewTracks": "Library, new tracks",
+  "listeningHistory": "Listening history",
+  "loading": "Loading",
+  "loadingScenes": "Loading scenes",
+  "manageSubscription": "Manage subscription",
+  "menu": "Menu",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "monthly": "Monthly",
+  "moodLabel": "{title}, mood",
+  "@moodLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moreFor": "More: {title}",
+  "@moreFor": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "mostWith": "Most with",
+  "mostlyIn": "Mostly in {room}",
+  "@mostlyIn": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "music": "Music",
+  "musicFollowsTheRoom": "Music follows the room",
+  "myMusic": "My music",
+  "myMusicExplain": "Your own music, played in these rooms. Files you add are copied into PureLofi, so they play without a connection.",
+  "myPurelofiWeek": "My PureLofi week",
+  "myWeekIn": "My week in",
+  "newMark": "New",
+  "newPassword": "New password",
+  "newPlaylist": "New playlist",
+  "nextInQueue": "Next in queue",
+  "nextTrack": "Next track",
+  "nextUp": "Next up",
+  "noArtistsYet": "No artists yet.",
+  "noBtsClip": "No behind-the-scenes clip for this track yet.",
+  "noEarlierPurchase": "No earlier purchase on this store account",
+  "noEarlierPurchaseSentence": "No earlier purchase on this store account.",
+  "noFavoritesYet": "Nothing marked yet. Tap ⋯ on a track, or the heart beside the one playing.",
+  "noScenesToSwitchToYet": "No scenes to switch to yet.",
+  "noScenesYet": "No scenes yet.",
+  "noTracksYet": "No tracks yet.",
+  "notNow": "Not now",
+  "nothingCalled": "Nothing called \"{query}\".",
+  "@nothingCalled": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingDownloadedShort": "Nothing downloaded yet",
+  "nothingDownloadedYet": "Nothing downloaded yet.",
+  "nothingMatches": "Nothing matches \"{query}\".",
+  "@nothingMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingPlayedYet": "Nothing played yet.",
+  "nothingYet": "Nothing yet.",
+  "nowPlaying": "Now playing",
+  "ofRealLoFi": "of real lo-fi",
+  "off": "Off",
+  "onRepeat": "On repeat",
+  "onThisPhone": "{size} on this phone",
+  "@onThisPhone": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "opensPlatform": "Opens {platform}",
+  "@opensPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "opensPlatformToArtist": "Opens {platform}. It goes straight to the artist.",
+  "@opensPlatformToArtist": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "otherWaysToSignIn": "Other ways to sign in",
+  "password": "Password",
+  "pause": "Pause",
+  "paywallFinePrint": "Cancel any time in your store settings. Pro stays with your PureLofi account, on every phone you sign in on.",
+  "perMonthPrice": "{price} a month",
+  "@perMonthPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "plansDidNotLoad": "The plans could not be loaded.",
+  "play": "Play",
+  "playEverything": "Play everything",
+  "playNext": "Play next",
+  "playOrder": "Play order",
+  "playingScope": "Playing {title}. Play everything",
+  "@playingScope": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistOneTrack": "Playlist · 1 track",
+  "playlistTrackCount": "{count, plural, =1{Playlist · 1 track} other{Playlist · {count} tracks}}",
+  "@playlistTrackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playsOfflineNow": "Plays offline now",
+  "position": "Position",
+  "previousTrack": "Previous track",
+  "privacy": "Privacy",
+  "pro": "Pro",
+  "proIsBack": "Pro is back",
+  "proMonthly": "Pro · monthly",
+  "proStaysWithAccount": "Pro stays with your account, on every phone you sign in on.",
+  "proYearly": "Pro · yearly",
+  "purelofiApp": "purelofi.app",
+  "purelofiPro": "PureLofi Pro",
+  "queue": "Queue",
+  "rainyEvenings": "Rainy evenings",
+  "recent": "Recent",
+  "recentlyAdded": "Recently added",
+  "recentlyPlayed": "Recently played",
+  "remove": "Remove",
+  "removeAll": "Remove all",
+  "removeDownload": "Remove download",
+  "removeDownloads": "Remove downloads",
+  "removeFromFavorites": "Remove from favorites",
+  "removeFromPurelofi": "Remove from PureLofi",
+  "removeTrackExplain": "This deletes the copy in PureLofi. The file on your phone stays.",
+  "removeTrackQuestion": "Remove \"{title}\"?",
+  "@removeTrackQuestion": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "Rename",
+  "renamePlaylist": "Rename playlist",
+  "repeatTrack": "Repeat track",
+  "reportAProblem": "Report a problem",
+  "resendIn": "Resend in {seconds}s",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "restorePurchases": "Restore purchases",
+  "retry": "Retry",
+  "room": "Room",
+  "roomSounds": "Room sounds",
+  "savedMusicAndRooms": "Saved music and rooms",
+  "search": "Search",
+  "searchYourMusic": "Search your music",
+  "sendANewCode": "Send a new code",
+  "sendFeedback": "Send feedback",
+  "sendResetCode": "Send reset code",
+  "setPassword": "Set password",
+  "settings": "Settings",
+  "share": "Share",
+  "sharePurelofi": "Share PureLofi",
+  "shareYourWeek": "Share your week",
+  "showTheControls": "Show the controls",
+  "shuffle": "Shuffle",
+  "signIn": "Sign in",
+  "signInOptional": "Optional. The music plays the same either way.",
+  "signOut": "Sign out",
+  "signedIn": "Signed in",
+  "signedInWithApple": "Signed in with Apple",
+  "signedInWithEmail": "Signed in with email",
+  "signedInWithGoogle": "Signed in with Google",
+  "sleepTimer": "Sleep timer",
+  "softTransitions": "Soft transitions",
+  "sortBy": "Sort by: {sort}",
+  "@sortBy": {
+    "placeholders": {
+      "sort": {
+        "type": "String"
+      }
+    }
+  },
+  "sound": "Sound",
+  "sounds": "Sounds",
+  "startTrial": "Start {days}-day free trial",
+  "@startTrial": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "stopsAt": "Stops at {time}",
+  "@stopsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "streak": "Streak",
+  "supportArtist": "Support {name}",
+  "@supportArtist": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "supportThisArtist": "Support this artist",
+  "terms": "Terms",
+  "theTracksStayInPurelofiOnly": "The tracks stay in PureLofi; only the list goes.",
+  "theirPage": "their page",
+  "thisWeek": "This week",
+  "timeThisWeek": "{time} this week",
+  "@timeThisWeek": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "title": "Title",
+  "toListenOffline": "To listen offline",
+  "track": "Track",
+  "trackCount": "{count, plural, =1{1 track} other{{count} tracks}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tracks": "Tracks",
+  "tracksAndArtists": "Tracks and artists",
+  "tracksFadeIntoEachOther": "Tracks fade into each other",
+  "trialBanner": "{days} days free. Cancel before, pay nothing.",
+  "@trialBanner": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "tryAgain": "Try again",
+  "waitingForStore": "Waiting for the store to confirm. Pro opens when it does.",
+  "weSentACodeTo": "We sent a code to {address}.",
+  "@weSentACodeTo": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeToPurelofi": "Welcome to PureLofi",
+  "windowMode": "Window mode",
+  "withPro": "With Pro",
+  "yearly": "Yearly",
+  "yourLibrary": "Your Library",
+  "yourMusicPrefix": "Your music  ·  ",
+  "yourOwnList": "Your own list"
+}

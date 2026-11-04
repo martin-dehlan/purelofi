@@ -21,6 +21,7 @@ import '../widgets/player_controls.widget.dart';
 import '../widgets/library_button.widget.dart';
 import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
 ///
@@ -160,7 +161,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       // The whole room is the tap that brings the controls back, so it
       // needs a name for screen readers too (#153).
       body: Semantics(
-        label: 'Show the controls',
+        label: context.l10n.showTheControls,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
@@ -231,7 +232,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                               .read(windowModeControllerProvider.notifier)
                               .leave();
                         },
-                        child: const Text('Leave window mode'),
+                        child: Text(context.l10n.leaveWindowMode),
                       ),
                     ),
                   ),

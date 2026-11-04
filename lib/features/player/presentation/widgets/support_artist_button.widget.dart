@@ -9,6 +9,7 @@ import '../../../../common/utils/app_links.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../domain/artist.entity.dart';
 import '../../domain/artist_link.dart';
+import '../../../../l10n/l10n.dart';
 
 /// "Support Masso" on an artist's page (#152): straight to where they take
 /// support, outside the app. The line under it says so plainly — the money
@@ -51,7 +52,7 @@ class SupportArtistButton extends ConsumerWidget {
             foregroundColor: cs.primary,
           ),
           child: Text(
-            'Support ${artist.name}',
+            context.l10n.supportArtist(artist.name),
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: context.fontM,
@@ -61,7 +62,9 @@ class SupportArtistButton extends ConsumerWidget {
         ),
         SizedBox(height: context.spaceXs),
         Text(
-          'Opens ${supportPlatform(url)}. It goes straight to the artist.',
+          context.l10n.opensPlatformToArtist(
+            supportPlatform(url) ?? context.l10n.theirPage,
+          ),
           textAlign: TextAlign.center,
           style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
         ),
