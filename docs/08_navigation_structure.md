@@ -108,7 +108,7 @@ is a modal bottom sheet (`showModalBottomSheet`), not a route:
 | Sheet | Opened from | Holds |
 |---|---|---|
 | Library | the button right of the transport | pills Up next · PureLofi · My music · Favorites; track rows with `⋯` |
-| Room page | the gear, top left | One page, nothing behind a row: account and Pro, the rooms as covers to swipe, sleep timer chips, settings, share and feedback, legal links, version. Rises to just under the top so the scene shows above it; a tap there or a swipe down goes back (`showRoomPage`). |
+| Room page | the gear, top left | One page, nothing behind a row: account and Pro, the rooms as covers to swipe, sleep timer chips, settings, share and feedback, legal links, version. A bottom sheet of fixed height (88 %) that scrolls inside, so nothing in it resizes it; swipe down or tap the scene to close (`showRoomPage`). |
 | Pro (paywall) | a locked room card · Room page → PureLofi Pro | The two plans as the store prices them, one button, restore, terms/privacy. Opens the tapped room once bought (#16). |
 | Account | Room page → account card | Signed out: Apple (iOS) · Google · email + password (confirm and reset by six-digit code). Signed in: who, sign out, delete account. Optional — gates nothing (#38). |
 | BTS | a track's `⋯`, the menu, or the deep link | the footage |

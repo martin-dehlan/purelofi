@@ -75,8 +75,7 @@ void main() {
     await openMenu(tester);
 
     expect(find.text('Room'), findsOneWidget);
-    // On the way back at the top, and on its card.
-    expect(find.text(makeScene('scene-1').title), findsNWidgets(2));
+    expect(find.text(makeScene('scene-1').title), findsOneWidget);
   });
 
   testWidgets('behind the scenes is gone from the menu', (tester) async {
