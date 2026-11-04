@@ -78,6 +78,7 @@ extension CachedSceneX on CachedScene {
       videoUrl: scene.videoUrl,
       sortOrder: scene.sortOrder,
       thumbnailUrl: scene.thumbnailUrl,
+      createdAt: scene.createdAt,
       canvasWidth: scene.canvasWidth,
       canvasHeight: scene.canvasHeight,
       layers: layers

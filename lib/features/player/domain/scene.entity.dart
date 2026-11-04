@@ -14,6 +14,10 @@ abstract class SceneEntity with _$SceneEntity {
     required int sortOrder,
     String? thumbnailUrl,
 
+    /// When it was added, for marking what is new (#148). Null for scenes
+    /// built in code, like the dev scene.
+    DateTime? createdAt,
+
     /// The authoring grid the layers are drawn on. The renderer scales from
     /// it by an integer factor, which is what keeps the pixels square.
     @Default(320) int canvasWidth,
