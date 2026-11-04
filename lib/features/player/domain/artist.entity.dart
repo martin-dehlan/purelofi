@@ -12,5 +12,9 @@ abstract class ArtistEntity with _$ArtistEntity {
     String? bio,
     String? avatarUrl,
     @Default(<String>[]) List<String> links,
+
+    /// Where to support them directly (#152): their Bandcamp, Ko-fi,
+    /// Patreon. Opened outside the app; PureLofi takes nothing.
+    String? supportUrl,
   }) = _ArtistEntity;
 }

@@ -57,6 +57,9 @@ extension ArtistRowX on ArtistTableData {
       for (final String link in links.split('\n'))
         if (isWebLink(link)) link,
     ],
+    supportUrl: supportUrl != null && isWebLink(supportUrl!)
+        ? supportUrl
+        : null,
   );
 }
 
@@ -68,6 +71,7 @@ extension ArtistEntityX on ArtistEntity {
         bio: Value<String?>(bio),
         avatarUrl: Value<String?>(avatarUrl),
         links: Value<String>(links.join('\n')),
+        supportUrl: Value<String?>(supportUrl),
         updatedAt: Value<DateTime>(now),
       );
 }

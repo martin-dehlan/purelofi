@@ -79,6 +79,9 @@ abstract final class AnalyticsEvents {
 
   // The focus timer (#137): whether people use it, and which plan.
   static const String focusStarted = 'focus_started';
+
+  // Support links (#152): how often PureLofi sends someone to an artist.
+  static const String artistSupportOpened = 'artist_support_opened';
 }
 
 /// Sends events to PostHog.

@@ -17,5 +17,8 @@ class ArtistTable extends Table {
   /// The artist's channels, one URL per line.
   TextColumn get links => text().withDefault(const Constant(''))();
 
+  /// Where to support the artist directly (#152).
+  TextColumn get supportUrl => text().nullable()();
+
   DateTimeColumn get updatedAt => dateTime()();
 }
