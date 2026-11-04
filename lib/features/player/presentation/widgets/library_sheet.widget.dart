@@ -29,6 +29,7 @@ import 'mini_player.widget.dart';
 import 'playlist_name_dialog.dart';
 import 'search_results.widget.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
 enum LibraryFilter { tracks, artists, downloaded, local }
@@ -209,7 +210,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Search',
+                        tooltip: context.l10n.search,
                         iconSize: context.fontXl,
                         icon: AppIcon(
                           AppGlyph.search,
@@ -265,12 +266,12 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                   ),
                   LibraryFilter.tracks => _Tracks(
                     tracks: catalogue,
-                    empty: 'No tracks yet.',
+                    empty: context.l10n.noTracksYet,
                   ),
                   LibraryFilter.artists => const ArtistList(),
                   LibraryFilter.downloaded => _Tracks(
                     tracks: catalogue.where(downloads.has).toList(),
-                    empty: 'Nothing downloaded yet.',
+                    empty: context.l10n.nothingDownloadedYet,
                   ),
                   LibraryFilter.local => const MyMusic(),
                 },
@@ -323,7 +324,7 @@ class _PageFrame extends StatelessWidget {
               child: Row(
                 children: <Widget>[
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onPressed: onBack,
                     icon: AppIcon(
                       AppGlyph.back,
@@ -407,7 +408,7 @@ class _RecentPage extends ConsumerWidget {
           ),
           sliver: _Tracks(
             tracks: ref.watch(recentlyPlayedTracksProvider),
-            empty: 'Nothing played yet.',
+            empty: context.l10n.nothingPlayedYet,
           ),
         ),
       ],
@@ -431,7 +432,7 @@ class _SearchField extends StatelessWidget {
         Expanded(
           child: SearchBar(
             autoFocus: true,
-            hintText: 'Tracks and artists',
+            hintText: context.l10n.tracksAndArtists,
             onChanged: onChanged,
             elevation: const WidgetStatePropertyAll<double>(0),
             backgroundColor: WidgetStatePropertyAll<Color>(
@@ -453,7 +454,10 @@ class _SearchField extends StatelessWidget {
         TextButton(
           onPressed: onCancel,
           style: TextButton.styleFrom(foregroundColor: cs.onSurface),
-          child: Text('Cancel', style: TextStyle(fontSize: context.fontM)),
+          child: Text(
+            context.l10n.cancel,
+            style: TextStyle(fontSize: context.fontM),
+          ),
         ),
       ],
     );
@@ -524,7 +528,7 @@ class _Overview extends ConsumerWidget {
               color: cs.onPrimary,
             ),
           ),
-          title: 'Favorites',
+          title: context.l10n.favorites,
           subtitle: favorites == 1 ? '1 track' : '$favorites tracks',
           onTap: onFavorites,
         ),
@@ -539,7 +543,7 @@ class _Overview extends ConsumerWidget {
                 color: cs.onSurface,
               ),
             ),
-            title: 'Recently played',
+            title: context.l10n.recentlyPlayed,
             subtitle: recent.first.title,
             onTap: onRecent,
           ),
@@ -575,8 +579,8 @@ class _Overview extends ConsumerWidget {
               color: cs.onSurface,
             ),
           ),
-          title: 'New playlist',
-          subtitle: 'Your own list',
+          title: context.l10n.newPlaylist,
+          subtitle: context.l10n.yourOwnList,
           onTap: () async {
             final String? name = await askPlaylistName(context);
             if (name == null) return;
@@ -587,7 +591,7 @@ class _Overview extends ConsumerWidget {
           _Row(
             tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
             title: artist.name,
-            subtitle: 'Artist',
+            subtitle: context.l10n.artist,
             onTap: () => unawaited(openArtistPage(context, artist.id)),
           ),
       ],
@@ -799,7 +803,7 @@ class _ClearFilter extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return ActionChip(
-      tooltip: 'All',
+      tooltip: context.l10n.all,
       shape: const CircleBorder(),
       side: BorderSide.none,
       backgroundColor: cs.surfaceContainerHigh,

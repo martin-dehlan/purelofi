@@ -20,6 +20,7 @@ import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/room_music.controller.dart';
 import '../../controller/soft_transitions.controller.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The few things about the app a listener may want differently: whether
 /// the controls step aside, the room the saved files take up and, where Pro
@@ -158,8 +159,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
           children: <Widget>[
             MenuRow(
               glyph: AppGlyph.eye,
-              title: 'Hide controls',
-              subtitle: 'After a few seconds without a tap',
+              title: context.l10n.hideControls,
+              subtitle: context.l10n.afterAFewSecondsWithoutA,
               trailing: Switch(
                 value: autoHide,
                 onChanged: (bool on) => unawaited(
@@ -174,8 +175,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
             ),
             MenuRow(
               glyph: AppGlyph.next,
-              title: 'Soft transitions',
-              subtitle: 'Tracks fade into each other',
+              title: context.l10n.softTransitions,
+              subtitle: context.l10n.tracksFadeIntoEachOther,
               trailing: Switch(
                 value: softTransitions,
                 onChanged: (bool on) => unawaited(
@@ -190,8 +191,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
             ),
             MenuRow(
               glyph: AppGlyph.scene,
-              title: 'Music follows the room',
-              subtitle: 'Each room plays its own mood',
+              title: context.l10n.musicFollowsTheRoom,
+              subtitle: context.l10n.eachRoomPlaysItsOwnMood,
               trailing: Switch(
                 value: followRoom,
                 onChanged: (bool on) => unawaited(
@@ -208,15 +209,15 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
             // phone, and the listener's to throw away.
             MenuRow(
               glyph: AppGlyph.timer,
-              title: 'Listening history',
-              subtitle: 'Kept on this phone only',
+              title: context.l10n.listeningHistory,
+              subtitle: context.l10n.keptOnThisPhoneOnly,
               trailing: TextButton(
                 onPressed: hasHistory
                     ? () => unawaited(
                         ref.read(playHistoryRepositoryProvider).clear(),
                       )
                     : null,
-                child: const Text('Clear'),
+                child: Text(context.l10n.clear),
               ),
               onTap: null,
             ),
@@ -228,25 +229,25 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.storage,
-                title: 'Saved music and rooms',
+                title: context.l10n.savedMusicAndRooms,
                 subtitle: bytes == null
                     ? 'Counting…'
                     : '${SettingsSection.sizeLabel(bytes)} on this phone',
                 trailing: TextButton(
                   onPressed: clear,
-                  child: const Text('Clear'),
+                  child: Text(context.l10n.clear),
                 ),
                 onTap: clear,
               ),
               MenuRow(
                 glyph: AppGlyph.download,
-                title: 'Downloads',
+                title: context.l10n.downloads,
                 subtitle: _downloadsLabel(downloadCount, downloadedBytes),
                 trailing: TextButton(
                   onPressed: downloadCount == 0
                       ? null
                       : () => unawaited(_removeDownloads()),
-                  child: const Text('Remove all'),
+                  child: Text(context.l10n.removeAll),
                 ),
                 // Nothing to open: the row says what is kept, the button
                 // takes it back. Greyed while there is nothing.
@@ -261,15 +262,15 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.inOrder,
-                title: 'Restore purchases',
+                title: context.l10n.restorePurchases,
                 subtitle: _restoring ? 'Asking the store…' : _restored,
                 onTap: _restoring ? null : () => unawaited(_restore()),
               ),
               if (pro.isPro && manage != null)
                 MenuRow(
                   glyph: AppGlyph.settings,
-                  title: 'Manage subscription',
-                  subtitle: 'Change or cancel in your store',
+                  title: context.l10n.manageSubscription,
+                  subtitle: context.l10n.changeOrCancelInYourStore,
                   onTap: () => unawaited(AppLinks.openUrl(manage)),
                 ),
             ],

@@ -4,6 +4,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../domain/account.entity.dart';
 import 'auth_button.widget.dart';
 import 'account_header.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The profile (#96): who is signed in, since when, and the two ways out —
 /// signing out, and deleting the account, which the stores require in the
@@ -48,7 +49,7 @@ class SignedInAccount extends StatelessWidget {
         if (actions) ...<Widget>[
           SizedBox(height: context.spaceL),
           AuthButton(
-            label: 'Sign out',
+            label: context.l10n.signOut,
             busy: busy,
             onPressed: busy ? null : onSignOut,
           ),
@@ -56,7 +57,7 @@ class SignedInAccount extends StatelessWidget {
           TextButton(
             onPressed: busy ? null : onDelete,
             style: TextButton.styleFrom(foregroundColor: cs.error),
-            child: const Text('Delete account'),
+            child: Text(context.l10n.deleteAccount),
           ),
         ],
       ],

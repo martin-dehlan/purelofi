@@ -18,6 +18,7 @@ import '../../domain/listening_stats.dart';
 import '../../domain/scene.entity.dart';
 import '../../domain/track.entity.dart';
 import 'recap_card.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The week in more detail (#151): the days as bars, the room, the artist,
 /// the track, the streak, and the recap card to share.
@@ -114,7 +115,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('This week', style: label()),
+            Text(context.l10n.thisWeek, style: label()),
             Text(
               listeningTimeLabel(stats.total),
               style: TextStyle(
@@ -153,7 +154,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
                 onPressed: _sharing
                     ? null
                     : () => unawaited(_share(recapWidth)),
-                child: const Text('Share your week'),
+                child: Text(context.l10n.shareYourWeek),
               ),
             ],
             SizedBox(height: context.spaceL),

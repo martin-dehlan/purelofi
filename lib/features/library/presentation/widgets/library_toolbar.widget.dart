@@ -7,6 +7,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/library.controller.dart';
 import '../../domain/library_view.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Sort and, for a library big enough to need it, search (#66).
 ///
@@ -127,7 +128,7 @@ class _Search extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return SearchBar(
-      hintText: 'Search your music',
+      hintText: context.l10n.searchYourMusic,
       onChanged: onSearch,
       elevation: const WidgetStatePropertyAll<double>(0),
       backgroundColor: WidgetStatePropertyAll<Color>(

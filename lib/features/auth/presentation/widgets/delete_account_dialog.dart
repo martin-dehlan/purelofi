@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Asks once before an account is deleted. `true` means go ahead.
 ///
@@ -10,7 +11,7 @@ Future<bool> confirmDeleteAccount(BuildContext context) async {
   final bool? confirmed = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) => AlertDialog(
-      title: const Text('Delete your account?'),
+      title: Text(context.l10n.deleteYourAccount),
       content: const Text(
         'This removes your account and everything tied to it for good. '
         'PureLofi keeps playing — you just will not be signed in.',
@@ -18,12 +19,12 @@ Future<bool> confirmDeleteAccount(BuildContext context) async {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keep it'),
+          child: Text(context.l10n.keepIt),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: TextButton.styleFrom(foregroundColor: cs.error),
-          child: const Text('Delete'),
+          child: Text(context.l10n.delete),
         ),
       ],
     ),

@@ -12,6 +12,7 @@ import '../../domain/track.entity.dart';
 import 'new_dot.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'track_cover.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One track, the way a music app draws one: a round cover, the title, who
 /// it is by, and a `⋯` with everything else that can be done with it.
@@ -90,7 +91,7 @@ class TrackTile extends ConsumerWidget {
           // apps mark it.
           if (downloaded) ...<Widget>[
             Semantics(
-              label: 'Downloaded',
+              label: context.l10n.downloaded,
               child: AppIcon(
                 AppGlyph.download,
                 size: context.fontS,
@@ -121,7 +122,7 @@ class TrackTile extends ConsumerWidget {
           ],
           if (repeating)
             Semantics(
-              label: 'On repeat',
+              label: context.l10n.onRepeat,
               child: AppIcon(
                 AppGlyph.repeatOne,
                 size: context.fontL,

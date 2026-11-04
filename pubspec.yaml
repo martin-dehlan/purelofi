@@ -62,6 +62,9 @@ dependencies:
   share_plus: ^13.3.1
   path_parsing: ^1.1.0
   wakelock_plus: ^1.8.2
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +93,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # ARB files in lib/l10n become AppLocalizations (#140).
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

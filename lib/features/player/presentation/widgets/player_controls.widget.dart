@@ -20,6 +20,7 @@ import 'queue_sheet.widget.dart';
 import 'scope_line.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The bar along the bottom: the track, its waveform, and the transport —
 /// the play order on its left, the way into the music on its right.
@@ -107,7 +108,7 @@ class PlayerControls extends ConsumerWidget {
               ),
               _TransportButton(
                 glyph: AppGlyph.previous,
-                label: 'Previous track',
+                label: context.l10n.previousTrack,
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).previous,
               ),
@@ -123,7 +124,7 @@ class PlayerControls extends ConsumerWidget {
               SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: AppGlyph.next,
-                label: 'Next track',
+                label: context.l10n.nextTrack,
                 size: context.screenWidth * 0.07,
                 onTap: ref.read(playerControllerProvider.notifier).playNext,
               ),
@@ -132,7 +133,7 @@ class PlayerControls extends ConsumerWidget {
                   alignment: AlignmentDirectional.centerEnd,
                   child: _SheetButton(
                     glyph: AppGlyph.queue,
-                    label: 'Queue',
+                    label: context.l10n.queue,
                     onTap: () => showQueueSheet(context),
                   ),
                 ),
@@ -325,7 +326,7 @@ class _ModeButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Play order',
+      label: context.l10n.playOrder,
       value: name,
       excludeSemantics: true,
       child: GestureDetector(
@@ -413,7 +414,7 @@ class _BackToPureLofi extends ConsumerWidget {
     // One label, not the label and the line read out after it.
     return Semantics(
       button: true,
-      label: 'Back to PureLofi',
+      label: context.l10n.backToPurelofi,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

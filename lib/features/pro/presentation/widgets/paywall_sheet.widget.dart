@@ -16,6 +16,7 @@ import '../../domain/pro.repository.dart';
 import '../../domain/pro_plan.entity.dart';
 import 'locked_rooms_strip.widget.dart';
 import 'plan_option.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// PureLofi Pro, offered once and plainly (#16): what it opens, the two
 /// plans as the store prices them, one button. No countdowns, no
@@ -250,7 +251,7 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
                         onPressed: () => setState(() {
                           _plans = _pro.plans();
                         }),
-                        child: const Text('Try again'),
+                        child: Text(context.l10n.tryAgain),
                       ),
                     ],
                   );
@@ -348,15 +349,15 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
               children: <Widget>[
                 TextButton(
                   onPressed: _busy ? null : _restore,
-                  child: const Text('Restore purchases'),
+                  child: Text(context.l10n.restorePurchases),
                 ),
                 TextButton(
                   onPressed: () => AppLinks.open(AppLinks.terms),
-                  child: const Text('Terms'),
+                  child: Text(context.l10n.terms),
                 ),
                 TextButton(
                   onPressed: () => AppLinks.open(AppLinks.privacy),
-                  child: const Text('Privacy'),
+                  child: Text(context.l10n.privacy),
                 ),
               ],
             ),

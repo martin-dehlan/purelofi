@@ -9,6 +9,7 @@ import 'delete_account_dialog.dart';
 import 'email_password_form.widget.dart';
 import 'sign_in_options.widget.dart';
 import 'signed_in_account.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The account in a sheet of its own: on the way to Pro (#108) and as the
 /// first launch's welcome. The room page shows the same [AccountPanel]
@@ -211,7 +212,10 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(foregroundColor: cs.onSurface),
-              child: Text('Not now', style: TextStyle(fontSize: context.fontM)),
+              child: Text(
+                context.l10n.notNow,
+                style: TextStyle(fontSize: context.fontM),
+              ),
             ),
           ),
         ],

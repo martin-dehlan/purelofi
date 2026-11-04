@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The quiet mark on something added since the listener last looked
 /// (#148): a dot in the accent, no word, no number.
@@ -12,7 +13,7 @@ class NewDot extends StatelessWidget {
     final double size = context.spaceS;
 
     return Semantics(
-      label: 'New',
+      label: context.l10n.newMark,
       child: Container(
         width: size,
         height: size,

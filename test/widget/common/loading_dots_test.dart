@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/l10n/l10n.dart';
 import 'package:purelofi/common/widgets/loading_dots.widget.dart';
 
 void main() {
   Future<void> pumpDots(WidgetTester tester, {bool still = false}) =>
       tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: MediaQuery(
             data: const MediaQueryData(
               size: Size(400, 800),

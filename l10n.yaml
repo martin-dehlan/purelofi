@@ -1,0 +1,7 @@
+# Every string the listener reads, in lib/l10n (#140). English is the
+# template; a key missing from another language falls back to it.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

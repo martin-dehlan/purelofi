@@ -26,6 +26,7 @@ import 'focus_timer_chips.widget.dart';
 import 'sleep_timer_chips.widget.dart';
 import 'sound_mix.widget.dart';
 import 'week_line.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
@@ -152,8 +153,8 @@ class RoomPage extends ConsumerWidget {
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.scene,
-                title: 'Window mode',
-                subtitle: 'Just the room, the screen stays on',
+                title: context.l10n.windowMode,
+                subtitle: context.l10n.justTheRoomTheScreenStays,
                 onTap: () {
                   Navigator.of(context).pop();
                   ref.read(windowModeControllerProvider.notifier).enter();
@@ -168,13 +169,13 @@ class RoomPage extends ConsumerWidget {
             children: <Widget>[
               MenuRow(
                 glyph: AppGlyph.share,
-                title: 'Share PureLofi',
+                title: context.l10n.sharePurelofi,
                 onTap: () => unawaited(onShare()),
               ),
               MenuRow(
                 glyph: AppGlyph.mail,
-                title: 'Send feedback',
-                subtitle: 'Ideas, bugs or a hello',
+                title: context.l10n.sendFeedback,
+                subtitle: context.l10n.ideasBugsOrAHello,
                 onTap: () => unawaited(AppLinks.open(AppLinks.feedback)),
               ),
             ],

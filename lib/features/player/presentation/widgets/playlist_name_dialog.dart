@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Asks for a playlist's name (#141): a new one, or a new name for one.
 /// `null` when the listener cancelled or left it empty.
@@ -54,13 +55,13 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
       autofocus: true,
       maxLength: 100,
       textCapitalization: TextCapitalization.sentences,
-      decoration: const InputDecoration(hintText: 'Rainy evenings'),
+      decoration: InputDecoration(hintText: context.l10n.rainyEvenings),
       onSubmitted: (String value) => Navigator.of(context).pop(value),
     ),
     actions: <Widget>[
       TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.cancel),
       ),
       TextButton(
         onPressed: () => Navigator.of(context).pop(_field.text),
@@ -76,15 +77,15 @@ Future<bool> confirmDeletePlaylist(BuildContext context, String name) async {
     context: context,
     builder: (BuildContext context) => AlertDialog(
       title: Text('Delete "$name"?'),
-      content: const Text('The tracks stay in PureLofi; only the list goes.'),
+      content: Text(context.l10n.theTracksStayInPurelofiOnly),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keep'),
+          child: Text(context.l10n.keep),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Delete'),
+          child: Text(context.l10n.delete),
         ),
       ],
     ),

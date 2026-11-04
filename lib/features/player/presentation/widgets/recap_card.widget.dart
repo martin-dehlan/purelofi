@@ -4,6 +4,7 @@ import '../../../../common/utils/app_fonts.dart';
 import '../../domain/listening_stats.dart';
 import '../../domain/scene.entity.dart';
 import 'scene_thumbnail.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The week as a picture to share (#151): the room most listened in, how
 /// long, and who. Laid out on a 9:16 card in proportions of its own width,
@@ -42,7 +43,7 @@ class RecapCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('My week in', style: text(5, dim: true)),
+          Text(context.l10n.myWeekIn, style: text(5, dim: true)),
           Text(
             'PureLofi',
             style: text(
@@ -61,19 +62,19 @@ class RecapCard extends StatelessWidget {
             listeningTimeLabel(stats.total),
             style: text(11, strong: true).copyWith(color: cs.primary),
           ),
-          Text('of real lo-fi', style: text(5, dim: true)),
+          Text(context.l10n.ofRealLoFi, style: text(5, dim: true)),
           SizedBox(height: unit * 4),
           if (stats.topArtist case final String artist) ...<Widget>[
-            Text('Most with', style: text(4, dim: true)),
+            Text(context.l10n.mostWith, style: text(4, dim: true)),
             Text(artist, style: text(6, strong: true), maxLines: 1),
             SizedBox(height: unit * 2),
           ],
           if (topTrack case final String track) ...<Widget>[
-            Text('On repeat', style: text(4, dim: true)),
+            Text(context.l10n.onRepeat, style: text(4, dim: true)),
             Text(track, style: text(6, strong: true), maxLines: 1),
           ],
           SizedBox(height: unit * 10),
-          Text('purelofi.app', style: text(4, dim: true)),
+          Text(context.l10n.purelofiApp, style: text(4, dim: true)),
         ],
       ),
     );

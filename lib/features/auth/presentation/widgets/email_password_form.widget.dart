@@ -10,6 +10,7 @@ import '../../domain/auth.repository.dart';
 import '../../domain/password_rules.dart';
 import 'auth_button.widget.dart';
 import 'code_field.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Where the email form stands.
 enum EmailStep {
@@ -273,29 +274,29 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
                     onPressed: _busy
                         ? null
                         : () => _goTo(EmailStep.createAccount),
-                    child: const Text('Create an account'),
+                    child: Text(context.l10n.createAnAccount),
                   ),
                   TextButton(
                     onPressed: _busy ? null : () => _goTo(EmailStep.forgot),
-                    child: const Text('Forgot password?'),
+                    child: Text(context.l10n.forgotPassword),
                   ),
                 ],
                 EmailStep.createAccount => <Widget>[
                   TextButton(
                     onPressed: _busy ? null : () => _goTo(EmailStep.signIn),
-                    child: const Text('I have an account'),
+                    child: Text(context.l10n.iHaveAnAccount),
                   ),
                 ],
                 EmailStep.forgot => <Widget>[
                   TextButton(
                     onPressed: _busy ? null : () => _goTo(EmailStep.signIn),
-                    child: const Text('Back to sign in'),
+                    child: Text(context.l10n.backToSignIn),
                   ),
                 ],
                 EmailStep.confirm || EmailStep.reset => <Widget>[
                   TextButton(
                     onPressed: _busy ? null : () => _goTo(_codeFrom),
-                    child: const Text('Different email'),
+                    child: Text(context.l10n.differentEmail),
                   ),
                   TextButton(
                     onPressed: _busy || _secondsLeft > 0 ? null : _resend,
@@ -313,7 +314,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
             alignment: AlignmentDirectional.centerStart,
             child: TextButton(
               onPressed: _busy ? null : widget.onBack,
-              child: const Text('Other ways to sign in'),
+              child: Text(context.l10n.otherWaysToSignIn),
             ),
           ),
         ],

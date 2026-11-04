@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../errors/app_error.dart';
 import '../errors/error_mapper.dart';
 import '../utils/responsive.dart';
+import '../../l10n/l10n.dart';
 
 /// Renders a failure the way the user should see it: one plain sentence from
 /// `AppError.userMessage`, never raw exception text (see `docs/07`).
@@ -34,7 +35,7 @@ class ErrorState extends StatelessWidget {
               ),
               if (onRetry != null) ...<Widget>[
                 SizedBox(height: context.spaceM),
-                TextButton(onPressed: onRetry, child: const Text('Retry')),
+                TextButton(onPressed: onRetry, child: Text(context.l10n.retry)),
               ],
             ],
           ),
