@@ -54,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +106,11 @@ class AppDatabase extends _$AppDatabase {
       // current definition already has the column.
       if (from < 9 && !await _hasColumn('scene_layers', 'tap_label')) {
         await m.addColumn(sceneLayerTable, sceneLayerTable.tapLabel);
+      }
+
+      // 10: the sounds each room brings (#136), as a JSON column.
+      if (from < 10 && !await _hasColumn('scenes', 'ambients')) {
+        await m.addColumn(sceneTable, sceneTable.ambients);
       }
     },
   );

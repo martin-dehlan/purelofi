@@ -422,3 +422,18 @@ ffmpeg -framerate 12 -i frame_%04d.png \
 - 60–120 second loops: the seam is visible, so make it rare.
 - Last frame must differ from the first, or the loop point stutters.
 - `-an`: the scene is silent, the music comes from the audio player.
+
+## Room sounds (#136)
+
+A room can bring ambient loops: rain on the window, the fire, the train.
+They play beside the music, pause with it, and the listener mixes them on
+the room page.
+
+- **Real recordings or CC0, never generated**, the same rule as the music.
+- One seamless loop per sound, 60–120 s, mono is fine. AAC (`.m4a`) at
+  96–128 kbps keeps a loop under 2 MB. Cut on a zero crossing and check the
+  seam in a looping player: a click every minute is worse than no rain.
+- Upload to the `ambient` bucket, add a row to `ambient_sounds`, then link
+  it to the room in `scene_ambients` with the level it starts at
+  (`default_level`, 0–1; rain behind a closed window ≈ 0.4, a fire in the
+  room ≈ 0.3).

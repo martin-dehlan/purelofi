@@ -8,6 +8,27 @@ enum VolumeLayer {
   /// The sleep timer's fade before it pauses (#138).
   sleepTimer,
 
-  /// The focus timer's break, when the music steps back (#137).
+  /// The focus timer's break, when the music steps back (#137). The room's
+  /// sounds stay where they are: a break is a moment to hear the rain.
   focusBreak,
+
+  /// The listener's own level for the music (#154).
+  music,
+
+  /// The listener's own level for the room's sounds (#136, #154).
+  ambience,
 }
+
+/// The layers that turn the room's sounds down too. The music's own level
+/// and the focus break are the music's alone.
+const Set<VolumeLayer> ambienceLayers = <VolumeLayer>{
+  VolumeLayer.sleepTimer,
+  VolumeLayer.ambience,
+};
+
+/// The layers that turn the music down.
+const Set<VolumeLayer> musicLayers = <VolumeLayer>{
+  VolumeLayer.sleepTimer,
+  VolumeLayer.focusBreak,
+  VolumeLayer.music,
+};

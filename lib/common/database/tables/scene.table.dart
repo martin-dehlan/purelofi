@@ -19,6 +19,10 @@ class SceneTable extends Table {
   IntColumn get canvasWidth => integer().withDefault(const Constant(320))();
   IntColumn get canvasHeight => integer().withDefault(const Constant(696))();
 
+  /// The room's sounds (#136) as JSON: a short list that is only ever read
+  /// whole with its scene, so a table of its own would buy nothing.
+  TextColumn get ambients => text().withDefault(const Constant('[]'))();
+
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(true))();

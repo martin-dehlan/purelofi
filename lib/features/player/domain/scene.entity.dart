@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'ambient_sound.entity.dart';
 import 'scene_layer.entity.dart';
 
 part 'scene.entity.freezed.dart';
@@ -26,6 +27,9 @@ abstract class SceneEntity with _$SceneEntity {
     /// Sprite layers, back to front. Empty means this is still a video
     /// scene and [videoUrl] is what plays.
     @Default(<SceneLayerEntity>[]) List<SceneLayerEntity> layers,
+
+    /// The sounds the room brings (#136), in the order they are listed.
+    @Default(<AmbientSoundEntity>[]) List<AmbientSoundEntity> ambients,
   }) = _SceneEntity;
 
   const SceneEntity._();
