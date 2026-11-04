@@ -8,7 +8,11 @@ import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/scene_layer.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
-class MockContentRepository extends Mock implements ContentRepository {}
+class MockContentRepository extends Mock implements ContentRepository {
+  /// Nothing ever lands late unless a test says so.
+  @override
+  Stream<void> get updates => const Stream<void>.empty();
+}
 
 class MockContentApi extends Mock implements ContentApi {}
 

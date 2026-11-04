@@ -232,6 +232,63 @@ void main() {
       expect(tracks.single.id, 'track-1');
     });
 
+    test('a fetch that lands late says so, and the cache has it', () async {
+      when(
+        () => mockApi.fetchTracks(),
+      ).thenAnswer((_) async => <TrackModel>[makeTrackModel('old')]);
+      await repository.getTracks();
+
+      final ContentRepositoryImpl impatient = ContentRepositoryImpl(
+        api: mockApi,
+        trackDao: TrackDao(database),
+        sceneDao: SceneDao(database),
+        artistDao: ArtistDao(database),
+        patienceWithCache: const Duration(milliseconds: 20),
+      );
+      addTearDown(impatient.dispose);
+      final Completer<List<TrackModel>> slow = Completer<List<TrackModel>>();
+      when(() => mockApi.fetchTracks()).thenAnswer((_) => slow.future);
+
+      // The room opens on what was there.
+      expect((await impatient.getTracks()).single.id, 'old');
+
+      final Future<void> updated = impatient.updates.first;
+      slow.complete(<TrackModel>[makeTrackModel('new')]);
+      await updated;
+
+      clearInteractions(mockApi);
+      expect((await impatient.getTracks(cachedOnly: true)).single.id, 'new');
+      // Read from the device: the server is not asked again.
+      verifyNever(() => mockApi.fetchTracks());
+    });
+
+    test('a fetch that fails late changes nothing', () async {
+      when(
+        () => mockApi.fetchTracks(),
+      ).thenAnswer((_) async => <TrackModel>[makeTrackModel('old')]);
+      await repository.getTracks();
+
+      final ContentRepositoryImpl impatient = ContentRepositoryImpl(
+        api: mockApi,
+        trackDao: TrackDao(database),
+        sceneDao: SceneDao(database),
+        artistDao: ArtistDao(database),
+        patienceWithCache: const Duration(milliseconds: 20),
+      );
+      addTearDown(impatient.dispose);
+      final Completer<List<TrackModel>> slow = Completer<List<TrackModel>>();
+      when(() => mockApi.fetchTracks()).thenAnswer((_) => slow.future);
+      await impatient.getTracks();
+
+      bool fired = false;
+      impatient.updates.listen((_) => fired = true);
+      slow.completeError(Exception('SocketException: gone'));
+      await pumpEventQueue();
+
+      expect(fired, isFalse);
+      expect((await impatient.getTracks(cachedOnly: true)).single.id, 'old');
+    });
+
     test('forgets what the server stopped listing', () async {
       when(() => mockApi.fetchTracks()).thenAnswer(
         (_) async => <TrackModel>[

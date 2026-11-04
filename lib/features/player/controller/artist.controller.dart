@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/artist.entity.dart';
+import '../domain/content.repository.dart';
 import '../domain/track.entity.dart';
 import 'player.provider.dart';
 import 'track.controller.dart';
@@ -13,7 +14,15 @@ part 'artist.controller.g.dart';
 class ArtistListController extends _$ArtistListController {
   @override
   Future<List<ArtistEntity>> build() {
-    return ref.watch(contentRepositoryProvider).getArtists();
+    final ContentRepository content = ref.watch(contentRepositoryProvider);
+    onLateUpdate(
+      ref,
+      content,
+      () => content.getArtists(cachedOnly: true),
+      (List<ArtistEntity> artists) =>
+          state = AsyncData<List<ArtistEntity>>(artists),
+    );
+    return content.getArtists();
   }
 }
 

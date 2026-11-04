@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
@@ -22,8 +24,12 @@ import 'track.model.dart';
 /// a train: when the network fails and something was cached, the failure is
 /// swallowed and the cached content is served. When nothing was cached there
 /// is nothing to show, so the error is raised and the UI says so.
+///
+/// A fetch that runs past its wait is not dropped: it still lands in the
+/// cache, and [updates] says so, so a track taken off the server goes from
+/// the app the moment the answer is in, not on the next start.
 class ContentRepositoryImpl implements ContentRepository {
-  const ContentRepositoryImpl({
+  ContentRepositoryImpl({
     required ContentApi api,
     required TrackDao trackDao,
     required SceneDao sceneDao,
@@ -53,26 +59,37 @@ class ContentRepositoryImpl implements ContentRepository {
   /// in the cache for the next start, it just is not waited for.
   final Duration patienceWithCache;
 
-  @override
-  Future<List<SceneEntity>> getScenes() async {
-    final bool cachedBefore = await _has(_sceneDao.getScenes);
-    final AppError? failure = await _refresh(cached: cachedBefore, () async {
-      final List<SceneModel> models = await _api.fetchScenes();
-      final List<SceneEntity> scenes = models
-          .map((SceneModel model) => model.toEntity())
-          .toList();
+  final StreamController<void> _updates = StreamController<void>.broadcast();
 
-      final DateTime now = _now();
-      await _sceneDao.replaceScenes(
-        <SceneTableCompanion>[
-          for (final SceneEntity scene in scenes) scene.toCompanion(now: now),
-        ],
-        <SceneLayerTableCompanion>[
-          for (final SceneEntity scene in scenes)
-            ...scene.toLayerCompanions(now: now),
-        ],
-      );
-    });
+  @override
+  Stream<void> get updates => _updates.stream;
+
+  Future<void> dispose() => _updates.close();
+
+  @override
+  Future<List<SceneEntity>> getScenes({bool cachedOnly = false}) async {
+    final bool cachedBefore = await _has(_sceneDao.getScenes);
+    final AppError? failure = await _refresh(
+      skip: cachedOnly,
+      cached: cachedBefore,
+      () async {
+        final List<SceneModel> models = await _api.fetchScenes();
+        final List<SceneEntity> scenes = models
+            .map((SceneModel model) => model.toEntity())
+            .toList();
+
+        final DateTime now = _now();
+        await _sceneDao.replaceScenes(
+          <SceneTableCompanion>[
+            for (final SceneEntity scene in scenes) scene.toCompanion(now: now),
+          ],
+          <SceneLayerTableCompanion>[
+            for (final SceneEntity scene in scenes)
+              ...scene.toLayerCompanions(now: now),
+          ],
+        );
+      },
+    );
 
     final List<SceneEntity> cached = await _read(
       () async => (await _sceneDao.getScenes())
@@ -86,12 +103,12 @@ class ContentRepositoryImpl implements ContentRepository {
   }
 
   @override
-  Future<List<TrackEntity>> getTracks() async {
+  Future<List<TrackEntity>> getTracks({bool cachedOnly = false}) async {
     final bool cachedBefore = await _has(_trackDao.getTracks);
     // The artists come along so every track can show who made it. Their
     // fetch failing costs the names, never the music.
     final (AppError? failure, _) = await (
-      _refresh(cached: cachedBefore, () async {
+      _refresh(skip: cachedOnly, cached: cachedBefore, () async {
         final List<TrackModel> models = await _api.fetchTracks();
         final DateTime now = _now();
 
@@ -100,7 +117,7 @@ class ContentRepositoryImpl implements ContentRepository {
             model.toEntity().toCompanion(now: now),
         ]);
       }),
-      _refresh(cached: cachedBefore, _refreshArtists),
+      _refresh(skip: cachedOnly, cached: cachedBefore, _refreshArtists),
     ).wait;
 
     final List<TrackEntity> cached = await _read(() async {
@@ -118,9 +135,10 @@ class ContentRepositoryImpl implements ContentRepository {
   }
 
   @override
-  Future<List<ArtistEntity>> getArtists() async {
+  Future<List<ArtistEntity>> getArtists({bool cachedOnly = false}) async {
     final bool cachedBefore = await _has(_artistDao.getArtists);
     final AppError? failure = await _refresh(
+      skip: cachedOnly,
       cached: cachedBefore,
       _refreshArtists,
     );
@@ -182,13 +200,25 @@ class ContentRepositoryImpl implements ContentRepository {
 
   /// Runs a fetch-and-cache, and hands back what went wrong instead of
   /// throwing — the caller decides whether the cache makes it survivable.
+  ///
+  /// Past its wait the fetch goes on. When it lands after all, [updates]
+  /// fires; when it fails late, nothing changes.
   Future<AppError?> _refresh(
     Future<void> Function() body, {
     bool cached = false,
+    bool skip = false,
   }) async {
+    if (skip) return null;
+
+    final Future<void> fetch = body();
     try {
-      await body().timeout(cached ? patienceWithCache : patience);
+      await fetch.timeout(cached ? patienceWithCache : patience);
       return null;
+    } on TimeoutException catch (error, stackTrace) {
+      fetch.then((_) {
+        if (!_updates.isClosed) _updates.add(null);
+      }, onError: (Object _) {}).ignore();
+      return ErrorMapper.fromException(error, stackTrace);
     } on Object catch (error, stackTrace) {
       return ErrorMapper.fromException(error, stackTrace);
     }
