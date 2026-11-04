@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PureLofi · Listen</title>
+<meta name="description" content="Real lo-fi by real musicians, in a little pixel room. Listen in your browser.">
+<meta name="theme-color" content="#030308">
+<link rel="icon" type="image/png" href="a/favicon.png">
+<link rel="stylesheet" href="listen.css">
+</head>
+<body>
+<canvas id="room" aria-label="A pixel-art room" role="img"></canvas>
+<main class="player">
+  <p class="room-name" id="roomName">&nbsp;</p>
+  <div class="now" aria-live="polite">
+    <p class="title" id="title">Real lo-fi, in your browser</p>
+    <p class="artist" id="artist">&nbsp;</p>
+  </div>
+  <div class="controls">
+    <button type="button" id="prevRoom" aria-label="Previous room">&#8249;</button>
+    <button type="button" id="play" class="play" aria-label="Play" disabled>&#9654;</button>
+    <button type="button" id="next" aria-label="Next track" disabled>&#9197;</button>
+    <button type="button" id="nextRoom" aria-label="Next room">&#8250;</button>
+  </div>
+  <p class="note" id="note"></p>
+  <p class="app"><a href="/">All of it, offline and on the lock screen: get the app</a></p>
+</main>
+<audio id="audio" preload="none"></audio>
+<script src="config.js"></script>
+<script src="scenes.js"></script>
+<script src="listen.js"></script>
+</body>
+</html>
