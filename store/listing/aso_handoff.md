@@ -72,7 +72,7 @@ they work, study, read or fall asleep. Target size: iPhone 6.9"
 
 ```text
 5. SAVE YOUR FAVOURITES
-   AND PLAY OFFLINE
+   TAKE THEM OFFLINE WITH PRO
    Capture: still to take — heart four or five tracks first, then open the
    library on the Favourites pill so the list is full, not empty.
    Breakout: none.
