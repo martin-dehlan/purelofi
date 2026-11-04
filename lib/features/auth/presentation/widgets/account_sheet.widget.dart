@@ -10,7 +10,34 @@ import 'email_password_form.widget.dart';
 import 'sign_in_options.widget.dart';
 import 'signed_in_account.widget.dart';
 
-/// The account, in the same lean sheet as the menu it is opened from.
+/// The account in a sheet of its own: on the way to Pro (#108) and as the
+/// first launch's welcome. The room page shows the same [AccountPanel]
+/// inline, at its top.
+class AccountSheet extends StatelessWidget {
+  const AccountSheet({this.reason, this.welcome = false, super.key});
+
+  final String? reason;
+  final bool welcome;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        // The keyboard comes up for the email, password and code; the sheet
+        // rises with it rather than hiding the field.
+        padding: EdgeInsets.fromLTRB(
+          context.horizontalPadding,
+          0,
+          context.horizontalPadding,
+          context.spaceL + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: AccountPanel(reason: reason, welcome: welcome),
+      ),
+    );
+  }
+}
+
+/// The account itself, wherever it is shown.
 ///
 /// Optional from top to bottom: no onboarding, nothing gated, the music
 /// plays the same either way (#38). Signed out it offers the ways in;
@@ -18,8 +45,13 @@ import 'signed_in_account.widget.dart';
 ///
 /// As the [welcome] on a first launch it carries a way past it, and closes
 /// itself once someone is signed in.
-class AccountSheet extends ConsumerStatefulWidget {
-  const AccountSheet({this.reason, this.welcome = false, super.key});
+class AccountPanel extends ConsumerStatefulWidget {
+  const AccountPanel({
+    this.reason,
+    this.welcome = false,
+    this.badge,
+    super.key,
+  });
 
   /// Why an account is asked for here, said under the title — the sheet
   /// was opened on the way to something (Pro, #108), so it closes the
@@ -29,11 +61,15 @@ class AccountSheet extends ConsumerStatefulWidget {
   /// The one-time offer on the first launch, with a way to skip it.
   final bool welcome;
 
+  /// What else the listener has, such as Pro: under the name when signed
+  /// in, over the ways in when not.
+  final Widget? badge;
+
   @override
-  ConsumerState<AccountSheet> createState() => _AccountSheetState();
+  ConsumerState<AccountPanel> createState() => _AccountPanelState();
 }
 
-class _AccountSheetState extends ConsumerState<AccountSheet> {
+class _AccountPanelState extends ConsumerState<AccountPanel> {
   bool _email = false;
 
   /// The sign-in, sign-out or deletion under way.
@@ -102,6 +138,7 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
         busy: _leaving,
         onSignOut: () => _leave(auth.signOut),
         onDelete: _delete,
+        badge: widget.badge,
       );
     } else if (_email) {
       body = EmailPasswordForm(onBack: () => setState(() => _email = false));
@@ -119,69 +156,58 @@ class _AccountSheetState extends ConsumerState<AccountSheet> {
       );
     }
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        // The keyboard comes up for the email, password and code; the sheet rises
-        // with it rather than hiding the field.
-        padding: EdgeInsets.fromLTRB(
-          context.horizontalPadding,
-          0,
-          context.horizontalPadding,
-          context.spaceL + MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            if (account == null) ...<Widget>[
-              Text(
-                widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: context.fontL,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (reason != null) ...<Widget>[
-                SizedBox(height: context.spaceXs),
-                Text(
-                  reason,
-                  style: TextStyle(
-                    color: cs.onSurfaceVariant,
-                    fontSize: context.fontS,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-              SizedBox(height: context.spaceL),
-            ],
-            body,
-            if (widget.welcome && account == null && !_email) ...<Widget>[
-              SizedBox(height: context.spaceS),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(foregroundColor: cs.onSurface),
-                  child: Text(
-                    'Not now',
-                    style: TextStyle(fontSize: context.fontM),
-                  ),
-                ),
-              ),
-            ],
-            if (_error != null) ...<Widget>[
-              SizedBox(height: context.spaceM),
-              Center(
-                child: Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: cs.error, fontSize: context.fontS),
-                ),
-              ),
-            ],
+    final Widget? badge = widget.badge;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (account == null) ...<Widget>[
+          Text(
+            widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
+            style: TextStyle(
+              color: cs.onSurface,
+              fontSize: context.fontL,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: context.spaceXs),
+          Text(
+            reason ?? 'Optional. The music plays the same either way.',
+            style: TextStyle(
+              color: cs.onSurfaceVariant,
+              fontSize: context.fontS,
+              height: 1.4,
+            ),
+          ),
+          if (badge != null && !_email) ...<Widget>[
+            SizedBox(height: context.spaceM),
+            Align(alignment: Alignment.centerLeft, child: badge),
           ],
-        ),
-      ),
+          SizedBox(height: context.spaceL),
+        ],
+        body,
+        if (widget.welcome && account == null && !_email) ...<Widget>[
+          SizedBox(height: context.spaceS),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(foregroundColor: cs.onSurface),
+              child: Text('Not now', style: TextStyle(fontSize: context.fontM)),
+            ),
+          ),
+        ],
+        if (_error != null) ...<Widget>[
+          SizedBox(height: context.spaceM),
+          Center(
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: cs.error, fontSize: context.fontS),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

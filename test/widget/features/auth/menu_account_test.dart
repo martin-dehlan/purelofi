@@ -38,17 +38,34 @@ void main() {
     ),
   ];
 
-  testWidgets('signed out, the menu offers sign-in', (tester) async {
+  testWidgets('signed out, the ways in are right on the page', (tester) async {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openMenu(tester);
 
-    expect(find.text('Apple, Google or email'), findsOneWidget);
-
-    await tapMenuEntry(tester, 'Sign in');
-
-    expect(find.byType(AccountSheet), findsOneWidget);
+    // No second sheet to open first.
+    expect(find.byType(AccountSheet), findsNothing);
+    expect(find.byType(AccountPanel), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Continue with email'), findsOneWidget);
+  });
+
+  testWidgets('signed in, sign out is right on the page', (tester) async {
+    final FakeAuthRepository auth = FakeAuthRepository(
+      signedIn: const Account(
+        id: 'u1',
+        method: SignInMethod.google,
+        email: 'me@example.com',
+      ),
+    );
+    await tester.pumpRoutedApp(overrides: overrides(), auth: auth);
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+
+    await tapMenuEntry(tester, 'Sign out');
+
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.byType(AccountSheet), findsNothing);
   });
 
   testWidgets('signed in, the menu says who', (tester) async {

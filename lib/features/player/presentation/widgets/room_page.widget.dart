@@ -12,14 +12,12 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../common/widgets/legal_links.widget.dart';
 import '../../../../common/widgets/menu_group.widget.dart';
 import '../../../../common/widgets/menu_row.widget.dart';
-import '../../../auth/controller/auth.controller.dart';
-import '../../../auth/domain/account.entity.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_plan.entity.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
-import 'profile_card.widget.dart';
+import '../../../pro/presentation/widgets/pro_pill.widget.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
 import 'sleep_timer_chips.widget.dart';
@@ -52,7 +50,6 @@ class RoomPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Account? account = ref.watch(authControllerProvider).value;
     final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
     final ProStatus pro =
         ref.watch(proControllerProvider).value ?? ProStatus.free;
@@ -79,7 +76,11 @@ class RoomPage extends ConsumerWidget {
     return SingleChildScrollView(
       controller: controller,
       padding: EdgeInsets.only(
-        bottom: MediaQuery.paddingOf(context).bottom + context.spaceL,
+        // The keyboard comes up for the email sign-in.
+        bottom:
+            MediaQuery.paddingOf(context).bottom +
+            MediaQuery.viewInsetsOf(context).bottom +
+            context.spaceL,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -100,32 +101,46 @@ class RoomPage extends ConsumerWidget {
               ),
             ),
           ),
-          MenuGroup(
-            children: <Widget>[
-              // Who is listening and what they have, in one card. Pro is a
-              // pill in it, only where Pro can be bought: a build without
-              // RevenueCat's keys has nothing to offer here (#16).
-              ProfileCard(
-                account: account,
-                onTap: () => unawaited(showAccountSheet(context)),
-                pro: !sellsPro
-                    ? null
-                    : pro.isPro
-                    ? switch (pro.plan) {
-                        PlanPeriod.yearly => 'Pro · yearly',
-                        PlanPeriod.monthly => 'Pro · monthly',
-                        null => 'Pro',
-                      }
-                    : 'Get Pro',
-                isPro: pro.isPro,
-                onPro: pro.isPro
-                    ? (manage == null
-                          ? null
-                          : () => unawaited(AppLinks.open(Uri.parse(manage))))
-                    : () =>
-                          unawaited(showPaywallSheet(context, source: 'menu')),
+          // Who is listening, right here: the ways in, or the account and
+          // the way out. No second sheet to open. Pro is a pill in it, only
+          // where Pro can be bought (#16).
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.horizontalPadding,
+            ),
+            child: Material(
+              color: cs.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(
+                context.cardBorderRadius * 1.5,
               ),
-            ],
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: EdgeInsets.all(context.spaceL),
+                child: AccountPanel(
+                  badge: !sellsPro
+                      ? null
+                      : ProPill(
+                          label: pro.isPro
+                              ? switch (pro.plan) {
+                                  PlanPeriod.yearly => 'Pro · yearly',
+                                  PlanPeriod.monthly => 'Pro · monthly',
+                                  null => 'Pro',
+                                }
+                              : 'Get Pro',
+                          filled: !pro.isPro,
+                          onTap: pro.isPro
+                              ? (manage == null
+                                    ? null
+                                    : () => unawaited(
+                                        AppLinks.open(Uri.parse(manage)),
+                                      ))
+                              : () => unawaited(
+                                  showPaywallSheet(context, source: 'menu'),
+                                ),
+                        ),
+                ),
+              ),
+            ),
           ),
           heading('Room'),
           const SceneStrip(),
