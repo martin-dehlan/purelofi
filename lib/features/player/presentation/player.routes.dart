@@ -13,8 +13,11 @@ final List<RouteBase> playerRoutes = <RouteBase>[
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.trackPath,
-        builder: (_, GoRouterState state) =>
-            PlayerScreen(deepLinkTrackId: state.pathParameters['trackId']),
+        builder: (_, GoRouterState state) => PlayerScreen(
+          deepLinkTrackId: AppRoutes.trackIdFrom(
+            state.pathParameters['trackId'],
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.authCallbackPath,

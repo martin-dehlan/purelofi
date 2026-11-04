@@ -123,9 +123,7 @@ class RoomPage extends ConsumerWidget {
                           onTap: pro.isPro
                               ? (manage == null
                                     ? null
-                                    : () => unawaited(
-                                        AppLinks.open(Uri.parse(manage)),
-                                      ))
+                                    : () => unawaited(AppLinks.openUrl(manage)))
                               : () => unawaited(
                                   showPaywallSheet(context, source: 'menu'),
                                 ),
