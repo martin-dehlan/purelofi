@@ -92,12 +92,16 @@ DeviceFavorites deviceFavorites(Ref ref) =>
     DeviceFavoritesImpl(ref.watch(trackDaoProvider));
 
 @Riverpod(keepAlive: true)
-ContentRepository contentRepository(Ref ref) => ContentRepositoryImpl(
-  api: ref.watch(contentApiProvider),
-  trackDao: ref.watch(trackDaoProvider),
-  sceneDao: ref.watch(sceneDaoProvider),
-  artistDao: ref.watch(artistDaoProvider),
-);
+ContentRepository contentRepository(Ref ref) {
+  final ContentRepositoryImpl repository = ContentRepositoryImpl(
+    api: ref.watch(contentApiProvider),
+    trackDao: ref.watch(trackDaoProvider),
+    sceneDao: ref.watch(sceneDaoProvider),
+    artistDao: ref.watch(artistDaoProvider),
+  );
+  ref.onDispose(repository.dispose);
+  return repository;
+}
 
 @Riverpod(keepAlive: true)
 ArtistDao artistDao(Ref ref) => ArtistDao(ref.watch(appDatabaseProvider));

@@ -6,8 +6,10 @@ import '../../../common/analytics/analytics.provider.dart';
 
 import '../dev/test_scene.dart';
 import '../../pro/controller/pro.controller.dart';
+import '../domain/content.repository.dart';
 import '../domain/scene.entity.dart';
 import 'player.provider.dart';
+import 'track.controller.dart';
 
 part 'scene.controller.g.dart';
 
@@ -23,9 +25,16 @@ class SceneListController extends _$SceneListController {
     // any build that does not ask for it.
     if (DevTestScene.enabled) return <SceneEntity>[await DevTestScene.load()];
 
-    final List<SceneEntity> scenes = await ref
-        .watch(contentRepositoryProvider)
-        .getScenes();
+    final ContentRepository content = ref.watch(contentRepositoryProvider);
+    onLateUpdate(
+      ref,
+      content,
+      () => content.getScenes(cachedOnly: true),
+      (List<SceneEntity> scenes) =>
+          state = AsyncData<List<SceneEntity>>(scenes),
+    );
+
+    final List<SceneEntity> scenes = await content.getScenes();
 
     // Every cover onto the disk now, while the listener is still looking at
     // the room: by the time they open the scene list, the pictures are

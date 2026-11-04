@@ -178,6 +178,12 @@ Local-first: trigger background sync, serve local stream immediately, optimistic
 writes for favorites. (Same shape as the wine-app lineage — see git history of
 this file for the full example.)
 
+Content (`ContentRepositoryImpl`): with something cached, a fetch gets 3 s,
+then the cache is served. A fetch that runs over keeps going; when it lands,
+`ContentRepository.updates` fires and the track, artist and scene lists read
+the cache again (`cachedOnly: true`, no second fetch). A track taken off
+Supabase leaves the app in the same session, not on the next start.
+
 ---
 
 ## The file cache
