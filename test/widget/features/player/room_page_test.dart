@@ -80,7 +80,7 @@ void main() {
   testWidgets('a swipe down puts the page away too', (tester) async {
     await start(tester);
 
-    await tester.fling(find.text('Your room'), const Offset(0, 600), 2000);
+    await tester.fling(find.byType(SceneStrip), const Offset(0, 600), 2000);
     await tester.pumpAndSettle();
 
     expect(find.byType(RoomPage), findsNothing);

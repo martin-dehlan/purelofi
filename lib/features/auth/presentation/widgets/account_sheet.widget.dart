@@ -50,6 +50,7 @@ class AccountPanel extends ConsumerStatefulWidget {
     this.reason,
     this.welcome = false,
     this.badge,
+    this.actions = true,
     super.key,
   });
 
@@ -64,6 +65,9 @@ class AccountPanel extends ConsumerStatefulWidget {
   /// What else the listener has, such as Pro: under the name when signed
   /// in, over the ways in when not.
   final Widget? badge;
+
+  /// Whether sign out and delete show here, or elsewhere on the page.
+  final bool actions;
 
   @override
   ConsumerState<AccountPanel> createState() => _AccountPanelState();
@@ -139,6 +143,7 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
         onSignOut: () => _leave(auth.signOut),
         onDelete: _delete,
         badge: widget.badge,
+        actions: widget.actions,
       );
     } else if (_email) {
       body = EmailPasswordForm(onBack: () => setState(() => _email = false));
@@ -163,27 +168,40 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (account == null) ...<Widget>[
-          Text(
-            widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: context.fontL,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: context.fontL,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: context.spaceXs),
+                    Text(
+                      reason ??
+                          'Optional. The music plays the same either way.',
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: context.fontS,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Same place as for a signed-in listener: the row's end.
+              if (badge != null && !_email) ...<Widget>[
+                SizedBox(width: context.spaceS),
+                badge,
+              ],
+            ],
           ),
-          SizedBox(height: context.spaceXs),
-          Text(
-            reason ?? 'Optional. The music plays the same either way.',
-            style: TextStyle(
-              color: cs.onSurfaceVariant,
-              fontSize: context.fontS,
-              height: 1.4,
-            ),
-          ),
-          if (badge != null && !_email) ...<Widget>[
-            SizedBox(height: context.spaceM),
-            Align(alignment: Alignment.centerLeft, child: badge),
-          ],
           SizedBox(height: context.spaceL),
         ],
         body,
