@@ -3,7 +3,11 @@
 Copy for App Store Connect and Play Console (#94). The music comes from
 different lo-fi artists: never name instruments, never say who played a
 track and never suggest any of it is AI. "No AI" only ever refers to the
-music: the rooms are made with PixelLab.
+music: the rooms are made with PixelLab, so always write "No AI music".
+
+The title targets "lofi music" and "lofi player". "No AI" sits in the subtitle
+because searching for it mostly returns AI generators. Store copy spells it
+"lofi", which is what people search for.
 
 Default language in both stores is English (US), with German added. The app
 itself is English only, so the German description says so. The copy names no
@@ -15,12 +19,12 @@ prices: they differ by country and the app shows them before purchase.
 
 **Name** (30) · 27 characters
 ```
-PureLofi: Lo-fi Pixel Rooms
+PureLofi: Lofi Music Player
 ```
 
-**Subtitle** (30) · 26 characters
+**Subtitle** (30) · 30 characters
 ```
-Real lo-fi music, never AI
+Retro pixel rooms, no AI music
 ```
 
 **Promotional text** (170) · 126 characters
@@ -28,18 +32,18 @@ Real lo-fi music, never AI
 Put a room on and leave it running while you work, read or fall asleep. New rooms and new artists arrive in the app over time.
 ```
 
-**Keywords** (100) · 92 characters. Words already in the name and subtitle are left out; Apple indexes those anyway.
+**Keywords** (100) · 92 characters. Words already in the name and subtitle are left out, since Apple indexes those anyway.
 ```
-chill,study,focus,beats,relax,sleep,ambient,rain,cozy,calm,radio,coffee,background,retro,cat
+study,focus,sleep,radio,chill,beats,relax,ambient,rain,cozy,calm,coffee,background,cat,lo-fi
 ```
 
 **Description**
 ```
-PureLofi is a lo-fi player set in pixel rooms. Pick a room, press play and let it run.
+PureLofi is a lofi music player set in retro pixel rooms. Pick a room, press play and let it run while you study, focus, read or fall asleep.
 
-The music comes from lo-fi musicians. None of it is made by AI.
+The music comes from lofi musicians. None of it is made by AI.
 
-The rooms move while the music plays. Rain runs down the window, the record turns and every now and then the cat wakes up.
+The pixel art rooms move while the music plays. Rain runs down the window, the record turns and every now and then the cat wakes up.
 
 What's in it
 - Seven rooms: a rainy flat, a bookshop in autumn, a laundromat at night, a night train, a home studio, a cabin in the snow and a rooftop at dusk
@@ -60,12 +64,12 @@ Terms: https://purelofi.app/terms
 
 **App name** (30) · 27 characters
 ```
-PureLofi: Lo-fi Pixel Rooms
+PureLofi: Lofi Music Player
 ```
 
-**Short description** (80) · 71 characters
+**Short description** (80) · 72 characters
 ```
-Real lo-fi music in living pixel rooms. No AI music, no account needed.
+Lofi music for study, focus and sleep in retro pixel rooms. No AI music.
 ```
 
 **Full description**: the App Store description, with the last Pro sentence reading
@@ -79,12 +83,12 @@ You can cancel any time in your Google Play settings.
 
 **Name** (30) · 27 characters
 ```
-PureLofi: Lo-fi Pixel-Räume
+PureLofi: Lofi Musik Player
 ```
 
 **Subtitle** (30) · 27 characters
 ```
-Echte Lo-fi-Musik, keine KI
+Pixel-Räume, keine KI-Musik
 ```
 
 **Promotional text** (170) · 139 characters
@@ -92,18 +96,18 @@ Echte Lo-fi-Musik, keine KI
 Mach einen Raum an und lass ihn laufen, beim Arbeiten, Lesen oder Einschlafen. Neue Räume und neue Artists kommen nach und nach in die App.
 ```
 
-**Keywords** (100) · 95 characters
+**Keywords** (100) · 96 characters
 ```
-lofi,chill,lernen,fokus,beats,entspannen,schlafen,regen,gemütlich,ruhe,radio,kaffee,retro,katze
+retro,lernen,fokus,schlafen,study,focus,sleep,chill,beats,radio,entspannen,regen,gemütlich,katze
 ```
 
 **Description**
 ```
-PureLofi ist ein Lo-fi-Player in Pixel-Räumen. Raum aussuchen, Play drücken und laufen lassen.
+PureLofi ist ein Lofi-Musik-Player in Retro-Pixel-Räumen. Raum aussuchen, Play drücken und laufen lassen, beim Lernen, Arbeiten, Lesen oder Einschlafen.
 
-Die Musik kommt von Lo-fi-Musikern. Nichts davon ist mit KI gemacht.
+Die Musik kommt von Lofi-Musikern. Nichts davon ist mit KI gemacht.
 
-Die Räume bewegen sich, während die Musik läuft. Regen rinnt über die Scheibe, die Platte dreht sich und ab und zu wacht die Katze auf.
+Die Pixel-Räume bewegen sich, während die Musik läuft. Regen rinnt über die Scheibe, die Platte dreht sich und ab und zu wacht die Katze auf.
 
 Das steckt drin
 - Sieben Räume: eine verregnete Wohnung, ein Buchladen im Herbst, ein Waschsalon bei Nacht, ein Nachtzug, ein Home Studio, eine Hütte im Schnee und eine Dachterrasse in der Dämmerung
@@ -126,12 +130,12 @@ Nutzungsbedingungen: https://purelofi.app/terms
 
 **App name** (30) · 27 characters
 ```
-PureLofi: Lo-fi Pixel-Räume
+PureLofi: Lofi Musik Player
 ```
 
-**Short description** (80) · 79 characters
+**Short description** (80) · 78 characters
 ```
-Echte Lo-fi-Musik in lebendigen Pixel-Räumen. Keine KI-Musik, kein Konto nötig.
+Lofi-Musik für Lernen, Fokus und Schlaf in Retro-Pixel-Räumen. Keine KI-Musik.
 ```
 
 **Full description**: the App Store description, with the last Pro sentence reading
@@ -153,10 +157,10 @@ App Store display names (30) and descriptions (45).
 
 ```
 <en-US>
-First release: seven pixel rooms, lo-fi music from real musicians, favourites and PureLofi Pro.
+First release: seven pixel rooms, lofi music from real musicians, favourites and PureLofi Pro.
 </en-US>
 <de-DE>
-Erste Version: sieben Pixel-Räume, Lo-fi-Musik von echten Musikern, Favoriten und PureLofi Pro.
+Erste Version: sieben Pixel-Räume, Lofi-Musik von echten Musikern, Favoriten und PureLofi Pro.
 </de-DE>
 ```
 
@@ -166,7 +170,7 @@ The demo account needs Pro granted in RevenueCat first, or the last sentence
 of the second paragraph is wrong.
 
 ```
-PureLofi is a lo-fi music player. Everything except Pro works without an account. Sign-in is optional and keeps favourites and Pro across devices.
+PureLofi is a lofi music player. Everything except Pro works without an account. Sign-in is optional and keeps favourites and Pro across devices.
 
 To review Pro, sign in with the account below (Menu -> Sign in -> email). It already has Pro.
 
