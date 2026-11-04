@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/utils/responsive.dart';
+
 import '../../../auth/controller/welcome.controller.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/scene_touch.controller.dart';
 import '../../controller/startup.controller.dart';
+import '../../controller/window_mode.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
@@ -37,6 +40,24 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _started = false;
   bool _deepLinkHandled = false;
+
+  /// In window mode a tap shows only the way out, for a few seconds (#149).
+  bool _windowExitShown = false;
+  Timer? _windowExitTimer;
+
+  @override
+  void dispose() {
+    _windowExitTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showWindowExit() {
+    _windowExitTimer?.cancel();
+    setState(() => _windowExitShown = true);
+    _windowExitTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _windowExitShown = false);
+    });
+  }
 
   /// Whether the first launch's welcome is still to come. Unknown until the
   /// stored flag is read; the music waits for the answer, and while the
@@ -125,8 +146,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       _welcomeShown = true;
       unawaited(Future<void>.microtask(_welcome));
     }
+    final bool windowMode = ref.watch(windowModeControllerProvider);
     final bool controlsVisible =
-        !starting && ref.watch(controlsVisibilityControllerProvider);
+        !starting &&
+        !windowMode &&
+        ref.watch(controlsVisibilityControllerProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -143,6 +167,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             if (starting) return;
             // A tap that woke the cat is not a request for the transport.
             if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+            // In window mode the room stays alone; a tap offers the way out.
+            if (ref.read(windowModeControllerProvider)) {
+              _showWindowExit();
+              return;
+            }
 
             ref.read(controlsVisibilityControllerProvider.notifier).reveal();
           },
@@ -187,6 +216,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   ),
                 ),
               ),
+              // The only thing window mode shows, and only after a tap.
+              if (windowMode && _windowExitShown)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.all(context.spaceL),
+                      child: FilledButton.tonal(
+                        onPressed: () {
+                          _windowExitTimer?.cancel();
+                          setState(() => _windowExitShown = false);
+                          ref
+                              .read(windowModeControllerProvider.notifier)
+                              .leave();
+                        },
+                        child: const Text('Leave window mode'),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

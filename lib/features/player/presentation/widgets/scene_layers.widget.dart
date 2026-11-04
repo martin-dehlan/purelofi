@@ -45,7 +45,36 @@ int sceneScaleFor({
   final int byHeight = (viewport.height * devicePixelRatio / canvasHeight)
       .ceil();
 
+  // Much wider than the room — a phone on its side, a tablet (#149):
+  // covering the width would cut away most of the height. The room keeps
+  // its whole height instead and stands in the middle, the sides left dark,
+  // like a window in a wall.
+  if (isPillarboxed(
+    viewport: viewport,
+    canvasWidth: canvasWidth,
+    canvasHeight: canvasHeight,
+  )) {
+    return math.max(1, byHeight);
+  }
+
   return math.max(1, math.max(byWidth, byHeight));
+}
+
+/// How much wider than the room the screen may be before the room stops
+/// covering it and stands in the middle instead.
+const double pillarboxRatio = 1.3;
+
+/// Whether [viewport] is wide enough that the room is pillarboxed (#149).
+bool isPillarboxed({
+  required Size viewport,
+  required int canvasWidth,
+  required int canvasHeight,
+}) {
+  if (viewport.height <= 0 || canvasHeight <= 0) return false;
+  final double screen = viewport.width / viewport.height;
+  final double room = canvasWidth / canvasHeight;
+
+  return screen > room * pillarboxRatio;
 }
 
 /// Which frame of a strip is showing at [clock].
@@ -121,8 +150,15 @@ Rect visibleCanvasRect({
       devicePixelRatio;
   if (scale <= 0) return Rect.fromLTWH(0, 0, canvasWidth * 1, canvasHeight * 1);
 
-  final double hidden = (canvasWidth * scale - viewport.width) / 2 / scale;
-  final double cut = (canvasHeight * scale - viewport.height) / 2 / scale;
+  // Never less than nothing: a pillarboxed room shows all of its width.
+  final double hidden = math.max(
+    0,
+    (canvasWidth * scale - viewport.width) / 2 / scale,
+  );
+  final double cut = math.max(
+    0,
+    (canvasHeight * scale - viewport.height) / 2 / scale,
+  );
 
   return Rect.fromLTRB(hidden, cut, canvasWidth - hidden, canvasHeight - cut);
 }

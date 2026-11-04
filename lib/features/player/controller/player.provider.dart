@@ -16,6 +16,7 @@ import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/follows.impl.dart';
+import '../data/screen_awake.service.impl.dart';
 import '../data/mix_preferences.service.impl.dart';
 import '../data/mood.repository.impl.dart';
 import '../data/playlist.repository.impl.dart';
@@ -31,6 +32,7 @@ import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
 import '../domain/mix_preferences.service.dart';
+import '../domain/screen_awake.service.dart';
 import '../domain/mood.entity.dart';
 import '../domain/playlist.entity.dart';
 import '../domain/playlist_sync.dart';
@@ -133,6 +135,10 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// Keeps the screen on in window mode (#149).
+@Riverpod(keepAlive: true)
+ScreenAwake screenAwake(Ref ref) => const ScreenAwakeImpl();
 
 /// The artists the listener follows, on the device (#147).
 @Riverpod(keepAlive: true)
