@@ -10,6 +10,7 @@ import '../domain/ambient_loop.dart';
 import '../domain/audio_interruption.dart';
 import '../domain/audio_interruption.source.dart';
 import '../domain/audio_player.service.dart';
+import '../domain/media_library.dart';
 import '../domain/playback_mode.dart';
 import '../domain/soft_transition.dart';
 import '../domain/track.entity.dart';
@@ -368,6 +369,51 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
     loop.applied = volume;
     unawaited(_guard(() => loop.player.setVolume(volume)));
+  }
+
+  MediaLibrary? _library;
+
+  @override
+  void setLibrary(MediaLibrary library) => _library = library;
+
+  /// A media browser opening a folder (#145): Android Auto, a watch.
+  @override
+  Future<List<MediaItem>> getChildren(
+    String parentMediaId, [
+    Map<String, dynamic>? options,
+  ]) async {
+    final MediaLibrary? library = _library;
+    if (library == null) return const <MediaItem>[];
+    try {
+      final List<BrowseNode> nodes = await library.children(
+        parentMediaId == AudioService.browsableRootId
+            ? BrowseIds.root
+            : parentMediaId,
+      );
+      return <MediaItem>[
+        for (final BrowseNode node in nodes)
+          MediaItem(
+            id: node.id,
+            title: node.title,
+            artist: node.subtitle,
+            artUri: node.artUri,
+            playable: node.playable,
+          ),
+      ];
+    } on Object {
+      return const <MediaItem>[];
+    }
+  }
+
+  /// A media browser playing an entry: the app decides what that means.
+  @override
+  Future<void> playFromMediaId(
+    String mediaId, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final MediaLibrary? library = _library;
+    if (library == null) return;
+    await _guard(() => library.play(mediaId));
   }
 
   @override

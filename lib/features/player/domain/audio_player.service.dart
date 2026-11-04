@@ -1,5 +1,6 @@
 import '../../../common/errors/app_error.dart';
 import 'ambient_loop.dart';
+import 'media_library.dart';
 import 'playback_mode.dart';
 import 'track.entity.dart';
 import 'volume_layer.dart';
@@ -69,4 +70,7 @@ abstract class AudioPlayerService {
   /// before. Sounds that stay keep playing; new ones fade in, gone ones fade
   /// out. They play while the music plays and pause with it.
   Future<void> setAmbience(List<AmbientLoop> loops);
+
+  /// What media browsers — Android Auto — may open and play (#145).
+  void setLibrary(MediaLibrary library);
 }
