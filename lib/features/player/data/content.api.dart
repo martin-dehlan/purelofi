@@ -17,10 +17,14 @@ class ContentApi {
   final SupabaseClient _client;
 
   Future<List<SceneModel>> fetchScenes() async {
-    // Layers come back embedded, so a scene and its stack are one request.
+    // Layers and the room's sounds (#136) come back embedded, so a scene
+    // and everything it needs are one request.
     final List<Map<String, dynamic>> rows = await _client
         .from(scenesTable)
-        .select('*, $layersTable(*)')
+        .select(
+          '*, $layersTable(*), '
+          'scene_ambients(default_level, ambient_sounds(*))',
+        )
         .eq('is_active', true)
         .order('sort_order');
 

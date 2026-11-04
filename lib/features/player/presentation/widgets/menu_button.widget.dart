@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import 'room_page.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The menu, top left of the scene, as a gear: the account, the settings
 /// and the rest of the app live behind it. The library sits opposite it,
@@ -16,7 +17,7 @@ class MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Menu',
+      label: context.l10n.menu,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

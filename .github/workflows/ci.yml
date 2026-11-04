@@ -33,7 +33,10 @@ jobs:
       - name: Create .env
         run: cp .env.example .env
 
-      # Generated files are not committed.
+      # Generated files are not committed: the strings (#140), then the rest.
+      - name: Generate localizations
+        run: flutter gen-l10n
+
       - name: Generate code
         run: dart run build_runner build
 

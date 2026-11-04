@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
+import '../../controller/new_content.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
+import 'new_dot.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'track_cover.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One track, the way a music app draws one: a round cover, the title, who
 /// it is by, and a `⋯` with everything else that can be done with it.
@@ -60,6 +63,10 @@ class TrackTile extends ConsumerWidget {
       ),
     );
 
+    final bool isNew = ref.watch(
+      newTracksProvider.select((Set<String> ids) => ids.contains(track.id)),
+    );
+
     return ListTile(
       selected: isCurrent,
       // The accent on the title is the whole mark; a tinted row on top of it
@@ -84,7 +91,7 @@ class TrackTile extends ConsumerWidget {
           // apps mark it.
           if (downloaded) ...<Widget>[
             Semantics(
-              label: 'Downloaded',
+              label: context.l10n.downloaded,
               child: AppIcon(
                 AppGlyph.download,
                 size: context.fontS,
@@ -108,9 +115,14 @@ class TrackTile extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          // Added since the listener last looked (#148).
+          if (isNew) ...<Widget>[
+            const NewDot(),
+            SizedBox(width: context.spaceS),
+          ],
           if (repeating)
             Semantics(
-              label: 'On repeat',
+              label: context.l10n.onRepeat,
               child: AppIcon(
                 AppGlyph.repeatOne,
                 size: context.fontL,
@@ -134,7 +146,7 @@ class _TrackMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'More: ${track.title}',
+      tooltip: context.l10n.moreFor(track.title),
       icon: AppIcon(
         AppGlyph.more,
         size: context.fontL,

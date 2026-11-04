@@ -6,11 +6,16 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../../common/cache/media_cache.service.dart';
 import '../../../common/errors/app_error.dart';
+import '../domain/ambient_loop.dart';
 import '../domain/audio_interruption.dart';
 import '../domain/audio_interruption.source.dart';
 import '../domain/audio_player.service.dart';
+import '../domain/media_library.dart';
 import '../domain/playback_mode.dart';
+import '../domain/soft_transition.dart';
 import '../domain/track.entity.dart';
+import '../domain/volume_fader.dart';
+import '../domain/volume_layer.dart';
 
 /// `just_audio` playback wrapped in an `audio_service` handler.
 ///
@@ -24,9 +29,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     MediaCache? cache,
     AudioInterruptionSource? interruptions,
     bool? roomInTitle,
+    AudioPlayer Function()? chimePlayer,
+    AudioPlayer Function()? loopPlayer,
   }) : _player = player ?? AudioPlayer(),
+       _loopPlayer = loopPlayer ?? _sidePlayer,
        _cache = cache,
-       _roomInTitle = roomInTitle ?? Platform.isAndroid {
+       _roomInTitle = roomInTitle ?? Platform.isAndroid,
+       _chimePlayer = chimePlayer ?? _sidePlayer {
     if (interruptions != null) _listenForInterruptions(interruptions);
 
     _subscriptions.addAll(<StreamSubscription<Object?>>[
@@ -36,11 +45,45 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       ),
       _player.processingStateStream.listen((ProcessingState processingState) {
         if (processingState == ProcessingState.completed) {
+          // The track ran out on its own: the next one may come in softly.
+          _fadeInNext = true;
           _nextRequests.add(null);
         }
       }),
+      // The room's sounds play while the music plays (#136).
+      _player.playingStream.listen(_followPlaying),
+      // Often enough for a fade to sound smooth, not for every frame.
+      _player
+          .createPositionStream(
+            minPeriod: const Duration(milliseconds: 50),
+            maxPeriod: const Duration(milliseconds: 100),
+          )
+          .listen(_followPosition),
     ]);
   }
+
+  /// A player beside the music's, for the chime and the room's sounds: it
+  /// must neither stop the track nor take the audio session from it.
+  static AudioPlayer _sidePlayer() => AudioPlayer(
+    handleInterruptions: false,
+    handleAudioSessionActivation: false,
+  );
+
+  static const String chimeAsset = 'assets/sounds/chime.wav';
+
+  /// How loud the chime is over the music.
+  static const double chimeVolume = 0.6;
+
+  final AudioPlayer Function() _chimePlayer;
+  AudioPlayer? _chime;
+
+  /// The room's sounds, each on a player of its own (#136). Like the chime
+  /// they never take the audio session from the music.
+  final AudioPlayer Function() _loopPlayer;
+  final Map<String, _Loop> _loops = <String, _Loop>{};
+
+  /// How long a room's sound takes to come in or go.
+  static const Duration ambienceFade = Duration(seconds: 2);
 
   final AudioPlayer _player;
   final MediaCache? _cache;
@@ -72,6 +115,27 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
     return _roomInTitle && room != null ? '$title · $room' : title;
   }
+
+  /// The levels that make up the volume: ducking for another app, the
+  /// soft transition between tracks, and the app's own layers. The player
+  /// is set to their product.
+  double _duck = 1;
+  double _transition = 1;
+  final Map<VolumeLayer, double> _layers = <VolumeLayer, double>{};
+  double? _applied;
+
+  bool _softTransitions = true;
+
+  /// Whether the next track to load arrived because the last one ran out.
+  bool _fadeInNext = false;
+
+  /// Whether the track playing came in that way, and has not finished
+  /// coming in.
+  bool _fadingIn = false;
+
+  /// While a track loads, the playhead still reports the last one's end,
+  /// which says nothing about how loud the new one should be.
+  bool _loading = false;
 
   PlaybackMode _mode = PlaybackMode.shuffle;
   final StreamController<void> _nextRequests =
@@ -124,6 +188,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   @override
   Future<void> playTrack(TrackEntity track) async {
     _trackTitle = track.title;
+    // Only a track that followed one running out fades in; one the listener
+    // picked or skipped to is there at full volume at once.
+    _fadingIn = _softTransitions && _fadeInNext;
+    _fadeInNext = false;
+    _transition = _fadingIn ? 0 : 1;
+    _applyVolume();
+
     mediaItem.add(
       MediaItem(
         id: track.id,
@@ -142,8 +213,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       ),
     );
 
+    _loading = true;
     await _guard(() async {
-      await _player.setAudioSource(await _sourceFor(track.audioUrl));
+      try {
+        await _player.setAudioSource(await _sourceFor(track.audioUrl));
+      } finally {
+        _loading = false;
+      }
       await _player.play();
     });
   }
@@ -205,9 +281,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
           case InterruptionAction.none:
             break;
           case InterruptionAction.duck:
-            unawaited(_guard(() => _player.setVolume(duckedVolume)));
+            _duck = duckedVolume;
+            _applyVolume();
           case InterruptionAction.restoreVolume:
-            unawaited(_guard(() => _player.setVolume(1)));
+            _duck = 1;
+            _applyVolume();
           case InterruptionAction.pause:
             _pausedByInterruption = true;
             unawaited(_guard(_player.pause));
@@ -217,6 +295,175 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
         }
       }),
     ]);
+  }
+
+  @override
+  Future<void> setVolumeLayer(VolumeLayer layer, double level) async {
+    _layers[layer] = level.clamp(0, 1).toDouble();
+    _applyVolume();
+  }
+
+  @override
+  Future<void> setSoftTransitions(bool enabled) async {
+    _softTransitions = enabled;
+    if (!enabled) {
+      _fadingIn = false;
+      _transition = 1;
+      _applyVolume();
+    }
+  }
+
+  @override
+  Future<void> playChime() => _guard(() async {
+    final AudioPlayer chime = _chime ??= _chimePlayer();
+    await chime.setAsset(chimeAsset);
+    await chime.setVolume(chimeVolume);
+    await chime.play();
+  });
+
+  /// The soft transition, following the playhead (#139).
+  void _followPosition(Duration position) {
+    if (_loading) return;
+    if (_fadingIn && position >= softFadeIn) _fadingIn = false;
+
+    final double level = softTransitionLevel(
+      position: position,
+      duration: _player.duration,
+      enabled: _softTransitions,
+      loops: _mode.loops,
+      fadesIn: _fadingIn,
+    );
+    if (level == _transition) return;
+
+    _transition = level;
+    _applyVolume();
+  }
+
+  /// The product of [layers]' levels; a layer never set is at 1.
+  double _layerGain(Set<VolumeLayer> layers) {
+    double gain = 1;
+    for (final VolumeLayer layer in layers) {
+      gain *= _layers[layer] ?? 1;
+    }
+    return gain;
+  }
+
+  /// Sets the music to the product of every level that is its own, and the
+  /// room's sounds to theirs, when it has changed.
+  void _applyVolume() {
+    final double volume = _duck * _transition * _layerGain(musicLayers);
+    if (volume != _applied) {
+      _applied = volume;
+      unawaited(_guard(() => _player.setVolume(volume)));
+    }
+    _loops.values.forEach(_applyLoop);
+  }
+
+  /// One room's sound: its level in the mix, how far it has faded in, and
+  /// what turns every sound down — another app ducking, the sleep timer, the
+  /// listener's ambience level. Never the focus break, never a transition.
+  void _applyLoop(_Loop loop) {
+    final double volume =
+        loop.level * loop.fade.level * _duck * _layerGain(ambienceLayers);
+    if (volume == loop.applied) return;
+
+    loop.applied = volume;
+    unawaited(_guard(() => loop.player.setVolume(volume)));
+  }
+
+  MediaLibrary? _library;
+
+  @override
+  void setLibrary(MediaLibrary library) => _library = library;
+
+  /// A media browser opening a folder (#145): Android Auto, a watch.
+  @override
+  Future<List<MediaItem>> getChildren(
+    String parentMediaId, [
+    Map<String, dynamic>? options,
+  ]) async {
+    final MediaLibrary? library = _library;
+    if (library == null) return const <MediaItem>[];
+    try {
+      final List<BrowseNode> nodes = await library.children(
+        parentMediaId == AudioService.browsableRootId
+            ? BrowseIds.root
+            : parentMediaId,
+      );
+      return <MediaItem>[
+        for (final BrowseNode node in nodes)
+          MediaItem(
+            id: node.id,
+            title: node.title,
+            artist: node.subtitle,
+            artUri: node.artUri,
+            playable: node.playable,
+          ),
+      ];
+    } on Object {
+      return const <MediaItem>[];
+    }
+  }
+
+  /// A media browser playing an entry: the app decides what that means.
+  @override
+  Future<void> playFromMediaId(
+    String mediaId, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final MediaLibrary? library = _library;
+    if (library == null) return;
+    await _guard(() => library.play(mediaId));
+  }
+
+  @override
+  Future<void> setAmbience(List<AmbientLoop> loops) async {
+    final Map<String, AmbientLoop> wanted = <String, AmbientLoop>{
+      for (final AmbientLoop loop in loops) loop.id: loop,
+    };
+
+    // Gone from the room: fade out, then let go of the player.
+    for (final String id in _loops.keys.toList()) {
+      if (wanted.containsKey(id)) continue;
+      final _Loop leaving = _loops.remove(id)!;
+      leaving.fade.fadeTo(0, ambienceFade);
+      leaving.disposal = Timer(ambienceFade, () {
+        leaving.fade.cancel();
+        unawaited(leaving.player.dispose());
+      });
+    }
+
+    for (final AmbientLoop loop in loops) {
+      final _Loop? playing = _loops[loop.id];
+      if (playing != null) {
+        playing.level = loop.level;
+        _applyLoop(playing);
+        continue;
+      }
+
+      final AudioPlayer player = _loopPlayer();
+      late final _Loop entry;
+      entry = _Loop(
+        player: player,
+        level: loop.level,
+        fade: VolumeFader((double _) async => _applyLoop(entry)),
+      );
+      entry.fade.jumpTo(0);
+      _loops[loop.id] = entry;
+      await _guard(() async {
+        await player.setAudioSource(await _sourceFor(loop.url));
+        await player.setLoopMode(LoopMode.one);
+        if (_player.playing) await player.play();
+      });
+      entry.fade.fadeTo(1, ambienceFade);
+    }
+  }
+
+  /// The room's sounds start and stop with the music.
+  void _followPlaying(bool playing) {
+    for (final _Loop loop in _loops.values) {
+      unawaited(_guard(playing ? loop.player.play : loop.player.pause));
+    }
   }
 
   @override
@@ -295,6 +542,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       await subscription.cancel();
     }
     await _player.dispose();
+    await _chime?.dispose();
+    for (final _Loop loop in _loops.values) {
+      loop.fade.cancel();
+      loop.disposal?.cancel();
+      await loop.player.dispose();
+    }
+    _loops.clear();
     await _nextRequests.close();
     await _modeRequests.close();
     await _errors.close();
@@ -359,4 +613,23 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     PlayerInterruptedException() => 'playback was interrupted',
     _ => 'this track could not be played',
   };
+}
+
+/// One of the room's sounds while it plays (#136).
+class _Loop {
+  _Loop({required this.player, required this.level, required this.fade});
+
+  final AudioPlayer player;
+
+  /// Its level in the listener's mix.
+  double level;
+
+  /// How far it has come in, or gone.
+  final VolumeFader fade;
+
+  /// The volume last handed to [player].
+  double? applied;
+
+  /// Set once it is leaving: lets go of the player after the fade.
+  Timer? disposal;
 }

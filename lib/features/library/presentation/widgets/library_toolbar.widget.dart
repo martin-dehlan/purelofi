@@ -7,6 +7,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/library.controller.dart';
 import '../../domain/library_view.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Sort and, for a library big enough to need it, search (#66).
 ///
@@ -60,11 +61,13 @@ class _SortChip extends StatelessWidget {
   final LibrarySort sort;
   final ValueChanged<LibrarySort> onSort;
 
-  static const Map<LibrarySort, String> names = <LibrarySort, String>{
-    LibrarySort.recent: 'Recently added',
-    LibrarySort.title: 'Title',
-    LibrarySort.artist: 'Artist',
-  };
+  /// What each sort is called, in the listener's language (#140).
+  static String nameOf(BuildContext context, LibrarySort sort) =>
+      switch (sort) {
+        LibrarySort.recent => context.l10n.recentlyAdded,
+        LibrarySort.title => context.l10n.title,
+        LibrarySort.artist => context.l10n.artist,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +90,7 @@ class _SortChip extends StatelessWidget {
             ),
             onPressed: () => onSort(option),
             child: Text(
-              names[option]!,
+              nameOf(context, option),
               style: TextStyle(fontSize: context.fontM),
             ),
           ),
@@ -99,11 +102,14 @@ class _SortChip extends StatelessWidget {
               size: context.fontM,
               color: cs.onSurfaceVariant,
             ),
-            tooltip: 'Sort by: ${names[sort]}',
+            tooltip: context.l10n.sortBy(nameOf(context, sort)),
             label: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(names[sort]!, style: TextStyle(fontSize: context.fontS)),
+                Text(
+                  nameOf(context, sort),
+                  style: TextStyle(fontSize: context.fontS),
+                ),
                 AppIcon(
                   AppGlyph.dropDown,
                   size: context.fontM,
@@ -127,7 +133,7 @@ class _Search extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return SearchBar(
-      hintText: 'Search your music',
+      hintText: context.l10n.searchYourMusic,
       onChanged: onSearch,
       elevation: const WidgetStatePropertyAll<double>(0),
       backgroundColor: WidgetStatePropertyAll<Color>(

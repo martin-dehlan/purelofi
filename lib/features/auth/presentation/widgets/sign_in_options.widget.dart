@@ -5,6 +5,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../domain/account.entity.dart';
 import 'auth_button.widget.dart';
 import 'google_mark.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The ways in, stacked: Apple (where there is a native Apple sheet), Google
 /// (where it is set up), and email, which always works.
@@ -44,7 +45,7 @@ class SignInOptions extends StatelessWidget {
       children: <Widget>[
         if (showApple) ...<Widget>[
           AuthButton(
-            label: 'Continue with Apple',
+            label: context.l10n.continueWithApple,
             primary: true,
             leading: SizedBox(
               width: context.fontL * (25 / 31),
@@ -62,7 +63,7 @@ class SignInOptions extends StatelessWidget {
         ],
         if (showGoogle) ...<Widget>[
           AuthButton(
-            label: 'Continue with Google',
+            label: context.l10n.continueWithGoogle,
             leading: GoogleMark(size: context.fontL),
             busy: busy == SignInMethod.google,
             onPressed: idle ? onGoogle : null,
@@ -70,7 +71,7 @@ class SignInOptions extends StatelessWidget {
           SizedBox(height: gap),
         ],
         AuthButton(
-          label: 'Continue with email',
+          label: context.l10n.continueWithEmail,
           onPressed: idle ? onEmail : null,
         ),
       ],

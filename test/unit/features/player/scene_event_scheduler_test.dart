@@ -375,4 +375,39 @@ void main() {
       );
     });
   });
+
+  group('reduced motion (#153)', () {
+    test('nothing starts on its own', () {
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[event('car')],
+        random: _FixedRandom(0),
+      );
+
+      scheduler.update(const Duration(minutes: 10), startTimed: false);
+
+      expect(scheduler.runningLayerId, isNull);
+    });
+
+    test('what the listener triggered still plays out and ends', () {
+      const SceneLayerEntity cat = SceneLayerEntity(
+        id: 'cat',
+        zIndex: 16,
+        spriteUrl: 'https://example.com/cat.png',
+        frameCount: 20,
+        fps: 10,
+        tappable: true,
+      );
+      final SceneEventScheduler scheduler = SceneEventScheduler(
+        layers: <SceneLayerEntity>[cat],
+        random: _FixedRandom(0),
+      );
+
+      scheduler.trigger('cat', Duration.zero);
+      scheduler.update(const Duration(seconds: 1), startTimed: false);
+      expect(scheduler.runningLayerId, 'cat');
+
+      scheduler.update(const Duration(seconds: 10), startTimed: false);
+      expect(scheduler.runningLayerId, isNull);
+    });
+  });
 }

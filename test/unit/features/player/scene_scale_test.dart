@@ -22,14 +22,52 @@ void main() {
     });
 
     test('covers on both axes, not just the looser one', () {
-      // Wide and short: width needs 4x, height only 1x.
+      // A little wider than the room: width needs 3x, height only 2x.
       final int scale = sceneScaleFor(
-        viewport: const Size(1200, 400),
+        viewport: const Size(700, 1000),
         canvasWidth: 320,
         canvasHeight: 568,
       );
 
-      expect(scale, 4);
+      expect(scale, 3);
+    });
+
+    test('much wider than the room, it keeps the whole height (#149)', () {
+      // A phone on its side: covering the width would need 3x and cut
+      // away two thirds of the room. The height decides instead.
+      const Size landscape = Size(874, 402);
+      expect(
+        isPillarboxed(viewport: landscape, canvasWidth: 320, canvasHeight: 696),
+        isTrue,
+      );
+      final int scale = sceneScaleFor(
+        viewport: landscape,
+        canvasWidth: 320,
+        canvasHeight: 696,
+        devicePixelRatio: 3,
+      );
+      expect(scale, (402 * 3 / 696).ceil());
+
+      // And the whole width of the room is visible.
+      final Rect visible = visibleCanvasRect(
+        viewport: landscape,
+        canvasWidth: 320,
+        canvasHeight: 696,
+        devicePixelRatio: 3,
+      );
+      expect(visible.left, 0);
+      expect(visible.right, 320);
+    });
+
+    test('a phone held upright is never pillarboxed', () {
+      expect(
+        isPillarboxed(
+          viewport: const Size(402, 874),
+          canvasWidth: 320,
+          canvasHeight: 696,
+        ),
+        isFalse,
+      );
     });
 
     test('never scales below 1', () {

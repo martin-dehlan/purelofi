@@ -9,6 +9,7 @@ import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
 import 'scene_card.widget.dart';
 import 'scene_thumbnail.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The rooms, side by side in `sort_order`, to swipe through and step into.
 ///
@@ -33,7 +34,12 @@ class SceneStrip extends ConsumerWidget {
 
     Widget row(int count, Widget Function(int index) item) => SizedBox(
       // The cover and a line of title under it.
-      height: card + context.spaceXs + context.fontS * 1.6 + 2 * context.spaceM,
+      // The title line grows with the text size the listener chose (#153).
+      height:
+          card +
+          context.spaceXs +
+          MediaQuery.textScalerOf(context).scale(context.fontS) * 1.6 +
+          2 * context.spaceM,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         // Inside its card: the covers scroll to the card's edge.
@@ -49,7 +55,7 @@ class SceneStrip extends ConsumerWidget {
         if (scenes.isEmpty) {
           return Padding(
             padding: EdgeInsets.symmetric(vertical: context.spaceL),
-            child: const EmptyState(message: 'No scenes to switch to yet.'),
+            child: EmptyState(message: context.l10n.noScenesToSwitchToYet),
           );
         }
         return row(
@@ -62,7 +68,7 @@ class SceneStrip extends ConsumerWidget {
         );
       },
       loading: () => Semantics(
-        label: 'Loading scenes',
+        label: context.l10n.loadingScenes,
         child: ExcludeSemantics(
           child: row(
             placeholders,

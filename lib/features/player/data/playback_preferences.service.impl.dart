@@ -10,6 +10,8 @@ class PlaybackPreferencesImpl implements PlaybackPreferences {
     : _preferences = preferences ?? SharedPreferencesAsync();
 
   static const String _modeKey = 'playback.mode';
+  static const String _softTransitionsKey = 'playback.softTransitions';
+  static const String _followRoomKey = 'playback.followRoom';
 
   final SharedPreferencesAsync _preferences;
 
@@ -29,4 +31,30 @@ class PlaybackPreferencesImpl implements PlaybackPreferences {
   @override
   Future<void> save(PlaybackMode mode) =>
       _preferences.setString(_modeKey, mode.name);
+
+  @override
+  Future<bool> loadSoftTransitions() async {
+    try {
+      return await _preferences.getBool(_softTransitionsKey) ?? true;
+    } on Object {
+      return true;
+    }
+  }
+
+  @override
+  Future<void> saveSoftTransitions(bool enabled) =>
+      _preferences.setBool(_softTransitionsKey, enabled);
+
+  @override
+  Future<bool> loadFollowRoom() async {
+    try {
+      return await _preferences.getBool(_followRoomKey) ?? false;
+    } on Object {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> saveFollowRoom(bool enabled) =>
+      _preferences.setBool(_followRoomKey, enabled);
 }

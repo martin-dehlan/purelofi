@@ -10,6 +10,7 @@ import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'now_playing_bars.widget.dart';
 import 'track_cover.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The track playing, as a card at the foot of the library: the cover,
 /// what it is, the bars that dance while it plays, and pause. Skipping
@@ -108,32 +109,43 @@ class MiniPlayer extends ConsumerWidget {
                   // The one thing to do here, in the accent like the other
                   // main buttons of the app.
                   Tooltip(
-                    message: isPlaying ? 'Pause' : 'Play',
+                    message: isPlaying ? context.l10n.pause : context.l10n.play,
                     child: Material(
                       color: cs.primary,
                       shape: const CircleBorder(),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => unawaited(player.togglePlayPause()),
-                        child: Padding(
-                          padding: EdgeInsets.all(context.spaceS),
-                          // Play and pause turn into each other.
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            transitionBuilder:
-                                (Widget child, Animation<double> t) =>
-                                    ScaleTransition(
-                                      scale: t,
-                                      child: FadeTransition(
-                                        opacity: t,
-                                        child: child,
-                                      ),
-                                    ),
-                            child: AppIcon(
-                              isPlaying ? AppGlyph.pause : AppGlyph.play,
-                              key: ValueKey<bool>(isPlaying),
-                              size: context.fontL,
-                              color: cs.onPrimary,
+                        // A finger's size at the least (#153).
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minWidth: kMinInteractiveDimension,
+                            minHeight: kMinInteractiveDimension,
+                          ),
+                          child: Center(
+                            widthFactor: 1,
+                            heightFactor: 1,
+                            child: Padding(
+                              padding: EdgeInsets.all(context.spaceS),
+                              // Play and pause turn into each other.
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                transitionBuilder:
+                                    (Widget child, Animation<double> t) =>
+                                        ScaleTransition(
+                                          scale: t,
+                                          child: FadeTransition(
+                                            opacity: t,
+                                            child: child,
+                                          ),
+                                        ),
+                                child: AppIcon(
+                                  isPlaying ? AppGlyph.pause : AppGlyph.play,
+                                  key: ValueKey<bool>(isPlaying),
+                                  size: context.fontL,
+                                  color: cs.onPrimary,
+                                ),
+                              ),
                             ),
                           ),
                         ),

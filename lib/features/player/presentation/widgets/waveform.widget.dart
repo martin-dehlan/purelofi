@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The bars of a track's waveform, and the scrubber.
 ///
@@ -15,6 +16,7 @@ class Waveform extends StatefulWidget {
     required this.progress,
     required this.onSeek,
     required this.height,
+    this.semanticValueAt,
     super.key,
   });
 
@@ -29,6 +31,13 @@ class Waveform extends StatefulWidget {
   final ValueChanged<double> onSeek;
 
   final double height;
+
+  /// What a screen reader says for a point in the track, "1:23 of 3:00".
+  /// Without it the waveform is read as a plain slider.
+  final String Function(double fraction)? semanticValueAt;
+
+  /// How far one swipe up or down moves a screen reader's slider.
+  static const double semanticStep = 0.05;
 
   /// Bars per waveform. Odd, so it never lines up with a four-beat feel.
   static const int barCount = 57;
@@ -80,35 +89,51 @@ class _WaveformState extends State<Waveform> {
         double fractionAt(Offset local) =>
             (local.dx / constraints.maxWidth).clamp(0.0, 1.0);
 
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (TapDownDetails details) =>
-              widget.onSeek(fractionAt(details.localPosition)),
-          onHorizontalDragStart: (DragStartDetails details) =>
-              _scrub.value = fractionAt(details.localPosition),
-          onHorizontalDragUpdate: (DragUpdateDetails details) =>
-              _scrub.value = fractionAt(details.localPosition),
-          onHorizontalDragEnd: (DragEndDetails details) {
-            final double? target = _scrub.value;
-            _scrub.value = null;
-            if (target != null) widget.onSeek(target);
-          },
-          onHorizontalDragCancel: () => _scrub.value = null,
-          child: SizedBox(
-            height: widget.height,
-            width: double.infinity,
-            child: ValueListenableBuilder<double?>(
-              valueListenable: _scrub,
-              builder: (BuildContext context, double? scrub, _) {
-                return CustomPaint(
-                  painter: _WaveformPainter(
-                    bars: Waveform.barsFor(widget.seed),
-                    progress: (scrub ?? widget.progress).clamp(0, 1),
-                    played: cs.onSurface,
-                    upcoming: cs.onSurfaceVariant,
-                  ),
-                );
-              },
+        final double at = widget.progress.clamp(0.0, 1.0);
+        final double up = (at + Waveform.semanticStep).clamp(0.0, 1.0);
+        final double down = (at - Waveform.semanticStep).clamp(0.0, 1.0);
+        final String Function(double)? valueAt = widget.semanticValueAt;
+
+        // A slider to a screen reader (#153): named, with where it is, and
+        // moved in steps by swiping up or down.
+        return Semantics(
+          slider: true,
+          label: context.l10n.position,
+          value: valueAt?.call(at) ?? '${(at * 100).round()}%',
+          increasedValue: valueAt?.call(up) ?? '${(up * 100).round()}%',
+          decreasedValue: valueAt?.call(down) ?? '${(down * 100).round()}%',
+          onIncrease: () => widget.onSeek(up),
+          onDecrease: () => widget.onSeek(down),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (TapDownDetails details) =>
+                widget.onSeek(fractionAt(details.localPosition)),
+            onHorizontalDragStart: (DragStartDetails details) =>
+                _scrub.value = fractionAt(details.localPosition),
+            onHorizontalDragUpdate: (DragUpdateDetails details) =>
+                _scrub.value = fractionAt(details.localPosition),
+            onHorizontalDragEnd: (DragEndDetails details) {
+              final double? target = _scrub.value;
+              _scrub.value = null;
+              if (target != null) widget.onSeek(target);
+            },
+            onHorizontalDragCancel: () => _scrub.value = null,
+            child: SizedBox(
+              height: widget.height,
+              width: double.infinity,
+              child: ValueListenableBuilder<double?>(
+                valueListenable: _scrub,
+                builder: (BuildContext context, double? scrub, _) {
+                  return CustomPaint(
+                    painter: _WaveformPainter(
+                      bars: Waveform.barsFor(widget.seed),
+                      progress: (scrub ?? widget.progress).clamp(0, 1),
+                      played: cs.onSurface,
+                      upcoming: cs.onSurfaceVariant,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         );

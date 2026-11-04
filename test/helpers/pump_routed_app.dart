@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/presentation/widgets/library_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:purelofi/l10n/l10n.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/presentation/player.routes.dart';
 
@@ -13,10 +15,18 @@ import 'package:purelofi/features/library/controller/library.provider.dart';
 import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
+import 'fake_collections.dart';
+import 'fake_follows.dart';
+import 'fake_home_widget.dart';
+import 'fake_wake.dart';
+import 'fake_screen_awake.dart';
 import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
+import 'fake_mix_preferences.dart';
+import 'fake_new_content.repository.dart';
+import 'fake_play_history.repository.dart';
 import 'fake_playback_preferences.dart';
 import 'fake_pro.repository.dart';
 import 'fake_track_picker.dart';
@@ -66,10 +76,25 @@ Override _fakeWelcome(FakeWelcomePreferences? preferences) {
 /// it cannot answer.
 List<Override> _fakeLibrary(
   FakeLibraryRepository? library,
-  FakeTrackPicker? picker,
-) {
+  FakeTrackPicker? picker, [
+  FakePlayHistoryRepository? playHistory,
+  FakeNewContentRepository? newContent,
+  FakeMoodRepository? moods,
+  FakePlaylistRepository? playlistStore,
+]) {
   final FakeLibraryRepository fake = library ?? FakeLibraryRepository();
   addTearDown(fake.dispose);
+  final FakePlayHistoryRepository history =
+      playHistory ?? FakePlayHistoryRepository();
+  addTearDown(history.dispose);
+  final FakePlaylistRepository playlists =
+      playlistStore ?? FakePlaylistRepository();
+  addTearDown(playlists.dispose);
+  final FakeDeviceFollows follows = FakeDeviceFollows();
+  addTearDown(follows.dispose);
+  final FakeNewContentRepository seen =
+      newContent ?? FakeNewContentRepository();
+  addTearDown(seen.dispose);
 
   return <Override>[
     libraryRepositoryProvider.overrideWithValue(fake),
@@ -77,6 +102,19 @@ List<Override> _fakeLibrary(
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
     displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
+    playHistoryRepositoryProvider.overrideWithValue(history),
+    newContentRepositoryProvider.overrideWithValue(seen),
+    mixPreferencesProvider.overrideWithValue(FakeMixPreferences()),
+    moodRepositoryProvider.overrideWithValue(moods ?? FakeMoodRepository()),
+    playlistRepositoryProvider.overrideWithValue(playlists),
+    devicePlaylistsProvider.overrideWithValue(playlists),
+    accountPlaylistsProvider.overrideWithValue(FakeAccountPlaylists()),
+    deviceFollowsProvider.overrideWithValue(follows),
+    screenAwakeProvider.overrideWithValue(FakeScreenAwake()),
+    homeWidgetServiceProvider.overrideWithValue(FakeHomeWidgetService()),
+    wakeSchedulerProvider.overrideWithValue(FakeWakeScheduler()),
+    wakeAlarmStoreProvider.overrideWithValue(FakeWakeAlarmStore()),
+    accountFollowsProvider.overrideWithValue(FakeAccountFollows()),
   ];
 }
 
@@ -107,6 +145,10 @@ extension PumpRouted on WidgetTester {
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakePlayHistoryRepository? playHistory,
+    FakeNewContentRepository? newContent,
+    FakeMoodRepository? moods,
+    FakePlaylistRepository? playlistStore,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -116,7 +158,14 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker),
+          ..._fakeLibrary(
+            library,
+            picker,
+            playHistory,
+            newContent,
+            moods,
+            playlistStore,
+          ),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -124,6 +173,8 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(useMaterial3: true),
           builder: _stillMotion,
           home: child,
@@ -138,11 +189,16 @@ extension PumpRouted on WidgetTester {
   /// chrome as a listener does.
   Future<void> pumpRoutedApp({
     String initialRoute = '/',
+    Locale? locale,
     ThemeData? theme,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
+    FakePlayHistoryRepository? playHistory,
+    FakeNewContentRepository? newContent,
+    FakeMoodRepository? moods,
+    FakePlaylistRepository? playlistStore,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -152,7 +208,14 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker),
+          ..._fakeLibrary(
+            library,
+            picker,
+            playHistory,
+            newContent,
+            moods,
+            playlistStore,
+          ),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -160,6 +223,9 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: theme ?? ThemeData.dark(useMaterial3: true),
           builder: _stillMotion,
           routerConfig: GoRouter(
@@ -202,7 +268,8 @@ Future<void> tapMenuEntry(WidgetTester tester, String label) async {
 
 /// Opens the library from the right of the transport.
 Future<void> openLibrary(WidgetTester tester) async {
-  await tester.tap(find.bySemanticsLabel('Library'));
+  // By type: its label also says when there are new tracks (#148).
+  await tester.tap(find.byType(LibraryButton));
   await tester.pumpAndSettle();
 }
 

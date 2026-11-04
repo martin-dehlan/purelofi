@@ -11,15 +11,18 @@ import '../../library/controller/library.controller.dart';
 import '../../library/controller/library.provider.dart';
 import '../../library/domain/library_view.dart';
 import '../domain/audio_player.service.dart';
+import '../domain/playback_scope.dart';
 import '../domain/playback_mode.dart';
 import '../domain/player.state.dart';
 import '../domain/scene.entity.dart';
 import '../domain/track.entity.dart';
 import '../domain/up_next.dart';
+import 'collections.controller.dart';
 import 'playback_mode.controller.dart';
 import 'playback_source.controller.dart';
 import 'player.provider.dart';
 import 'scene.controller.dart';
+import 'soft_transitions.controller.dart';
 import 'track.controller.dart';
 
 export '../domain/up_next.dart' show favoriteWeight, pickWeighted;
@@ -87,6 +90,10 @@ class PlayerController extends _$PlayerController {
       if (shuffle != null && shuffle != value.shuffles) unawaited(replan());
       shuffle = value.shuffles;
     }, fireImmediately: true);
+
+    // Soft transitions (#139) are the audio service's to play; the setting
+    // only has to reach it. Listening loads it as soon as the player starts.
+    ref.listen<AsyncValue<bool>>(softTransitionsControllerProvider, (_, _) {});
 
     // The lock screen shows the room, and follows it when the listener
     // switches scenes.
@@ -293,12 +300,67 @@ class PlayerController extends _$PlayerController {
     }
   }
 
-  /// Every track on [source]'s side. Awaiting the future means the first
-  /// play works even if nothing has loaded the track list yet.
-  Future<List<TrackEntity>> _tracksFor(TrackSource source) =>
-      source == TrackSource.local
-      ? ref.read(libraryRepositoryProvider).getTracks()
-      : ref.read(trackListControllerProvider.future);
+  /// Plays from [scope] — a mood or a playlist (#141) — starting with
+  /// [start] if given, else with its first track (or a random one in
+  /// shuffle). What was lined up in the queue stays lined up.
+  Future<void> playScope(PlaybackScope scope, {TrackEntity? start}) async {
+    ref.read(playbackScopeControllerProvider.notifier).select(scope);
+    _played.clear();
+    state = state.copyWith(upNext: const <TrackEntity>[]);
+    if (start != null) {
+      await _play(start);
+      await _plan();
+    } else {
+      await _advance(useQueue: false);
+    }
+  }
+
+  /// Holds the stream to [scope] from the next track on, without cutting
+  /// the one playing (#143): the room changed, the music follows at the
+  /// next turn. `null` lets go of a room's scope.
+  Future<void> followScope(PlaybackScope? scope) async {
+    if (ref.read(playbackScopeControllerProvider) == scope) return;
+    ref.read(playbackScopeControllerProvider.notifier).select(scope);
+    _played.clear();
+    await replan();
+  }
+
+  /// Back from a mood or playlist to everything on the current side.
+  /// The side carries on from the track playing: a playlist can end on
+  /// one of the listener's own.
+  Future<void> leaveScope() async {
+    if (ref.read(playbackScopeControllerProvider) == null) return;
+    ref.read(playbackScopeControllerProvider.notifier).select(null);
+    final TrackSource? side = state.currentTrack?.source;
+    if (side != null) {
+      ref.read(playbackSourceControllerProvider.notifier).select(side);
+    }
+    _played.clear();
+    await replan();
+  }
+
+  Future<bool> _inScope(PlaybackScope scope, TrackEntity track) async {
+    try {
+      return (await scopeTracks(
+        ref,
+        scope,
+      )).any((TrackEntity t) => t.id == track.id);
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Every track on [source]'s side, or in the mood or playlist being
+  /// played (#141). Awaiting the future means the first play works even if
+  /// nothing has loaded the track list yet.
+  Future<List<TrackEntity>> _tracksFor(TrackSource source) {
+    final PlaybackScope? scope = ref.read(playbackScopeControllerProvider);
+    if (scope != null) return scopeTracks(ref, scope);
+
+    return source == TrackSource.local
+        ? ref.read(libraryRepositoryProvider).getTracks()
+        : ref.read(trackListControllerProvider.future);
+  }
 
   /// [tracks] in the order "in order" plays them: the listener's own in the
   /// sort they chose for the list, PureLofi's oldest first, the order they
@@ -307,6 +369,9 @@ class PlayerController extends _$PlayerController {
     List<TrackEntity> tracks,
     TrackSource source,
   ) async {
+    // A mood or playlist plays in its own order (#141).
+    if (ref.read(playbackScopeControllerProvider) != null) return tracks;
+
     if (source == TrackSource.local) {
       return sortTracks(tracks, (await _libraryView()).sort);
     }
@@ -395,6 +460,14 @@ class PlayerController extends _$PlayerController {
   /// Plays [track] because the listener picked it from a list. In order the
   /// stream carries on from it; in shuffle the draws already made stand.
   Future<void> playTrack(TrackEntity track) async {
+    // A track picked from outside the list being played is a new choice:
+    // the stream goes back to everything (#141).
+    final PlaybackScope? scope = ref.read(playbackScopeControllerProvider);
+    if (scope != null && !await _inScope(scope, track)) {
+      ref.read(playbackScopeControllerProvider.notifier).select(null);
+      state = state.copyWith(upNext: const <TrackEntity>[]);
+    }
+
     final List<TrackEntity> upNext = state.upNext;
     if (upNext.isNotEmpty && upNext.first.id == track.id) {
       state = state.copyWith(upNext: upNext.sublist(1));
@@ -417,8 +490,10 @@ class PlayerController extends _$PlayerController {
 
     // Picking a track from the other list is choosing that side: the stream
     // carries on from wherever the listener's last choice came from.
-    // The plan was drawn from the side just left.
-    if (ref.read(playbackSourceControllerProvider) != track.source) {
+    // The plan was drawn from the side just left. Inside a playlist both
+    // sides can follow each other, and the playlist is the choice (#141).
+    if (ref.read(playbackScopeControllerProvider) == null &&
+        ref.read(playbackSourceControllerProvider) != track.source) {
       _played.clear();
       state = state.copyWith(upNext: const <TrackEntity>[]);
       ref.read(playbackSourceControllerProvider.notifier).select(track.source);
@@ -444,8 +519,12 @@ class PlayerController extends _$PlayerController {
   /// and starts something from the new side straight away: a switch that
   /// kept playing the old source until the track ended would feel broken.
   Future<void> useSource(TrackSource source) async {
-    if (ref.read(playbackSourceControllerProvider) == source) return;
+    if (ref.read(playbackSourceControllerProvider) == source &&
+        ref.read(playbackScopeControllerProvider) == null) {
+      return;
+    }
 
+    ref.read(playbackScopeControllerProvider.notifier).select(null);
     _played.clear();
     state = state.copyWith(upNext: const <TrackEntity>[]);
     ref.read(playbackSourceControllerProvider.notifier).select(source);

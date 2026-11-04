@@ -10,6 +10,7 @@ import '../../domain/playback_mode.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// What is playing and what comes after it, as every player shows it: the
 /// "Up next" part of the library sheet.
@@ -46,18 +47,18 @@ class UpNext extends ConsumerWidget {
       slivers: <Widget>[
         SliverList.list(
           children: <Widget>[
-            const _Heading('Now playing'),
+            _Heading(context.l10n.nowPlaying),
             if (current == null)
-              const _Quiet('Nothing yet.')
+              _Quiet(context.l10n.nothingYet)
             else
               TrackTile(track: current, onTap: null, repeating: repeating),
             if (state.queue.isNotEmpty)
               _Heading(
-                'Next in queue',
+                context.l10n.nextInQueue,
                 action: TextButton(
                   onPressed: player.clearQueue,
                   child: Text(
-                    'Clear',
+                    context.l10n.clear,
                     style: TextStyle(fontSize: context.fontS),
                   ),
                 ),
@@ -94,7 +95,7 @@ class UpNext extends ConsumerWidget {
           },
         ),
         if (!repeating && state.upNext.isNotEmpty)
-          const SliverToBoxAdapter(child: _Heading('Next up')),
+          SliverToBoxAdapter(child: _Heading(context.l10n.nextUp)),
         SliverList.builder(
           itemCount: repeating ? 0 : state.upNext.length,
           itemBuilder: (BuildContext context, int index) => TrackTile(

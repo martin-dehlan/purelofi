@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../controller/sleep_timer.controller.dart';
+import '../../../../l10n/l10n.dart';
 
 /// When the music should stop, dragged into place: all the way left is off,
 /// every step five minutes more, up to two hours. The timer is set when the
@@ -19,13 +20,16 @@ class SleepTimerSlider extends ConsumerStatefulWidget {
   static const int step = 5;
 
   /// "Off", "45 min", "1 h" or "1 h 30".
-  static String lengthLabel(int minutes) {
-    if (minutes <= 0) return 'Off';
-    if (minutes < 60) return '$minutes min';
+  static String lengthLabel(AppLocalizations l10n, int minutes) {
+    if (minutes <= 0) return l10n.off;
+    if (minutes < 60) return l10n.minutesShort('$minutes');
     final int rest = minutes % 60;
     return rest == 0
-        ? '${minutes ~/ 60} h'
-        : '${minutes ~/ 60} h ${rest.toString().padLeft(2, '0')}';
+        ? l10n.hoursShort('${minutes ~/ 60}')
+        : l10n.hoursMinutesShort(
+            '${minutes ~/ 60}',
+            rest.toString().padLeft(2, '0'),
+          );
   }
 
   /// "23:40" or "11:40 PM", the way the phone tells the time.
@@ -99,39 +103,45 @@ class _SleepTimerSliderState extends ConsumerState<SleepTimerSlider> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
+          // Side by side where they fit; on a narrow card at a large text
+          // size the chip moves under the time rather than being cut short.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: context.spaceS,
+            runSpacing: context.spaceS,
             children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      at != null && shown == 0
-                          ? 'Under a minute'
-                          : SleepTimerSlider.lengthLabel(shown),
-                      style: TextStyle(
-                        color: off ? cs.onSurfaceVariant : cs.onSurface,
-                        fontSize: context.fontL,
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: const <FontFeature>[
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    at != null && shown == 0
+                        ? context.l10n.underAMinute
+                        : SleepTimerSlider.lengthLabel(context.l10n, shown),
+                    style: TextStyle(
+                      color: off ? cs.onSurfaceVariant : cs.onSurface,
+                      fontSize: context.fontL,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
                     ),
-                    Text(
-                      at == null
-                          ? 'Plays on'
-                          : 'Stops at ${SleepTimerSlider.timeOfDay(context, at)}',
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontSize: context.fontS,
-                      ),
+                  ),
+                  Text(
+                    at == null
+                        ? context.l10n.playsOn
+                        : context.l10n.stopsAt(
+                            SleepTimerSlider.timeOfDay(context, at),
+                          ),
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: context.fontS,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               ActionChip(
-                label: const Text('End of track'),
+                label: Text(context.l10n.endOfTrack),
                 onPressed: ref
                     .read(sleepTimerControllerProvider.notifier)
                     .endOfTrack,
@@ -165,7 +175,7 @@ class _SleepTimerSliderState extends ConsumerState<SleepTimerSlider> {
               max: SleepTimerSlider.longest.toDouble(),
               divisions: SleepTimerSlider.longest ~/ SleepTimerSlider.step,
               semanticFormatterCallback: (double v) =>
-                  SleepTimerSlider.lengthLabel(v.round()),
+                  SleepTimerSlider.lengthLabel(context.l10n, v.round()),
               onChanged: _onChanged,
               onChangeEnd: _onChangeEnd,
             ),

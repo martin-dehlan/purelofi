@@ -45,7 +45,36 @@ int sceneScaleFor({
   final int byHeight = (viewport.height * devicePixelRatio / canvasHeight)
       .ceil();
 
+  // Much wider than the room — a phone on its side, a tablet (#149):
+  // covering the width would cut away most of the height. The room keeps
+  // its whole height instead and stands in the middle, the sides left dark,
+  // like a window in a wall.
+  if (isPillarboxed(
+    viewport: viewport,
+    canvasWidth: canvasWidth,
+    canvasHeight: canvasHeight,
+  )) {
+    return math.max(1, byHeight);
+  }
+
   return math.max(1, math.max(byWidth, byHeight));
+}
+
+/// How much wider than the room the screen may be before the room stops
+/// covering it and stands in the middle instead.
+const double pillarboxRatio = 1.3;
+
+/// Whether [viewport] is wide enough that the room is pillarboxed (#149).
+bool isPillarboxed({
+  required Size viewport,
+  required int canvasWidth,
+  required int canvasHeight,
+}) {
+  if (viewport.height <= 0 || canvasHeight <= 0) return false;
+  final double screen = viewport.width / viewport.height;
+  final double room = canvasWidth / canvasHeight;
+
+  return screen > room * pillarboxRatio;
 }
 
 /// Which frame of a strip is showing at [clock].
@@ -121,8 +150,15 @@ Rect visibleCanvasRect({
       devicePixelRatio;
   if (scale <= 0) return Rect.fromLTWH(0, 0, canvasWidth * 1, canvasHeight * 1);
 
-  final double hidden = (canvasWidth * scale - viewport.width) / 2 / scale;
-  final double cut = (canvasHeight * scale - viewport.height) / 2 / scale;
+  // Never less than nothing: a pillarboxed room shows all of its width.
+  final double hidden = math.max(
+    0,
+    (canvasWidth * scale - viewport.width) / 2 / scale,
+  );
+  final double cut = math.max(
+    0,
+    (canvasHeight * scale - viewport.height) / 2 / scale,
+  );
 
   return Rect.fromLTRB(hidden, cut, canvasWidth - hidden, canvasHeight - cut);
 }
@@ -301,9 +337,14 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
     }
 
     _clock.tick(elapsed, isPlaying: _isPlaying);
-    _events.update(elapsed);
+    // Rare events are motion nobody asked for; with reduced motion the room
+    // keeps its loops and what the listener triggers, nothing more (#153).
+    _events.update(elapsed, startTimed: !_reduceMotion);
     _frameTick.value++;
   }
+
+  /// Read from the last build, since the ticker has no context of its own.
+  bool _reduceMotion = false;
 
   bool get _isPlaying =>
       ref.read(playerControllerProvider.select((state) => state.isPlaying));
@@ -331,6 +372,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
   @override
   Widget build(BuildContext context) {
     _reactToTrackChange();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     if (_loading) {
       return StartupScreen(
@@ -356,7 +398,7 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
       );
     }
 
-    return Listener(
+    final Widget scene = Listener(
       // A Listener rather than a GestureDetector: the chrome's own tap
       // handler still gets the event, so touching the cat also wakes the
       // controls.
@@ -378,6 +420,86 @@ class _SceneLayersViewState extends ConsumerState<SceneLayersView>
           ),
         ),
       ),
+    );
+
+    // For screen readers (#153): the room is a picture with a name, and each
+    // tappable layer that has a label is a button over where it is drawn.
+    final List<SceneLayerEntity> labelled = <SceneLayerEntity>[
+      for (final SceneLayerEntity layer in widget.scene.layers)
+        if (layer.tappable && layer.tapLabel != null) layer,
+    ];
+
+    return Semantics(
+      container: true,
+      image: true,
+      label: widget.scene.title,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final Size size = constraints.biggest;
+
+          return Stack(
+            children: <Widget>[
+              Positioned.fill(child: scene),
+              for (final SceneLayerEntity layer in labelled)
+                if (_screenRectOf(layer, size) case final Rect rect)
+                  Positioned.fromRect(
+                    rect: rect,
+                    child: Semantics(
+                      // Its own node, not merged into the room's name.
+                      container: true,
+                      button: true,
+                      label: layer.tapLabel,
+                      onTap: () => _events.trigger(layer.id, _clock.sceneTime),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Where [layer] is drawn on a viewport of [size], in logical pixels, or
+  /// `null` when it is not drawn at all — the inverse of the mapping in
+  /// [_onPointerDown].
+  Rect? _screenRectOf(SceneLayerEntity layer, Size size) {
+    final ui.Image? sprite = _sprites[layer.spriteUrl];
+    if (sprite == null || size.isEmpty || !size.isFinite) return null;
+
+    final double dpr = MediaQuery.of(context).devicePixelRatio;
+    final double scale =
+        sceneScaleFor(
+          viewport: size,
+          canvasWidth: widget.scene.canvasWidth,
+          canvasHeight: widget.scene.canvasHeight,
+          devicePixelRatio: dpr,
+        ) /
+        dpr;
+    final Rect visible = visibleCanvasRect(
+      viewport: size,
+      canvasWidth: widget.scene.canvasWidth,
+      canvasHeight: widget.scene.canvasHeight,
+      devicePixelRatio: dpr,
+    );
+    final Rect bounds = layerBounds(
+      layer,
+      frameSize: Size(
+        sprite.width / layer.frameCount,
+        sprite.height.toDouble(),
+      ),
+    );
+    if (!layerFits(layer, bounds: bounds, visible: visible)) return null;
+
+    final double originX = (size.width - widget.scene.canvasWidth * scale) / 2;
+    final double originY =
+        (size.height - widget.scene.canvasHeight * scale) / 2;
+
+    return Rect.fromLTWH(
+      originX + bounds.left * scale,
+      originY + bounds.top * scale,
+      bounds.width * scale,
+      bounds.height * scale,
     );
   }
 

@@ -3,7 +3,28 @@ import 'package:purelofi/features/player/domain/playback_preferences.service.dar
 
 /// Shuffle and repeat kept in memory rather than the platform's store.
 class FakePlaybackPreferences implements PlaybackPreferences {
-  FakePlaybackPreferences([this.stored = PlaybackMode.shuffle]);
+  FakePlaybackPreferences([
+    this.stored = PlaybackMode.shuffle,
+    this.softTransitions = true,
+    this.followRoom = false,
+  ]);
+
+  bool followRoom;
+
+  @override
+  Future<bool> loadFollowRoom() async => followRoom;
+
+  @override
+  Future<void> saveFollowRoom(bool enabled) async => followRoom = enabled;
+
+  bool softTransitions;
+
+  @override
+  Future<bool> loadSoftTransitions() async => softTransitions;
+
+  @override
+  Future<void> saveSoftTransitions(bool enabled) async =>
+      softTransitions = enabled;
 
   PlaybackMode stored;
   int saves = 0;

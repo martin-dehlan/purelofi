@@ -9,27 +9,51 @@ import '../../../library/presentation/widgets/my_music.widget.dart';
 import '../../controller/artist.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
+import '../../controller/collections.controller.dart';
+import '../../controller/play_history.controller.dart';
 import '../../controller/player.controller.dart';
+import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/artist.entity.dart';
+import '../../domain/mood.entity.dart';
+import '../../domain/playback_scope.dart';
+import '../../domain/playlist.entity.dart';
 import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
 import 'artist_sheet.widget.dart';
+import 'cached_picture.widget.dart';
+import 'collection_page.widget.dart';
 import 'library_scope.widget.dart';
 import 'mini_player.widget.dart';
+import 'playlist_name_dialog.dart';
 import 'search_results.widget.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
 enum LibraryFilter { tracks, artists, downloaded, local }
 
-/// A page that slides in over the library: an artist's, or the favourites.
+/// A page that slides in over the library: an artist's, the favourites, or
+/// what was played lately (#142).
 class _LibraryPage {
-  const _LibraryPage.artist(String this.artistId);
-  const _LibraryPage.favorites() : artistId = null;
+  const _LibraryPage.artist(String this.artistId)
+    : recent = false,
+      scope = null;
+  const _LibraryPage.favorites()
+    : artistId = null,
+      recent = false,
+      scope = null;
+  const _LibraryPage.recent() : artistId = null, recent = true, scope = null;
+
+  /// A mood or one of the listener's playlists (#141).
+  const _LibraryPage.collection(PlaybackScope this.scope)
+    : artistId = null,
+      recent = false;
 
   final String? artistId;
+  final bool recent;
+  final PlaybackScope? scope;
 }
 
 /// "Your Library", the way music apps lay theirs out (#110): a big title
@@ -62,12 +86,14 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
     duration: const Duration(milliseconds: 280),
   )..addStatusListener((_) => setState(() {}));
 
-  static const Map<LibraryFilter, String> names = <LibraryFilter, String>{
-    LibraryFilter.tracks: 'Tracks',
-    LibraryFilter.artists: 'Artists',
-    LibraryFilter.downloaded: 'Downloaded',
-    LibraryFilter.local: 'My music',
-  };
+  /// What each filter is called, in the listener's language (#140).
+  static String nameOf(BuildContext context, LibraryFilter filter) =>
+      switch (filter) {
+        LibraryFilter.tracks => context.l10n.tracks,
+        LibraryFilter.artists => context.l10n.artists,
+        LibraryFilter.downloaded => context.l10n.downloaded,
+        LibraryFilter.local => context.l10n.myMusic,
+      };
 
   @override
   void dispose() {
@@ -177,7 +203,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          'Your Library',
+                          context.l10n.yourLibrary,
                           style: TextStyle(
                             color: cs.onSurface,
                             fontSize: context.fontXl,
@@ -186,7 +212,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Search',
+                        tooltip: context.l10n.search,
                         iconSize: context.fontXl,
                         icon: AppIcon(
                           AppGlyph.search,
@@ -218,7 +244,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                   ],
                   for (final LibraryFilter f in filters) ...<Widget>[
                     _FilterPill(
-                      label: names[f]!,
+                      label: nameOf(context, f),
                       selected: filter == f,
                       onTap: () => _pick(f),
                     ),
@@ -236,15 +262,18 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
               : switch (filter) {
                   null => _Overview(
                     onFavorites: () => _open(const _LibraryPage.favorites()),
+                    onRecent: () => _open(const _LibraryPage.recent()),
+                    onCollection: (PlaybackScope scope) =>
+                        _open(_LibraryPage.collection(scope)),
                   ),
                   LibraryFilter.tracks => _Tracks(
                     tracks: catalogue,
-                    empty: 'No tracks yet.',
+                    empty: context.l10n.noTracksYet,
                   ),
                   LibraryFilter.artists => const ArtistList(),
                   LibraryFilter.downloaded => _Tracks(
                     tracks: catalogue.where(downloads.has).toList(),
-                    empty: 'Nothing downloaded yet.',
+                    empty: context.l10n.nothingDownloadedYet,
                   ),
                   LibraryFilter.local => const MyMusic(),
                 },
@@ -297,7 +326,7 @@ class _PageFrame extends StatelessWidget {
               child: Row(
                 children: <Widget>[
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onPressed: onBack,
                     icon: AppIcon(
                       AppGlyph.back,
@@ -306,12 +335,18 @@ class _PageFrame extends StatelessWidget {
                     ),
                   ),
                   if (artistId == null)
-                    Text(
-                      'Favorites',
-                      style: TextStyle(
-                        color: cs.onSurface,
-                        fontSize: context.fontXl,
-                        fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Text(
+                        page.scope?.title ??
+                            (page.recent
+                                ? context.l10n.recent
+                                : context.l10n.favorites),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: cs.onSurface,
+                          fontSize: context.fontXl,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                 ],
@@ -320,6 +355,10 @@ class _PageFrame extends StatelessWidget {
             Expanded(
               child: artistId != null
                   ? ArtistSheet(artistId: artistId)
+                  : page.scope != null
+                  ? CollectionPage(scope: page.scope!, onGone: onBack)
+                  : page.recent
+                  ? const _RecentPage()
                   : const _FavoritesPage(),
             ),
           ],
@@ -346,9 +385,32 @@ class _FavoritesPage extends ConsumerWidget {
           ),
           sliver: _Tracks(
             tracks: ref.watch(favoriteTracksProvider),
-            empty:
-                'Nothing marked yet. Tap ⋯ on a track, or the heart '
-                'beside the one playing.',
+            empty: context.l10n.noFavoritesYet,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// What was played lately, each track once, newest first (#142).
+class _RecentPage extends ConsumerWidget {
+  const _RecentPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            context.horizontalPadding,
+            context.spaceS,
+            context.horizontalPadding,
+            context.spaceXl,
+          ),
+          sliver: _Tracks(
+            tracks: ref.watch(recentlyPlayedTracksProvider),
+            empty: context.l10n.nothingPlayedYet,
           ),
         ),
       ],
@@ -372,7 +434,7 @@ class _SearchField extends StatelessWidget {
         Expanded(
           child: SearchBar(
             autoFocus: true,
-            hintText: 'Tracks and artists',
+            hintText: context.l10n.tracksAndArtists,
             onChanged: onChanged,
             elevation: const WidgetStatePropertyAll<double>(0),
             backgroundColor: WidgetStatePropertyAll<Color>(
@@ -394,7 +456,10 @@ class _SearchField extends StatelessWidget {
         TextButton(
           onPressed: onCancel,
           style: TextButton.styleFrom(foregroundColor: cs.onSurface),
-          child: Text('Cancel', style: TextStyle(fontSize: context.fontM)),
+          child: Text(
+            context.l10n.cancel,
+            style: TextStyle(fontSize: context.fontM),
+          ),
         ),
       ],
     );
@@ -404,18 +469,58 @@ class _SearchField extends StatelessWidget {
 /// Everything at a glance: the favourites pinned on top in the accent, as
 /// music apps set liked songs apart, then every artist.
 class _Overview extends ConsumerWidget {
-  const _Overview({required this.onFavorites});
+  const _Overview({
+    required this.onFavorites,
+    required this.onRecent,
+    required this.onCollection,
+  });
 
   final VoidCallback onFavorites;
+  final VoidCallback onRecent;
+
+  /// Opens a mood or a playlist (#141).
+  final ValueChanged<PlaybackScope> onCollection;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final int favorites = ref.watch(favoriteTracksProvider).length;
     final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
+    final List<TrackEntity> recent = ref.watch(recentlyPlayedTracksProvider);
+    final List<MoodEntity> moods =
+        ref.watch(moodsProvider).value ?? const <MoodEntity>[];
+    final List<PlaylistEntity> playlists =
+        ref.watch(playlistsProvider).value ?? const <PlaylistEntity>[];
+    final double tile = _Tile.sizeFor(context);
 
     return SliverList.list(
       children: <Widget>[
+        // PureLofi's moods first, as a row of covers to swipe (#141).
+        if (moods.isNotEmpty) ...<Widget>[
+          SizedBox(
+            height: tile * 1.6 + context.fontS * 2,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: moods.length,
+              separatorBuilder: (_, _) => SizedBox(width: context.spaceM),
+              itemBuilder: (BuildContext context, int i) {
+                final MoodEntity mood = moods[i];
+                return _MoodCard(
+                  mood: mood,
+                  size: tile * 1.6,
+                  onTap: () => onCollection(
+                    PlaybackScope(
+                      kind: ScopeKind.mood,
+                      id: mood.id,
+                      title: mood.title,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: context.spaceM),
+        ],
         _Row(
           tile: _Tile(
             background: cs.primary,
@@ -425,18 +530,139 @@ class _Overview extends ConsumerWidget {
               color: cs.onPrimary,
             ),
           ),
-          title: 'Favorites',
-          subtitle: favorites == 1 ? '1 track' : '$favorites tracks',
+          title: context.l10n.favorites,
+          subtitle: context.l10n.trackCount(favorites),
           onTap: onFavorites,
+        ),
+        // Only once something was heard: an empty row is a promise.
+        if (recent.isNotEmpty)
+          _Row(
+            tile: _Tile(
+              background: cs.surfaceContainerHighest,
+              child: AppIcon(
+                AppGlyph.timer,
+                size: context.fontXl,
+                color: cs.onSurface,
+              ),
+            ),
+            title: context.l10n.recentlyPlayed,
+            subtitle: recent.first.title,
+            onTap: onRecent,
+          ),
+        // The listener's own playlists, newest change first (#141).
+        for (final PlaylistEntity playlist in playlists)
+          _Row(
+            tile: _Tile(
+              background: cs.secondaryContainer,
+              child: AppIcon(
+                AppGlyph.queue,
+                size: context.fontXl,
+                color: cs.onSecondaryContainer,
+              ),
+            ),
+            title: playlist.name,
+            subtitle: playlist.items.length == 1
+                ? context.l10n.playlistOneTrack
+                : context.l10n.playlistTrackCount(playlist.items.length),
+            onTap: () => onCollection(
+              PlaybackScope(
+                kind: ScopeKind.playlist,
+                id: playlist.id,
+                title: playlist.name,
+              ),
+            ),
+          ),
+        _Row(
+          tile: _Tile(
+            background: cs.surfaceContainerHighest,
+            child: AppIcon(
+              AppGlyph.add,
+              size: context.fontXl,
+              color: cs.onSurface,
+            ),
+          ),
+          title: context.l10n.newPlaylist,
+          subtitle: context.l10n.yourOwnList,
+          onTap: () async {
+            final String? name = await askPlaylistName(context);
+            if (name == null) return;
+            await ref.read(playlistRepositoryProvider).create(name);
+          },
         ),
         for (final ArtistEntity artist in artists)
           _Row(
             tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
             title: artist.name,
-            subtitle: 'Artist',
+            subtitle: context.l10n.artist,
             onTap: () => unawaited(openArtistPage(context, artist.id)),
           ),
       ],
+    );
+  }
+}
+
+/// One of PureLofi's moods: its cover, square, with its name under it.
+class _MoodCard extends StatelessWidget {
+  const _MoodCard({
+    required this.mood,
+    required this.size,
+    required this.onTap,
+  });
+
+  final MoodEntity mood;
+  final double size;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String? cover = mood.coverUrl;
+    final Widget plain = ColoredBox(
+      color: cs.tertiaryContainer,
+      child: Center(
+        child: AppIcon(
+          AppGlyph.scene,
+          size: size * 0.3,
+          color: cs.onTertiaryContainer,
+        ),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      label: context.l10n.moodLabel(mood.title),
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(size * 0.08),
+                child: SizedBox.square(
+                  dimension: size,
+                  child: cover == null
+                      ? plain
+                      : CachedPicture(url: cover, fallback: plain),
+                ),
+              ),
+              SizedBox(height: context.spaceXs),
+              Text(
+                mood.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontSize: context.fontS,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -579,7 +805,7 @@ class _ClearFilter extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return ActionChip(
-      tooltip: 'All',
+      tooltip: context.l10n.all,
       shape: const CircleBorder(),
       side: BorderSide.none,
       backgroundColor: cs.surfaceContainerHigh,

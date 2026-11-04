@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:purelofi/common/errors/app_error.dart';
+import 'package:purelofi/features/player/domain/ambient_loop.dart';
 import 'package:purelofi/features/player/domain/audio_player.service.dart';
+import 'package:purelofi/features/player/domain/media_library.dart';
 import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/features/player/domain/volume_layer.dart';
 
 /// A stand-in for the real player: `just_audio` and `audio_service` both talk
 /// to platform channels, so unit tests drive this instead (see `docs/10`).
@@ -101,6 +104,44 @@ class FakeAudioPlayerService implements AudioPlayerService {
     stopCalls++;
     playingController.add(false);
   }
+
+  /// Every layer's current level; a layer never set is at 1.
+  final Map<VolumeLayer, double> layers = <VolumeLayer, double>{};
+
+  /// Every level each layer was set to, in order.
+  final Map<VolumeLayer, List<double>> layerHistory =
+      <VolumeLayer, List<double>>{};
+
+  double layer(VolumeLayer layer) => layers[layer] ?? 1;
+
+  @override
+  Future<void> setVolumeLayer(VolumeLayer layer, double level) async {
+    layers[layer] = level;
+    (layerHistory[layer] ??= <double>[]).add(level);
+  }
+
+  bool? softTransitions;
+
+  @override
+  Future<void> setSoftTransitions(bool enabled) async =>
+      softTransitions = enabled;
+
+  int chimes = 0;
+
+  /// What media browsers were handed.
+  MediaLibrary? library;
+
+  @override
+  void setLibrary(MediaLibrary library) => this.library = library;
+
+  /// The room's sounds last handed over.
+  List<AmbientLoop> ambience = const <AmbientLoop>[];
+
+  @override
+  Future<void> setAmbience(List<AmbientLoop> loops) async => ambience = loops;
+
+  @override
+  Future<void> playChime() async => chimes++;
 
   /// Simulates the current track running out, or skip on the lock screen.
   void emitNextRequest() => nextRequestController.add(null);

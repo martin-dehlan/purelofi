@@ -206,4 +206,50 @@ void main() {
     expect(find.byType(SceneLayersView), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  group('screen readers (#153)', () {
+    testWidgets('the room is a picture with its name, a labelled tappable '
+        'layer is a button', (tester) async {
+      final SemanticsHandle semantics = tester.ensureSemantics();
+      when(() => mockRepo.getScenes()).thenAnswer(
+        (_) async => <SceneEntity>[
+          makeScene('scene-a', title: 'Rainy Room').copyWith(
+            layers: <SceneLayerEntity>[
+              makeLayer('back', zIndex: 0),
+              makeLayer(
+                'cat',
+                zIndex: 1,
+                frameCount: 4,
+                fps: 8,
+              ).copyWith(tappable: true, tapLabel: 'Pet the cat'),
+              // Tappable but unnamed: kept out of the reader's way.
+              makeLayer(
+                'moth',
+                zIndex: 2,
+                frameCount: 4,
+                fps: 8,
+              ).copyWith(tappable: true),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpProviderApp(
+        child: const SceneBackground(),
+        overrides: overrides(),
+      );
+      await settle(tester);
+
+      expect(find.bySemanticsLabel('Rainy Room'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Pet the cat')),
+        matchesSemantics(
+          label: 'Pet the cat',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      semantics.dispose();
+    });
+  });
 }

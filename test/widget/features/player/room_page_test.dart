@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
+import 'package:purelofi/common/widgets/menu_row.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/focus_timer_chips.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
@@ -12,6 +14,7 @@ import 'package:purelofi/features/player/presentation/widgets/room_page.widget.d
 import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_section.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/sleep_timer_slider.widget.dart';
+import 'package:purelofi/l10n/l10n.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_media_cache.dart';
@@ -54,8 +57,30 @@ void main() {
   Finder onPage(Finder finder) =>
       find.descendant(of: find.byType(RoomPage), matching: finder);
 
+  /// Within the sleep timer: the sound card and the focus timer have a
+  /// slider and an "Off" of their own.
+  Finder inTimer(Finder finder) =>
+      find.descendant(of: find.byType(SleepTimerSlider), matching: finder);
+
+  Finder focusChip(String label) => find.descendant(
+    of: find.byType(FocusTimerChips),
+    matching: find.widgetWithText(ChoiceChip, label),
+  );
+
+  Future<void> tapChip(WidgetTester tester, Finder target) async {
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+  }
+
+  /// The switch on the settings row titled [title].
+  Finder toggleOf(String title) => find.descendant(
+    of: find.widgetWithText(MenuRow, title),
+    matching: find.byType(Switch),
+  );
   Future<void> slideTo(WidgetTester tester, double fraction) async {
-    final Finder slider = onPage(find.byType(Slider));
+    final Finder slider = inTimer(find.byType(Slider));
     await tester.ensureVisible(slider);
     await tester.pumpAndSettle();
     final Rect box = tester.getRect(slider);
@@ -73,7 +98,7 @@ void main() {
   }
 
   double sliderValue(WidgetTester tester) =>
-      tester.widget<Slider>(onPage(find.byType(Slider))).value;
+      tester.widget<Slider>(inTimer(find.byType(Slider))).value;
 
   testWidgets('one page with the room, the timer and the settings open', (
     tester,
@@ -122,13 +147,13 @@ void main() {
     ) async {
       await start(tester);
       expect(sliderValue(tester), 0);
-      expect(onPage(find.text('Off')), findsOneWidget);
+      expect(inTimer(find.text('Off')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsNothing);
 
       // A quarter of two hours.
       await slideTo(tester, 0.25);
 
-      expect(onPage(find.text('30 min')), findsOneWidget);
+      expect(inTimer(find.text('30 min')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsOneWidget);
       // The page stays open.
       expect(find.byType(RoomPage), findsOneWidget);
@@ -151,12 +176,43 @@ void main() {
       expect(find.textContaining('Stops at'), findsNothing);
     });
 
-    test('lengths read the way people say them', () {
-      expect(SleepTimerSlider.lengthLabel(0), 'Off');
-      expect(SleepTimerSlider.lengthLabel(45), '45 min');
-      expect(SleepTimerSlider.lengthLabel(60), '1 h');
-      expect(SleepTimerSlider.lengthLabel(90), '1 h 30');
-      expect(SleepTimerSlider.lengthLabel(65), '1 h 05');
+    test('lengths read the way people say them', () async {
+      final AppLocalizations en = await AppLocalizations.delegate.load(
+        const Locale('en'),
+      );
+      expect(SleepTimerSlider.lengthLabel(en, 0), 'Off');
+      expect(SleepTimerSlider.lengthLabel(en, 45), '45 min');
+      expect(SleepTimerSlider.lengthLabel(en, 60), '1 h');
+      expect(SleepTimerSlider.lengthLabel(en, 90), '1 h 30');
+      expect(SleepTimerSlider.lengthLabel(en, 65), '1 h 05');
+
+      final AppLocalizations de = await AppLocalizations.delegate.load(
+        const Locale('de'),
+      );
+      expect(SleepTimerSlider.lengthLabel(de, 0), 'Aus');
+      expect(SleepTimerSlider.lengthLabel(de, 90), '1 Std. 30');
+    });
+  });
+
+  group('focus timer (#137)', () {
+    testWidgets('is off until a plan is picked, then says until when', (
+      tester,
+    ) async {
+      await start(tester);
+      expect(tester.widget<ChoiceChip>(focusChip('Off')).selected, isTrue);
+
+      await tapChip(tester, focusChip('25 / 5 min'));
+
+      expect(
+        tester.widget<ChoiceChip>(focusChip('25 / 5 min')).selected,
+        isTrue,
+      );
+      // On the page, and on the player behind it.
+      expect(find.textContaining('Focus until'), findsWidgets);
+
+      await tapChip(tester, focusChip('Off'));
+
+      expect(find.textContaining('Focus until'), findsNothing);
     });
   });
 
@@ -165,7 +221,7 @@ void main() {
       await start(tester);
       await tapMenuEntry(tester, 'Settings');
 
-      final Finder toggle = find.byType(Switch);
+      final Finder toggle = toggleOf('Hide controls');
       await tester.ensureVisible(toggle);
       await tester.pumpAndSettle();
       expect(tester.widget<Switch>(toggle).value, isTrue);
@@ -176,6 +232,23 @@ void main() {
       expect(tester.widget<Switch>(toggle).value, isFalse);
     });
 
+    testWidgets('soft transitions are on, and reach the player when '
+        'turned off', (tester) async {
+      await start(tester);
+      await tapMenuEntry(tester, 'Settings');
+
+      final Finder toggle = toggleOf('Soft transitions');
+      await tester.ensureVisible(toggle);
+      await tester.pumpAndSettle();
+      expect(tester.widget<Switch>(toggle).value, isTrue);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(toggle).value, isFalse);
+      expect(fakeAudio.softTransitions, isFalse);
+    });
+
     testWidgets('says what the saved files take, and clears them', (
       tester,
     ) async {
@@ -183,7 +256,14 @@ void main() {
 
       expect(find.text('84 MB on this phone'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Clear');
+      // The saved files' Clear, not the listening history's.
+      await tapChip(
+        tester,
+        find.descendant(
+          of: find.widgetWithText(MenuRow, 'Saved music and rooms'),
+          matching: find.widgetWithText(TextButton, 'Clear'),
+        ),
+      );
 
       expect(cache.cleared, isTrue);
       expect(find.text('0 MB on this phone'), findsOneWidget);

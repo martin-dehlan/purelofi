@@ -3,14 +3,24 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 import 'daos/artist.dao.dart';
 import 'daos/cached_file.dao.dart';
+import 'daos/followed_artist.dao.dart';
 import 'daos/local_track.dao.dart';
+import 'daos/mood.dao.dart';
+import 'daos/play_event.dao.dart';
+import 'daos/playlist.dao.dart';
 import 'daos/scene.dao.dart';
+import 'daos/seen_item.dao.dart';
 import 'daos/track.dao.dart';
 import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
+import 'tables/followed_artist.table.dart';
 import 'tables/local_track.table.dart';
+import 'tables/mood.table.dart';
+import 'tables/play_event.table.dart';
+import 'tables/playlist.table.dart';
 import 'tables/scene.table.dart';
 import 'tables/scene_layer.table.dart';
+import 'tables/seen_item.table.dart';
 import 'tables/track.table.dart';
 
 part 'app_database.g.dart';
@@ -30,8 +40,24 @@ part 'app_database.g.dart';
     CachedFileTable,
     LocalTrackTable,
     ArtistTable,
+    PlayEventTable,
+    SeenItemTable,
+    MoodTable,
+    PlaylistTable,
+    FollowedArtistTable,
   ],
-  daos: <Type>[TrackDao, SceneDao, CachedFileDao, LocalTrackDao, ArtistDao],
+  daos: <Type>[
+    TrackDao,
+    SceneDao,
+    CachedFileDao,
+    LocalTrackDao,
+    ArtistDao,
+    PlayEventDao,
+    SeenItemDao,
+    MoodDao,
+    PlaylistDao,
+    FollowedArtistDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -40,7 +66,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,8 +104,55 @@ class AppDatabase extends _$AppDatabase {
         await m.deleteTable(artistTable.actualTableName);
         await m.createTable(artistTable);
       }
+
+      // 7: the listening log (#142). Rows no fetch can bring back, so the
+      // table is created and never rebuilt.
+      if (from < 7) await m.createTable(playEventTable);
+
+      // 8: what the listener has already met, for the "new" marks (#148).
+      if (from < 8) await m.createTable(seenItemTable);
+
+      // 9: what a screen reader says for a tappable layer (#153). Only a
+      // copy of the server's, but a column is cheap to add in place.
+      // Checked first: a database whose layers table was made from the
+      // current definition already has the column.
+      if (from < 9 && !await _hasColumn('scene_layers', 'tap_label')) {
+        await m.addColumn(sceneLayerTable, sceneLayerTable.tapLabel);
+      }
+
+      // 10: the sounds each room brings (#136), as a JSON column.
+      if (from < 10 && !await _hasColumn('scenes', 'ambients')) {
+        await m.addColumn(sceneTable, sceneTable.ambients);
+      }
+
+      // 11: moods and the listener's playlists (#141).
+      if (from < 11) {
+        await m.createTable(moodTable);
+        await m.createTable(playlistTable);
+      }
+
+      // 12: the mood each room plays (#143).
+      if (from < 12 && !await _hasColumn('scenes', 'mood_id')) {
+        await m.addColumn(sceneTable, sceneTable.moodId);
+      }
+
+      // 13: where to support an artist (#152).
+      if (from < 13 && !await _hasColumn('artists', 'support_url')) {
+        await m.addColumn(artistTable, artistTable.supportUrl);
+      }
+
+      // 14: the artists the listener follows (#147).
+      if (from < 14) await m.createTable(followedArtistTable);
     },
   );
+
+  Future<bool> _hasColumn(String table, String column) async {
+    final List<QueryRow> rows = await customSelect(
+      'PRAGMA table_info($table)',
+    ).get();
+
+    return rows.any((QueryRow row) => row.read<String>('name') == column);
+  }
 
   static QueryExecutor _openConnection() => driftDatabase(name: 'purelofi_db');
 }

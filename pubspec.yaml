@@ -61,6 +61,11 @@ dependencies:
   url_launcher: ^6.3.3
   share_plus: ^13.3.1
   path_parsing: ^1.1.0
+  wakelock_plus: ^1.8.2
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  home_widget: ^0.10.0
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +94,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # ARB files in lib/l10n become AppLocalizations (#140).
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -102,6 +109,8 @@ flutter:
     - assets/fonts/OFL-DMMono.txt
     # Development placeholder scene; see lib/features/player/dev/.
     - assets/dev/scenes/test_room/
+    # The focus timer's chime (#137), synthesised by tool/chime.py.
+    - assets/sounds/chime.wav
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

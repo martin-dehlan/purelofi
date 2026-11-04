@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -8,8 +10,24 @@ import '../../../common/config/supabase.provider.dart';
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/cached_file.dao.dart';
+import '../../../common/database/daos/followed_artist.dao.dart';
+import '../../../common/database/daos/mood.dao.dart';
+import '../../../common/database/daos/playlist.dao.dart';
+import '../../../common/database/daos/play_event.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
+import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
+import '../data/follows.impl.dart';
+import '../data/home_widget.service.impl.dart';
+import '../data/wake_alarm_store.impl.dart';
+import '../data/wake_scheduler.impl.dart';
+import '../data/screen_awake.service.impl.dart';
+import '../data/mix_preferences.service.impl.dart';
+import '../data/mood.repository.impl.dart';
+import '../data/playlist.repository.impl.dart';
+import '../data/playlists.api.dart';
+import '../data/new_content.repository.impl.dart';
+import '../data/play_history.repository.impl.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
 import '../data/device_favorites.impl.dart';
@@ -18,6 +36,15 @@ import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
+import '../domain/home_widget.service.dart';
+import '../domain/wake_alarm.dart';
+import '../domain/mix_preferences.service.dart';
+import '../domain/screen_awake.service.dart';
+import '../domain/mood.entity.dart';
+import '../domain/playlist.entity.dart';
+import '../domain/playlist_sync.dart';
+import '../domain/new_content.dart';
+import '../domain/play_history.repository.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
 import '../domain/display_preferences.service.dart';
@@ -105,6 +132,93 @@ ContentRepository contentRepository(Ref ref) {
 
 @Riverpod(keepAlive: true)
 ArtistDao artistDao(Ref ref) => ArtistDao(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true)
+PlayEventDao playEventDao(Ref ref) =>
+    PlayEventDao(ref.watch(appDatabaseProvider));
+
+/// The listening log on this device (#142). Overridden in widget tests with
+/// one in memory, like every other table.
+@Riverpod(keepAlive: true)
+PlayHistoryRepository playHistoryRepository(Ref ref) =>
+    PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// The wake-up alarm with the platform (#146). Asks at start whether the
+/// alarm is what opened the app.
+@Riverpod(keepAlive: true)
+WakeScheduler wakeScheduler(Ref ref) {
+  final WakeSchedulerImpl scheduler = WakeSchedulerImpl();
+  unawaited(scheduler.checkLaunch());
+  return scheduler;
+}
+
+/// Where the alarm is kept (#146).
+@Riverpod(keepAlive: true)
+WakeAlarmStore wakeAlarmStore(Ref ref) => WakeAlarmStoreImpl();
+
+/// The home and lock screen widgets (#144).
+@Riverpod(keepAlive: true)
+HomeWidgetService homeWidgetService(Ref ref) => HomeWidgetServiceImpl();
+
+/// Keeps the screen on in window mode (#149).
+@Riverpod(keepAlive: true)
+ScreenAwake screenAwake(Ref ref) => const ScreenAwakeImpl();
+
+/// The artists the listener follows, on the device (#147).
+@Riverpod(keepAlive: true)
+DeviceFollows deviceFollows(Ref ref) =>
+    DeviceFollows(FollowedArtistDao(ref.watch(appDatabaseProvider)));
+
+/// The account's follows (#147).
+@Riverpod(keepAlive: true)
+AccountFavorites accountFollows(Ref ref) =>
+    FollowsApi(ref.watch(supabaseClientProvider));
+
+/// PureLofi's moods (#141), with an offline copy.
+@Riverpod(keepAlive: true)
+MoodRepository moodRepository(Ref ref) => MoodRepositoryImpl(
+  client: ref.watch(supabaseClientProvider),
+  dao: MoodDao(ref.watch(appDatabaseProvider)),
+);
+
+/// The listener's playlists on this device (#141). Every change nudges the
+/// sync, which does nothing while signed out.
+@Riverpod(keepAlive: true)
+PlaylistRepositoryImpl playlistStore(Ref ref) => PlaylistRepositoryImpl(
+  PlaylistDao(ref.watch(appDatabaseProvider)),
+  onChange: () => ref.read(playlistChangesProvider.notifier).changed(),
+);
+
+@Riverpod(keepAlive: true)
+PlaylistRepository playlistRepository(Ref ref) =>
+    ref.watch(playlistStoreProvider);
+
+@Riverpod(keepAlive: true)
+DevicePlaylists devicePlaylists(Ref ref) => ref.watch(playlistStoreProvider);
+
+@Riverpod(keepAlive: true)
+AccountPlaylists accountPlaylists(Ref ref) =>
+    PlaylistsApi(ref.watch(supabaseClientProvider));
+
+/// Counts playlist changes, for the sync to follow without the repository
+/// knowing about it.
+@Riverpod(keepAlive: true)
+class PlaylistChanges extends _$PlaylistChanges {
+  @override
+  int build() => 0;
+
+  void changed() => state++;
+}
+
+/// The listener's mix of music and room sounds (#136, #154).
+@Riverpod(keepAlive: true)
+MixPreferences mixPreferences(Ref ref) => MixPreferencesImpl();
+
+/// What the listener has met, for the "new" marks (#148). Overridden in
+/// widget tests with one in memory.
+@Riverpod(keepAlive: true)
+NewContentRepository newContentRepository(Ref ref) =>
+    NewContentRepositoryImpl(dao: SeenItemDao(ref.watch(appDatabaseProvider)));
 
 /// Where shuffle and repeat are remembered. Overridden in tests with one in
 /// memory.

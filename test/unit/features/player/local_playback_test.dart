@@ -17,7 +17,10 @@ void main() {
   late AudioPlayerServiceImpl service;
   AudioSource? loaded;
 
-  setUpAll(() => registerFallbackValue(_FakeSource()));
+  setUpAll(() {
+    registerFallbackValue(_FakeSource());
+    registerFallbackValue(Duration.zero);
+  });
 
   setUp(() {
     player = _MockPlayer();
@@ -29,11 +32,22 @@ void main() {
     when(
       () => player.processingStateStream,
     ).thenAnswer((_) => const Stream<ProcessingState>.empty());
+    when(
+      () => player.playingStream,
+    ).thenAnswer((_) => const Stream<bool>.empty());
+    when(
+      () => player.createPositionStream(
+        steps: any(named: 'steps'),
+        minPeriod: any(named: 'minPeriod'),
+        maxPeriod: any(named: 'maxPeriod'),
+      ),
+    ).thenAnswer((_) => const Stream<Duration>.empty());
     when(() => player.setAudioSource(any())).thenAnswer((Invocation i) async {
       loaded = i.positionalArguments.first as AudioSource;
       return null;
     });
     when(player.play).thenAnswer((_) async {});
+    when(() => player.setVolume(any())).thenAnswer((_) async {});
     service = AudioPlayerServiceImpl(player: player, cache: cache);
   });
 

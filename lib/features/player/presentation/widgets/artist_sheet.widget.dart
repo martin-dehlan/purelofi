@@ -11,6 +11,8 @@ import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
 import 'artist_links_bar.widget.dart';
+import 'follow_button.widget.dart';
+import 'support_artist_button.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -18,6 +20,7 @@ import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'music_sheet.dart';
 import 'track_tile.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// An artist's page: who they are, a way to hear all of them, where to find
 /// more of their music, and their tracks.
@@ -62,7 +65,7 @@ class ArtistSheet extends ConsumerWidget {
                 ],
               )
             : Text(
-                'This artist is not on PureLofi any more.',
+                context.l10n.artistGone,
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
                   fontSize: context.fontS,
@@ -130,6 +133,8 @@ class ArtistSheet extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      SizedBox(height: context.spaceS),
+                      FollowButton(artistId: artist.id),
                     ],
                   ),
                   if (links.isNotEmpty)
@@ -155,7 +160,7 @@ class ArtistSheet extends ConsumerWidget {
                         shape: const StadiumBorder(),
                       ),
                       child: Text(
-                        'Play',
+                        context.l10n.play,
                         style: TextStyle(
                           fontSize: context.fontM,
                           fontWeight: FontWeight.w600,
@@ -168,8 +173,8 @@ class ArtistSheet extends ConsumerWidget {
                   // they are all here.
                   IconButton.filledTonal(
                     tooltip: allDownloaded
-                        ? 'Remove downloads'
-                        : 'Download all',
+                        ? context.l10n.removeDownloads
+                        : context.l10n.downloadAll,
                     onPressed: tracks.isEmpty || downloading
                         ? null
                         : toggleDownloads,
@@ -191,6 +196,11 @@ class ArtistSheet extends ConsumerWidget {
                   ),
                 ],
               ),
+              // Straight to the artist, when they take support (#152).
+              if (artist.supportUrl != null) ...<Widget>[
+                SizedBox(height: context.spaceM),
+                SupportArtistButton(artist: artist),
+              ],
               SizedBox(height: context.spaceM),
             ],
           ),

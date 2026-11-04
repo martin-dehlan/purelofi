@@ -283,6 +283,7 @@ An animation is a **horizontal strip**: 6 frames of a 64×64 sprite is one
 | `only_while_playing` | `false` | Advances only while audio plays. |
 | `hide_when_paused` | `false` | Not drawn while paused; fades in and out over 2.2s. |
 | `tappable` | `false` | Plays its reaction once when touched. |
+| `tap_label` | none | What a screen reader says for a tappable layer, e.g. "Pet the cat" (#153). Without it the layer is hidden from screen readers. |
 | `idle_frames` | `0` | How many frames at the start of the strip are the idle loop; the rest are the reaction. |
 | `on_track_change` | `false` | Plays its reaction once when a new track starts. |
 | `hide_when_clipped` | `false` | Drawn only when all of it fits on screen. |
@@ -421,3 +422,25 @@ ffmpeg -framerate 12 -i frame_%04d.png \
 - 60–120 second loops: the seam is visible, so make it rare.
 - Last frame must differ from the first, or the loop point stutters.
 - `-an`: the scene is silent, the music comes from the audio player.
+
+## Room sounds (#136)
+
+A room can bring ambient loops: rain on the window, the fire, the train.
+They play beside the music, pause with it, and the listener mixes them on
+the room page.
+
+- **Real recordings or CC0, never generated**, the same rule as the music.
+- One seamless loop per sound, 60–120 s, mono is fine. AAC (`.m4a`) at
+  96–128 kbps keeps a loop under 2 MB. Cut on a zero crossing and check the
+  seam in a looping player: a click every minute is worse than no rain.
+- Upload to the `ambient` bucket, add a row to `ambient_sounds`, then link
+  it to the room in `scene_ambients` with the level it starts at
+  (`default_level`, 0–1; rain behind a closed window ≈ 0.4, a fire in the
+  room ≈ 0.3).
+
+## The room's mood (#143)
+
+`scene.json` may name a mood by its slug: `"mood": "rainy-evenings"`. The
+upload tool looks it up and fails if it does not exist. With "Music follows
+the room" on in the settings, the stream plays that mood while the listener
+is in the room; a mood or playlist they picked themselves always wins.

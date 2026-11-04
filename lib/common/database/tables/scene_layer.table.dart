@@ -26,6 +26,7 @@ class SceneLayerTable extends Table {
   BoolColumn get hideWhenPaused =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get tappable => boolean().withDefault(const Constant(false))();
+  TextColumn get tapLabel => text().nullable()();
   IntColumn get idleFrameCount => integer().withDefault(const Constant(0))();
   BoolColumn get onTrackChange =>
       boolean().withDefault(const Constant(false))();

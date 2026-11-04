@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/scene.dao.dart';
+import 'ambient_sound.model.dart';
 import '../domain/artist.entity.dart';
 import '../domain/artist_link.dart';
 import '../domain/scene.entity.dart';
@@ -54,6 +57,9 @@ extension ArtistRowX on ArtistTableData {
       for (final String link in links.split('\n'))
         if (isWebLink(link)) link,
     ],
+    supportUrl: supportUrl != null && isWebLink(supportUrl!)
+        ? supportUrl
+        : null,
   );
 }
 
@@ -65,6 +71,7 @@ extension ArtistEntityX on ArtistEntity {
         bio: Value<String?>(bio),
         avatarUrl: Value<String?>(avatarUrl),
         links: Value<String>(links.join('\n')),
+        supportUrl: Value<String?>(supportUrl),
         updatedAt: Value<DateTime>(now),
       );
 }
@@ -79,6 +86,9 @@ extension CachedSceneX on CachedScene {
       videoUrl: scene.videoUrl,
       sortOrder: scene.sortOrder,
       thumbnailUrl: scene.thumbnailUrl,
+      createdAt: scene.createdAt,
+      ambients: AmbientSoundModel.fromCache(_decode(scene.ambients)),
+      moodId: scene.moodId,
       canvasWidth: scene.canvasWidth,
       canvasHeight: scene.canvasHeight,
       layers: layers
@@ -102,6 +112,7 @@ extension SceneLayerRowX on SceneLayerTableData {
     onlyWhilePlaying: onlyWhilePlaying,
     hideWhenPaused: hideWhenPaused,
     tappable: tappable,
+    tapLabel: tapLabel,
     idleFrameCount: idleFrameCount,
     onTrackChange: onTrackChange,
     hideWhenClipped: hideWhenClipped,
@@ -120,8 +131,14 @@ extension SceneEntityX on SceneEntity {
         sortOrder: Value<int>(sortOrder),
         canvasWidth: Value<int>(canvasWidth),
         canvasHeight: Value<int>(canvasHeight),
-        createdAt: Value<DateTime>(now),
+        // The server's date, not the moment of caching: the "new" marks
+        // (#148) compare it with the first launch.
+        createdAt: Value<DateTime>(createdAt ?? now),
         updatedAt: Value<DateTime>(now),
+        ambients: Value<String>(
+          jsonEncode(AmbientSoundModel.toCache(ambients)),
+        ),
+        moodId: Value<String?>(moodId),
       );
 
   List<SceneLayerTableCompanion> toLayerCompanions({required DateTime now}) =>
@@ -149,6 +166,7 @@ extension SceneLayerEntityX on SceneLayerEntity {
     onlyWhilePlaying: Value<bool>(onlyWhilePlaying),
     hideWhenPaused: Value<bool>(hideWhenPaused),
     tappable: Value<bool>(tappable),
+    tapLabel: Value<String?>(tapLabel),
     idleFrameCount: Value<int>(idleFrameCount),
     onTrackChange: Value<bool>(onTrackChange),
     hideWhenClipped: Value<bool>(hideWhenClipped),
@@ -157,4 +175,13 @@ extension SceneLayerEntityX on SceneLayerEntity {
     createdAt: Value<DateTime>(now),
     updatedAt: Value<DateTime>(now),
   );
+}
+
+/// A JSON column read back; anything unreadable is no sounds at all.
+Object? _decode(String json) {
+  try {
+    return jsonDecode(json);
+  } on FormatException {
+    return null;
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../l10n/l10n.dart';
 
 part 'app_error.freezed.dart';
 
@@ -43,5 +44,21 @@ extension AppErrorX on AppError {
     AuthError(:final String message) => message,
     PurchaseError(:final String message) => message,
     UnknownError() => 'Something went wrong. Please try again.',
+  };
+}
+
+/// [AppErrorX.userMessage] in the listener's language (#140). A message the
+/// mapper wrote itself — what the auth server said, say — is passed through;
+/// the general ones are translated.
+extension AppErrorL10n on AppError {
+  String userMessageIn(AppLocalizations l10n) => switch (this) {
+    NetworkError(:final String? message) => message ?? l10n.errorNetwork,
+    NotFoundError(:final String resource) => l10n.errorNotFound(resource),
+    ServerError(:final String? message, :final int? statusCode) =>
+      message ?? l10n.errorServer(statusCode?.toString() ?? '?'),
+    PlaybackError(:final String message) => l10n.errorPlayback(message),
+    AuthError(:final String message) => message,
+    PurchaseError(:final String message) => message,
+    UnknownError() => l10n.errorUnknown,
   };
 }

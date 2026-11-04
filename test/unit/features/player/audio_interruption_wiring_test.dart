@@ -33,6 +33,8 @@ void main() {
   late AudioPlayerServiceImpl service;
   bool playing = true;
 
+  setUpAll(() => registerFallbackValue(Duration.zero));
+
   setUp(() {
     player = _MockPlayer();
     source = _FakeSource();
@@ -44,6 +46,16 @@ void main() {
     when(
       () => player.processingStateStream,
     ).thenAnswer((_) => const Stream<ProcessingState>.empty());
+    when(
+      () => player.playingStream,
+    ).thenAnswer((_) => const Stream<bool>.empty());
+    when(
+      () => player.createPositionStream(
+        steps: any(named: 'steps'),
+        minPeriod: any(named: 'minPeriod'),
+        maxPeriod: any(named: 'maxPeriod'),
+      ),
+    ).thenAnswer((_) => const Stream<Duration>.empty());
     when(() => player.playing).thenAnswer((_) => playing);
     when(player.pause).thenAnswer((_) async => playing = false);
     when(player.play).thenAnswer((_) async => playing = true);

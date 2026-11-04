@@ -1,0 +1,18 @@
+@font-face{font-family:'Karla';src:url(a/Karla.ttf) format('truetype');font-weight:200 800;font-display:swap}
+:root{--bg:#030308;--fg:#f2ede4;--dim:#a49d93;--lamp:#F0A05D}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--fg);font-family:Karla,system-ui,sans-serif}
+#room{position:fixed;inset:0;width:100vw;height:100vh;image-rendering:pixelated;image-rendering:crisp-edges}
+.player{position:fixed;left:0;right:0;bottom:0;padding:1.25rem max(1rem,env(safe-area-inset-left)) max(1.5rem,env(safe-area-inset-bottom));background:rgba(3,3,8,.55);text-align:center}
+.room-name{color:var(--dim);font-size:.85rem;letter-spacing:.04em}
+.title{font-size:1.15rem;font-weight:700;margin-top:.35rem}
+.artist{color:var(--dim);font-size:.9rem;margin-top:.15rem}
+.controls{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem}
+.controls button{min-width:48px;min-height:48px;border:0;border-radius:999px;background:rgba(242,237,228,.08);color:var(--fg);font-size:1.4rem;cursor:pointer}
+.controls button.play{min-width:64px;min-height:64px;background:var(--lamp);color:var(--bg)}
+.controls button:disabled{opacity:.4;cursor:default}
+.controls button:focus-visible{outline:2px solid var(--lamp);outline-offset:3px}
+.note{color:var(--dim);font-size:.8rem;margin-top:.75rem;min-height:1em}
+.app{margin-top:.5rem;font-size:.85rem}
+.app a{color:var(--lamp)}
+@media (prefers-reduced-motion: reduce){.controls button{transition:none}}

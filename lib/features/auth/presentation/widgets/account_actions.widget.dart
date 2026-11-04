@@ -9,6 +9,7 @@ import '../../../../common/widgets/menu_row.widget.dart';
 import '../../controller/auth.controller.dart';
 import '../../domain/account.entity.dart';
 import 'delete_account_dialog.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The ways out of an account, as rows at the foot of the room page:
 /// signing out, and deleting it, which the stores require in the app.
@@ -32,7 +33,7 @@ class _AccountActionsState extends ConsumerState<AccountActions> {
     try {
       await action();
     } on AppError catch (error) {
-      if (mounted) setState(() => _error = error.userMessage);
+      if (mounted) setState(() => _error = error.userMessageIn(context.l10n));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -59,12 +60,12 @@ class _AccountActionsState extends ConsumerState<AccountActions> {
           children: <Widget>[
             MenuRow(
               glyph: AppGlyph.account,
-              title: 'Sign out',
+              title: context.l10n.signOut,
               onTap: _busy ? null : () => _leave(auth.signOut),
             ),
             MenuRow(
               glyph: AppGlyph.remove,
-              title: 'Delete account',
+              title: context.l10n.deleteAccount,
               danger: true,
               onTap: _busy ? null : _delete,
             ),

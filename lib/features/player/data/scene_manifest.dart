@@ -77,6 +77,7 @@ class LayerManifest {
     this.onlyWhilePlaying = false,
     this.hideWhenPaused = false,
     this.tappable = false,
+    this.tapLabel,
     this.idleFrameCount = 0,
     this.onTrackChange = false,
     this.hideWhenClipped = false,
@@ -92,6 +93,9 @@ class LayerManifest {
   final bool onlyWhilePlaying;
   final bool hideWhenPaused;
   final bool tappable;
+
+  /// What a screen reader says for the layer when it is tappable (#153).
+  final String? tapLabel;
   final int idleFrameCount;
   final bool onTrackChange;
   final bool hideWhenClipped;
@@ -121,6 +125,7 @@ class LayerManifest {
       onlyWhilePlaying: json['only_while_playing'] as bool? ?? false,
       hideWhenPaused: json['hide_when_paused'] as bool? ?? false,
       tappable: json['tappable'] as bool? ?? false,
+      tapLabel: json['tap_label'] as String?,
       idleFrameCount: (json['idle_frames'] as num?)?.toInt() ?? 0,
       onTrackChange: json['on_track_change'] as bool? ?? false,
       hideWhenClipped: json['hide_when_clipped'] as bool? ?? false,
@@ -137,9 +142,13 @@ class SceneManifest {
     required this.canvasWidth,
     required this.canvasHeight,
     required this.layers,
+    this.mood,
   });
 
   final String title;
+
+  /// The slug of the mood the room plays (#143), if it names one.
+  final String? mood;
   final int canvasWidth;
   final int canvasHeight;
 
@@ -230,6 +239,7 @@ class SceneManifest {
       canvasWidth: (canvas['width'] as num?)?.toInt() ?? 320,
       canvasHeight: (canvas['height'] as num?)?.toInt() ?? 696,
       layers: layers,
+      mood: json['mood'] as String?,
     );
   }
 }

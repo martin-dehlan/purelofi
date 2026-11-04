@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../common/utils/responsive.dart';
+
 import '../../../auth/controller/welcome.controller.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/scene_touch.controller.dart';
 import '../../controller/startup.controller.dart';
+import '../../controller/window_mode.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
@@ -18,6 +21,7 @@ import '../widgets/player_controls.widget.dart';
 import '../widgets/library_button.widget.dart';
 import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The whole app: a looping scene with the player chrome floating over it.
 ///
@@ -37,6 +41,24 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _started = false;
   bool _deepLinkHandled = false;
+
+  /// In window mode a tap shows only the way out, for a few seconds (#149).
+  bool _windowExitShown = false;
+  Timer? _windowExitTimer;
+
+  @override
+  void dispose() {
+    _windowExitTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showWindowExit() {
+    _windowExitTimer?.cancel();
+    setState(() => _windowExitShown = true);
+    _windowExitTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _windowExitShown = false);
+    });
+  }
 
   /// Whether the first launch's welcome is still to come. Unknown until the
   /// stored flag is read; the music waits for the answer, and while the
@@ -125,65 +147,98 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       _welcomeShown = true;
       unawaited(Future<void>.microtask(_welcome));
     }
+    final bool windowMode = ref.watch(windowModeControllerProvider);
     final bool controlsVisible =
-        !starting && ref.watch(controlsVisibilityControllerProvider);
+        !starting &&
+        !windowMode &&
+        ref.watch(controlsVisibilityControllerProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
       // The room stays put when the keyboard comes up for a search in a
       // sheet; only the sheet makes room for it.
       resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (starting) return;
-          // A tap that woke the cat is not a request for the transport.
-          if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+      // The whole room is the tap that brings the controls back, so it
+      // needs a name for screen readers too (#153).
+      body: Semantics(
+        label: context.l10n.showTheControls,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (starting) return;
+            // A tap that woke the cat is not a request for the transport.
+            if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+            // In window mode the room stays alone; a tap offers the way out.
+            if (ref.read(windowModeControllerProvider)) {
+              _showWindowExit();
+              return;
+            }
 
-          ref.read(controlsVisibilityControllerProvider.notifier).reveal();
-        },
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            const SceneBackground(),
-            // Keeps text and icons readable over a bright video frame.
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
-            ),
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              // Hidden controls are not tappable: the first tap brings them
-              // back, it does not pause the music by accident.
-              child: IgnorePointer(
-                ignoring: !controlsVisible,
-                child: const Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(child: PlayerControls()),
+            ref.read(controlsVisibilityControllerProvider.notifier).reveal();
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              const SceneBackground(),
+              // Keeps text and icons readable over a bright video frame.
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
+              ),
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                // Hidden controls are not tappable: the first tap brings them
+                // back, it does not pause the music by accident.
+                child: IgnorePointer(
+                  ignoring: !controlsVisible,
+                  child: const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(child: PlayerControls()),
+                  ),
                 ),
               ),
-            ),
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: IgnorePointer(
-                ignoring: !controlsVisible,
-                // The menu top left, the library top right, as music apps
-                // hold them; the queue stays with the controls.
-                child: const SafeArea(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[MenuButton(), LibraryButton()],
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: IgnorePointer(
+                  ignoring: !controlsVisible,
+                  // The menu top left, the library top right, as music apps
+                  // hold them; the queue stays with the controls.
+                  child: const SafeArea(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[MenuButton(), LibraryButton()],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              // The only thing window mode shows, and only after a tap.
+              if (windowMode && _windowExitShown)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.all(context.spaceL),
+                      child: FilledButton.tonal(
+                        onPressed: () {
+                          _windowExitTimer?.cancel();
+                          setState(() => _windowExitShown = false);
+                          ref
+                              .read(windowModeControllerProvider.notifier)
+                              .leave();
+                        },
+                        child: Text(context.l10n.leaveWindowMode),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
