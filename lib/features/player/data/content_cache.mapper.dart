@@ -6,6 +6,7 @@ import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import 'ambient_sound.model.dart';
 import '../domain/artist.entity.dart';
+import '../domain/artist_link.dart';
 import '../domain/scene.entity.dart';
 import '../domain/scene_layer.entity.dart';
 import '../domain/track.entity.dart';
@@ -54,7 +55,7 @@ extension ArtistRowX on ArtistTableData {
     avatarUrl: avatarUrl,
     links: <String>[
       for (final String link in links.split('\n'))
-        if (link.isNotEmpty) link,
+        if (isWebLink(link)) link,
     ],
   );
 }

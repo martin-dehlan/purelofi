@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../domain/artist.entity.dart';
+import '../domain/artist_link.dart';
 
 part 'artist.model.freezed.dart';
 part 'artist.model.g.dart';
@@ -27,7 +28,10 @@ extension ArtistModelX on ArtistModel {
     name: name,
     bio: bio,
     avatarUrl: avatarUrl,
-    // Rows from before #109 have only the one link.
-    links: links.isNotEmpty ? links : <String>[?linkUrl],
+    // Rows from before #109 have only the one link. Only web links: these
+    // are opened outside the app.
+    links: (links.isNotEmpty ? links : <String>[?linkUrl])
+        .where(isWebLink)
+        .toList(),
   );
 }
