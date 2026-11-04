@@ -7,9 +7,10 @@ import 'package:purelofi/features/player/presentation/widgets/menu_button.widget
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
-import 'package:purelofi/features/player/presentation/widgets/menu_sheet.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/settings_sheet.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/sleep_timer_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/settings_section.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/sleep_timer_chips.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_media_cache.dart';
@@ -49,70 +50,80 @@ void main() {
     await openMenu(tester);
   }
 
-  testWidgets('a page inside the menu keeps the sheet the same height', (
+  Finder onPage(Finder finder) =>
+      find.descendant(of: find.byType(RoomPage), matching: finder);
+
+  ChoiceChip chip(WidgetTester tester, String label) =>
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+
+  testWidgets('one page with the room, the timer and the settings open', (
     tester,
   ) async {
     await start(tester);
-    final double menu = tester.getSize(find.byType(MenuSheet)).height;
 
-    for (final String entry in <String>[
-      'Change room',
-      'Sleep timer',
-      'Settings',
-    ]) {
-      await tapMenuEntry(tester, entry);
-      expect(tester.getSize(find.byType(MenuSheet)).height, menu);
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
-      expect(tester.getSize(find.byType(MenuSheet)).height, menu);
-    }
+    expect(onPage(find.byType(SceneStrip)), findsOneWidget);
+    expect(onPage(find.byType(SleepTimerChips)), findsOneWidget);
+    expect(onPage(find.byType(SettingsSection)), findsOneWidget);
+    // Nothing to open first, and no way back that is a page of its own.
+    expect(find.byTooltip('Back'), findsNothing);
   });
 
-  testWidgets('the room, the timer and the settings open inside the menu', (
+  testWidgets('the scene at the top is the way back', (tester) async {
+    await start(tester);
+
+    await tester.tap(find.bySemanticsLabel('Back to the room'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RoomPage), findsNothing);
+  });
+
+  testWidgets('a swipe down puts the page away too', (tester) async {
+    await start(tester);
+
+    await tester.fling(find.text('Your room'), const Offset(0, 500), 1500);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RoomPage), findsNothing);
+  });
+
+  testWidgets('choosing something keeps the page the same height', (
     tester,
   ) async {
     await start(tester);
+    final double page = tester.getSize(find.byType(RoomPage)).height;
 
-    await tapMenuEntry(tester, 'Settings');
-    // In the menu's sheet, not one of its own on top.
-    expect(
-      find.descendant(
-        of: find.byType(MenuSheet),
-        matching: find.byType(SettingsSheet),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Share PureLofi').hitTestable(), findsNothing);
+    await tapMenuEntry(tester, '30 min');
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(SettingsSheet), findsNothing);
-    expect(find.text('Share PureLofi'), findsOneWidget);
+    expect(tester.getSize(find.byType(RoomPage)).height, page);
   });
 
   group('sleep timer', () {
     testWidgets('is off until set, then says when it stops', (tester) async {
       await start(tester);
-      expect(find.text('Off'), findsOneWidget);
+      expect(chip(tester, 'Off').selected, isTrue);
+      expect(find.textContaining('Stops at'), findsNothing);
 
-      await tapMenuEntry(tester, 'Sleep timer');
-      expect(find.byType(SleepTimerSheet), findsOneWidget);
-      expect(find.text('Turn off'), findsNothing);
+      await tapMenuEntry(tester, '30 min');
 
-      await tester.tap(find.text('30 minutes'));
-      await tester.pumpAndSettle();
+      expect(chip(tester, 'Off').selected, isFalse);
+      expect(find.textContaining('Stops at'), findsOneWidget);
+      // The page stays open.
+      expect(find.byType(RoomPage), findsOneWidget);
 
-      // The page stays open and says when the music stops.
-      expect(find.byType(SleepTimerSheet), findsOneWidget);
-      expect(find.textContaining('Stops at').hitTestable(), findsOneWidget);
+      await tapMenuEntry(tester, 'Off');
 
-      await tapMenuEntry(tester, 'Turn off');
-      expect(find.text('Turn off'), findsNothing);
+      expect(chip(tester, 'Off').selected, isTrue);
+      expect(find.textContaining('Stops at'), findsNothing);
+    });
 
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
-      expect(find.text('Off'), findsOneWidget);
+    testWidgets('with nothing playing, the end of a track sets nothing', (
+      tester,
+    ) async {
+      await start(tester);
+
+      await tapMenuEntry(tester, 'End of track');
+
+      expect(chip(tester, 'Off').selected, isTrue);
     });
   });
 
@@ -120,9 +131,10 @@ void main() {
     testWidgets('hiding the controls can be turned off', (tester) async {
       await start(tester);
       await tapMenuEntry(tester, 'Settings');
-      expect(find.byType(SettingsSheet), findsOneWidget);
 
       final Finder toggle = find.byType(Switch);
+      await tester.ensureVisible(toggle);
+      await tester.pumpAndSettle();
       expect(tester.widget<Switch>(toggle).value, isTrue);
 
       await tester.tap(toggle);
@@ -135,12 +147,10 @@ void main() {
       tester,
     ) async {
       await start(tester);
-      await tapMenuEntry(tester, 'Settings');
 
       expect(find.text('84 MB on this phone'), findsOneWidget);
 
-      await tester.tap(find.text('Clear'));
-      await tester.pumpAndSettle();
+      await tapMenuEntry(tester, 'Clear');
 
       expect(cache.cleared, isTrue);
       expect(find.text('0 MB on this phone'), findsOneWidget);
@@ -148,8 +158,8 @@ void main() {
   });
 
   test('sizes read in whole megabytes, then gigabytes', () {
-    expect(SettingsSheet.sizeLabel(84 * 1024 * 1024), '84 MB');
-    expect(SettingsSheet.sizeLabel(1288490189), '1.2 GB');
+    expect(SettingsSection.sizeLabel(84 * 1024 * 1024), '84 MB');
+    expect(SettingsSection.sizeLabel(1288490189), '1.2 GB');
   });
 
   testWidgets('the menu button is a gear', (tester) async {

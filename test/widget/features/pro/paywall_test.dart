@@ -9,7 +9,8 @@ import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_card.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/pro/domain/pro.repository.dart';
 import 'package:purelofi/features/pro/domain/pro_plan.entity.dart';
 import 'package:purelofi/features/pro/domain/pro_status.entity.dart';
@@ -83,7 +84,7 @@ void main() {
   }
 
   Finder lockOn(String title) => find.descendant(
-    of: find.widgetWithText(ListTile, title),
+    of: find.widgetWithText(SceneCard, title),
     matching: find.byWidgetPredicate(
       (Widget w) => w is AppIcon && w.glyph == AppGlyph.lock,
     ),
@@ -141,7 +142,7 @@ void main() {
       await openSwitcher(tester, FakeProRepository(available: false));
 
       expect(lockOn('Snow Cabin'), findsNothing);
-      expect(find.byType(SceneSwitcherSheet), findsOneWidget);
+      expect(find.byType(SceneStrip), findsOneWidget);
     });
   });
 

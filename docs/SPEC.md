@@ -105,7 +105,7 @@ common/
 - `just_audio` streams tracks continuously; random next-track selection.
 - Pixel play/pause overlay (`play_icon.png` / `pause_icon.png`).
 - Controls auto-hide after 4s of inactivity; tap to reveal.
-- Scene switcher (`scene_switch_icon.png`) → picks another active scene.
+- Room page (the gear) → the rooms as covers to pick, sleep timer, settings and the account, all on one page.
 - Info/camera icon (`camera_icon.png`) → BTS modal.
 
 **BTS modal**

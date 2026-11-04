@@ -5,7 +5,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../auth/domain/account.entity.dart';
 import '../../../auth/presentation/widgets/profile_avatar.widget.dart';
 
-/// The top of the menu: who is listening. Signed in it shows the initial,
+/// The top of the room page: who is listening. Signed in it shows the initial,
 /// the name and the address; signed out, the way in.
 class ProfileCard extends StatelessWidget {
   const ProfileCard({required this.account, required this.onTap, super.key});

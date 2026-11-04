@@ -179,10 +179,25 @@ Future<void> openMenu(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Taps a row inside the open menu.
+/// Taps a row on the open room page, scrolling to it first.
+///
+/// The room, the sleep timer and the settings used to be pages of their
+/// own behind a row; they are sections of the page now, already open, so
+/// for those this only scrolls their heading into view.
 Future<void> tapMenuEntry(WidgetTester tester, String label) async {
-  await tester.tap(find.text(label));
+  const Map<String, String> sections = <String, String>{
+    'Change room': 'Room',
+    'Sleep timer': 'Sleep timer',
+    'Settings': 'Settings',
+  };
+  final String? section = sections[label];
+  final Finder target = find.text(section ?? label).first;
+  await tester.ensureVisible(target);
   await tester.pumpAndSettle();
+  if (section == null) {
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+  }
 }
 
 /// Opens the library from the right of the transport.
