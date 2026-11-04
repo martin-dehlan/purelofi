@@ -232,7 +232,7 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                   glyph: AppGlyph.settings,
                   title: 'Manage subscription',
                   subtitle: 'Change or cancel in your store',
-                  onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
+                  onTap: () => unawaited(AppLinks.openUrl(manage)),
                 ),
             ],
           ),

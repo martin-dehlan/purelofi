@@ -23,3 +23,17 @@ String artistLinkLabel(String url) {
 
   return 'Website';
 }
+
+/// Whether [url] is a web link the app may open outside itself.
+///
+/// Artist links come from the database and leave the app through the
+/// platform's URL handler, which also takes `intent:`, `file:`, `tel:` and
+/// whatever scheme another installed app has claimed. Only http(s) links
+/// with a host are artist channels; anything else is dropped, however it got
+/// into the row.
+bool isWebLink(String url) {
+  final Uri? uri = Uri.tryParse(url.trim());
+  if (uri == null || uri.host.isEmpty) return false;
+
+  return uri.scheme == 'https' || uri.scheme == 'http';
+}
