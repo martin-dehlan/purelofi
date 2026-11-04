@@ -12,6 +12,7 @@ import '../../../common/database/daos/play_event.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
+import '../data/mix_preferences.service.impl.dart';
 import '../data/new_content.repository.impl.dart';
 import '../data/play_history.repository.impl.dart';
 import '../data/content.api.dart';
@@ -22,6 +23,7 @@ import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
+import '../domain/mix_preferences.service.dart';
 import '../domain/new_content.dart';
 import '../domain/play_history.repository.dart';
 import '../domain/audio_player.service.dart';
@@ -121,6 +123,10 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// The listener's mix of music and room sounds (#136, #154).
+@Riverpod(keepAlive: true)
+MixPreferences mixPreferences(Ref ref) => MixPreferencesImpl();
 
 /// What the listener has met, for the "new" marks (#148). Overridden in
 /// widget tests with one in memory.

@@ -47,6 +47,9 @@ void main() {
       () => player.processingStateStream,
     ).thenAnswer((_) => const Stream<ProcessingState>.empty());
     when(
+      () => player.playingStream,
+    ).thenAnswer((_) => const Stream<bool>.empty());
+    when(
       () => player.createPositionStream(
         steps: any(named: 'steps'),
         minPeriod: any(named: 'minPeriod'),

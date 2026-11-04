@@ -18,6 +18,7 @@ import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
+import 'fake_mix_preferences.dart';
 import 'fake_new_content.repository.dart';
 import 'fake_play_history.repository.dart';
 import 'fake_playback_preferences.dart';
@@ -90,6 +91,7 @@ List<Override> _fakeLibrary(
     displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
     playHistoryRepositoryProvider.overrideWithValue(history),
     newContentRepositoryProvider.overrideWithValue(seen),
+    mixPreferencesProvider.overrideWithValue(FakeMixPreferences()),
   ];
 }
 

@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../domain/scene.entity.dart';
 import '../domain/scene_layer.entity.dart';
+import 'ambient_sound.model.dart';
 import 'scene_layer.model.dart';
 
 part 'scene.model.freezed.dart';
@@ -25,6 +26,10 @@ abstract class SceneModel with _$SceneModel {
     @JsonKey(name: 'scene_layers')
     @Default(<SceneLayerModel>[])
     List<SceneLayerModel> layers,
+
+    /// Embedded `scene_ambients` with their sounds (#136); read by
+    /// [AmbientSoundModel], since the shape is two levels deep.
+    @JsonKey(name: 'scene_ambients') Object? ambients,
   }) = _SceneModel;
 
   factory SceneModel.fromJson(Map<String, dynamic> json) =>
@@ -39,6 +44,7 @@ extension SceneModelX on SceneModel {
     sortOrder: sortOrder,
     thumbnailUrl: thumbnailUrl,
     createdAt: createdAt,
+    ambients: AmbientSoundModel.listFrom(ambients),
     canvasWidth: canvasWidth,
     canvasHeight: canvasHeight,
     // Back to front, whatever order the API happened to return them in.

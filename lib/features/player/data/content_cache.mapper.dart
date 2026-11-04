@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../common/database/app_database.dart';
 import '../../../common/database/daos/scene.dao.dart';
+import 'ambient_sound.model.dart';
 import '../domain/artist.entity.dart';
 import '../domain/scene.entity.dart';
 import '../domain/scene_layer.entity.dart';
@@ -79,6 +82,7 @@ extension CachedSceneX on CachedScene {
       sortOrder: scene.sortOrder,
       thumbnailUrl: scene.thumbnailUrl,
       createdAt: scene.createdAt,
+      ambients: AmbientSoundModel.fromCache(_decode(scene.ambients)),
       canvasWidth: scene.canvasWidth,
       canvasHeight: scene.canvasHeight,
       layers: layers
@@ -125,6 +129,9 @@ extension SceneEntityX on SceneEntity {
         // (#148) compare it with the first launch.
         createdAt: Value<DateTime>(createdAt ?? now),
         updatedAt: Value<DateTime>(now),
+        ambients: Value<String>(
+          jsonEncode(AmbientSoundModel.toCache(ambients)),
+        ),
       );
 
   List<SceneLayerTableCompanion> toLayerCompanions({required DateTime now}) =>
@@ -161,4 +168,13 @@ extension SceneLayerEntityX on SceneLayerEntity {
     createdAt: Value<DateTime>(now),
     updatedAt: Value<DateTime>(now),
   );
+}
+
+/// A JSON column read back; anything unreadable is no sounds at all.
+Object? _decode(String json) {
+  try {
+    return jsonDecode(json);
+  } on FormatException {
+    return null;
+  }
 }

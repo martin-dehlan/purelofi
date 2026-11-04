@@ -23,6 +23,7 @@ import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
 import 'focus_timer_chips.widget.dart';
 import 'sleep_timer_chips.widget.dart';
+import 'sound_mix.widget.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
@@ -138,6 +139,8 @@ class RoomPage extends ConsumerWidget {
           heading('Room'),
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
+          heading('Sound'),
+          const MenuGroup(children: <Widget>[SoundMix()]),
           heading('Focus'),
           const MenuGroup(children: <Widget>[FocusTimerChips()]),
           heading('Sleep timer'),

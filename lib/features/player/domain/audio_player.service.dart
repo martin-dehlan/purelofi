@@ -1,4 +1,5 @@
 import '../../../common/errors/app_error.dart';
+import 'ambient_loop.dart';
 import 'playback_mode.dart';
 import 'track.entity.dart';
 import 'volume_layer.dart';
@@ -63,4 +64,9 @@ abstract class AudioPlayerService {
   /// A soft chime over the music: the focus timer moving to its next half
   /// (#137).
   Future<void> playChime();
+
+  /// The room's sounds to loop beside the music (#136), replacing the set
+  /// before. Sounds that stay keep playing; new ones fade in, gone ones fade
+  /// out. They play while the music plays and pause with it.
+  Future<void> setAmbience(List<AmbientLoop> loops);
 }

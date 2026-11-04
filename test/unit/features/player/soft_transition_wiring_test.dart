@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/features/player/data/audio_player.service.impl.dart';
+import 'package:purelofi/features/player/domain/ambient_loop.dart';
 import 'package:purelofi/features/player/domain/playback_mode.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/domain/volume_layer.dart';
@@ -21,6 +23,8 @@ void main() {
   late StreamController<ProcessingState> processing;
   late AudioPlayerServiceImpl service;
   late List<double> volumes;
+  late StreamController<bool> playingNow;
+  late List<_MockPlayer> loopPlayers;
 
   setUpAll(() {
     registerFallbackValue(_FakeSource());
@@ -34,6 +38,8 @@ void main() {
     position = StreamController<Duration>.broadcast();
     processing = StreamController<ProcessingState>.broadcast();
     volumes = <double>[];
+    playingNow = StreamController<bool>.broadcast();
+    loopPlayers = <_MockPlayer>[];
 
     when(
       () => player.playbackEventStream,
@@ -41,6 +47,7 @@ void main() {
     when(
       () => player.processingStateStream,
     ).thenAnswer((_) => processing.stream);
+    when(() => player.playingStream).thenAnswer((_) => playingNow.stream);
     when(
       () => player.createPositionStream(
         steps: any(named: 'steps'),
@@ -70,10 +77,22 @@ void main() {
       player: player,
       roomInTitle: false,
       chimePlayer: () => chime,
+      loopPlayer: () {
+        final _MockPlayer loop = _MockPlayer();
+        when(() => loop.setAudioSource(any())).thenAnswer((_) async => null);
+        when(() => loop.setLoopMode(any())).thenAnswer((_) async {});
+        when(() => loop.setVolume(any())).thenAnswer((_) async {});
+        when(loop.play).thenAnswer((_) async {});
+        when(loop.pause).thenAnswer((_) async {});
+        when(loop.dispose).thenAnswer((_) async {});
+        loopPlayers.add(loop);
+        return loop;
+      },
     );
     addTearDown(() async {
       await position.close();
       await processing.close();
+      await playingNow.close();
     });
   });
 
@@ -169,5 +188,64 @@ void main() {
     verify(() => chime.setAsset(AudioPlayerServiceImpl.chimeAsset)).called(1);
     verify(chime.play).called(1);
     verifyNever(() => player.setAsset(any()));
+  });
+
+  group('the room\'s sounds (#136)', () {
+    const AmbientLoop rain = AmbientLoop(
+      id: 'rain',
+      url: 'https://example.com/rain.m4a',
+      level: 0.5,
+    );
+
+    test('each loops on a player of its own, and plays with the music', () {
+      fakeAsync((FakeAsync async) {
+        service.setAmbience(<AmbientLoop>[rain]);
+        async.flushMicrotasks();
+
+        final _MockPlayer loop = loopPlayers.single;
+        verify(() => loop.setLoopMode(LoopMode.one)).called(1);
+        verify(loop.play).called(1);
+
+        playingNow.add(false);
+        async.flushMicrotasks();
+        verify(loop.pause).called(1);
+      });
+    });
+
+    test('it fades in, and the focus break leaves it alone', () {
+      fakeAsync((FakeAsync async) {
+        service.setAmbience(<AmbientLoop>[rain]);
+        async.elapse(AudioPlayerServiceImpl.ambienceFade);
+        final _MockPlayer loop = loopPlayers.single;
+        expect(
+          verify(() => loop.setVolume(captureAny())).captured.last,
+          closeTo(0.5, 0.001),
+        );
+
+        service.setVolumeLayer(VolumeLayer.focusBreak, 0.4);
+        service.setVolumeLayer(VolumeLayer.sleepTimer, 0.5);
+        async.flushMicrotasks();
+
+        // The sleep timer turns the rain down too; the break does not.
+        expect(
+          verify(() => loop.setVolume(captureAny())).captured.last,
+          closeTo(0.25, 0.001),
+        );
+      });
+    });
+
+    test('a sound the new room does not have fades out and is let go', () {
+      fakeAsync((FakeAsync async) {
+        service.setAmbience(<AmbientLoop>[rain]);
+        async.elapse(AudioPlayerServiceImpl.ambienceFade);
+
+        service.setAmbience(const <AmbientLoop>[]);
+        async.elapse(AudioPlayerServiceImpl.ambienceFade);
+
+        final _MockPlayer loop = loopPlayers.single;
+        expect(verify(() => loop.setVolume(captureAny())).captured.last, 0);
+        verify(loop.dispose).called(1);
+      });
+    });
   });
 }
