@@ -102,32 +102,29 @@ class RoomPage extends ConsumerWidget {
           ),
           MenuGroup(
             children: <Widget>[
+              // Who is listening and what they have, in one card. Pro is a
+              // pill in it, only where Pro can be bought: a build without
+              // RevenueCat's keys has nothing to offer here (#16).
               ProfileCard(
                 account: account,
                 onTap: () => unawaited(showAccountSheet(context)),
+                pro: !sellsPro
+                    ? null
+                    : pro.isPro
+                    ? switch (pro.plan) {
+                        PlanPeriod.yearly => 'Pro · yearly',
+                        PlanPeriod.monthly => 'Pro · monthly',
+                        null => 'Pro',
+                      }
+                    : 'Get Pro',
+                isPro: pro.isPro,
+                onPro: pro.isPro
+                    ? (manage == null
+                          ? null
+                          : () => unawaited(AppLinks.open(Uri.parse(manage))))
+                    : () =>
+                          unawaited(showPaywallSheet(context, source: 'menu')),
               ),
-              // Right under who is listening, as what they have.
-              // Only where Pro can be bought; a build without
-              // RevenueCat's keys has nothing to offer here (#16).
-              if (sellsPro)
-                MenuRow(
-                  glyph: pro.isPro ? AppGlyph.check : AppGlyph.lock,
-                  title: 'PureLofi Pro',
-                  subtitle: pro.isPro
-                      ? switch (pro.plan) {
-                          PlanPeriod.yearly => 'Pro · yearly',
-                          PlanPeriod.monthly => 'Pro · monthly',
-                          null => 'Pro',
-                        }
-                      : 'Unlock every room',
-                  onTap: pro.isPro
-                      ? (manage == null
-                            ? null
-                            : () => unawaited(AppLinks.open(Uri.parse(manage))))
-                      : () => unawaited(
-                          showPaywallSheet(context, source: 'menu'),
-                        ),
-                ),
             ],
           ),
           heading('Room'),
