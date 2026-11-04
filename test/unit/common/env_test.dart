@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +31,42 @@ void main() {
       expect(
         Env.bannedIn(<String, String>{'SUPABASE_DB_PASSWORD': 'hunter2'}),
         <String>['SUPABASE_DB_PASSWORD'],
+      );
+    });
+
+    test('catches the Vercel token', () {
+      expect(Env.bannedIn(<String, String>{'VERCEL_TOKEN': 'token'}), <String>[
+        'VERCEL_TOKEN',
+      ]);
+    });
+
+    test('catches a secret by its shape, whatever it is called', () {
+      expect(
+        Env.bannedIn(<String, String>{
+          'SUPABASE_URL': 'https://example.supabase.co',
+          // The service role key pasted where the anon key belongs.
+          'SUPABASE_ANON_KEY': _jwt(<String, Object>{'role': 'service_role'}),
+          'REVENUECAT_APPLE_KEY': 'sk_abcdef',
+          'POSTHOG_API_KEY': 'sb_secret_abcdef',
+        }),
+        <String>[
+          'SUPABASE_ANON_KEY',
+          'REVENUECAT_APPLE_KEY',
+          'POSTHOG_API_KEY',
+        ],
+      );
+    });
+
+    test('the public keys are not mistaken for secrets', () {
+      expect(
+        Env.bannedIn(<String, String>{
+          'SUPABASE_ANON_KEY': _jwt(<String, Object>{'role': 'anon'}),
+          'REVENUECAT_APPLE_KEY': 'appl_abcdef',
+          'REVENUECAT_GOOGLE_KEY': 'goog_abcdef',
+          'POSTHOG_API_KEY': 'phc_abcdef',
+          'GOOGLE_WEB_CLIENT_ID': 'x.apps.googleusercontent.com',
+        }),
+        isEmpty,
       );
     });
 
@@ -69,6 +106,14 @@ void main() {
     });
   });
 }
+
+/// A token with [claims] in it. The signature is never checked here: the
+/// shape is what gives a secret away.
+String _jwt(Map<String, Object> claims) => <String>[
+  base64Url.encode(utf8.encode('{"alg":"HS256","typ":"JWT"}')),
+  base64Url.encode(utf8.encode(jsonEncode(claims))).replaceAll('=', ''),
+  'signature',
+].join('.');
 
 Map<String, String> _readEnvFile(String path) {
   final File file = File(path);
