@@ -26,7 +26,7 @@ class ArtistLinkButton extends StatelessWidget {
 
     return IconButton(
       tooltip: label,
-      onPressed: () => unawaited(AppLinks.open(Uri.parse(url))),
+      onPressed: () => unawaited(AppLinks.openUrl(url)),
       padding: EdgeInsets.all(context.spaceS),
       icon: mark == null
           ? AppIcon(AppGlyph.globe, size: size, color: cs.onSurface)
