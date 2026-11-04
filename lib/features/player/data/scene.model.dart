@@ -38,6 +38,7 @@ extension SceneModelX on SceneModel {
     videoUrl: videoUrl,
     sortOrder: sortOrder,
     thumbnailUrl: thumbnailUrl,
+    createdAt: createdAt,
     canvasWidth: canvasWidth,
     canvasHeight: canvasHeight,
     // Back to front, whatever order the API happened to return them in.

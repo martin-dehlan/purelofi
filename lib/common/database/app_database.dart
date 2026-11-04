@@ -6,6 +6,7 @@ import 'daos/cached_file.dao.dart';
 import 'daos/local_track.dao.dart';
 import 'daos/play_event.dao.dart';
 import 'daos/scene.dao.dart';
+import 'daos/seen_item.dao.dart';
 import 'daos/track.dao.dart';
 import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
@@ -13,6 +14,7 @@ import 'tables/local_track.table.dart';
 import 'tables/play_event.table.dart';
 import 'tables/scene.table.dart';
 import 'tables/scene_layer.table.dart';
+import 'tables/seen_item.table.dart';
 import 'tables/track.table.dart';
 
 part 'app_database.g.dart';
@@ -33,6 +35,7 @@ part 'app_database.g.dart';
     LocalTrackTable,
     ArtistTable,
     PlayEventTable,
+    SeenItemTable,
   ],
   daos: <Type>[
     TrackDao,
@@ -41,6 +44,7 @@ part 'app_database.g.dart';
     LocalTrackDao,
     ArtistDao,
     PlayEventDao,
+    SeenItemDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -50,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -92,6 +96,9 @@ class AppDatabase extends _$AppDatabase {
       // 7: the listening log (#142). Rows no fetch can bring back, so the
       // table is created and never rebuilt.
       if (from < 7) await m.createTable(playEventTable);
+
+      // 8: what the listener has already met, for the "new" marks (#148).
+      if (from < 8) await m.createTable(seenItemTable);
     },
   );
 

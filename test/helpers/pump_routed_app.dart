@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/presentation/widgets/library_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
@@ -17,6 +18,7 @@ import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
+import 'fake_new_content.repository.dart';
 import 'fake_play_history.repository.dart';
 import 'fake_playback_preferences.dart';
 import 'fake_pro.repository.dart';
@@ -69,12 +71,16 @@ List<Override> _fakeLibrary(
   FakeLibraryRepository? library,
   FakeTrackPicker? picker, [
   FakePlayHistoryRepository? playHistory,
+  FakeNewContentRepository? newContent,
 ]) {
   final FakeLibraryRepository fake = library ?? FakeLibraryRepository();
   addTearDown(fake.dispose);
   final FakePlayHistoryRepository history =
       playHistory ?? FakePlayHistoryRepository();
   addTearDown(history.dispose);
+  final FakeNewContentRepository seen =
+      newContent ?? FakeNewContentRepository();
+  addTearDown(seen.dispose);
 
   return <Override>[
     libraryRepositoryProvider.overrideWithValue(fake),
@@ -83,6 +89,7 @@ List<Override> _fakeLibrary(
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
     displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
     playHistoryRepositoryProvider.overrideWithValue(history),
+    newContentRepositoryProvider.overrideWithValue(seen),
   ];
 }
 
@@ -114,6 +121,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakePlayHistoryRepository? playHistory,
+    FakeNewContentRepository? newContent,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -123,7 +131,7 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker, playHistory),
+          ..._fakeLibrary(library, picker, playHistory, newContent),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -151,6 +159,7 @@ extension PumpRouted on WidgetTester {
     FakeLibraryRepository? library,
     FakeTrackPicker? picker,
     FakePlayHistoryRepository? playHistory,
+    FakeNewContentRepository? newContent,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -160,7 +169,7 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker, playHistory),
+          ..._fakeLibrary(library, picker, playHistory, newContent),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -210,7 +219,8 @@ Future<void> tapMenuEntry(WidgetTester tester, String label) async {
 
 /// Opens the library from the right of the transport.
 Future<void> openLibrary(WidgetTester tester) async {
-  await tester.tap(find.bySemanticsLabel('Library'));
+  // By type: its label also says when there are new tracks (#148).
+  await tester.tap(find.byType(LibraryButton));
   await tester.pumpAndSettle();
 }
 

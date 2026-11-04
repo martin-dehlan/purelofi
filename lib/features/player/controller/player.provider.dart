@@ -10,7 +10,9 @@ import '../../../common/database/daos/artist.dao.dart';
 import '../../../common/database/daos/cached_file.dao.dart';
 import '../../../common/database/daos/play_event.dao.dart';
 import '../../../common/database/daos/scene.dao.dart';
+import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
+import '../data/new_content.repository.impl.dart';
 import '../data/play_history.repository.impl.dart';
 import '../data/content.api.dart';
 import '../data/content.repository.impl.dart';
@@ -20,6 +22,7 @@ import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
+import '../domain/new_content.dart';
 import '../domain/play_history.repository.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/content.repository.dart';
@@ -118,6 +121,12 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// What the listener has met, for the "new" marks (#148). Overridden in
+/// widget tests with one in memory.
+@Riverpod(keepAlive: true)
+NewContentRepository newContentRepository(Ref ref) =>
+    NewContentRepositoryImpl(dao: SeenItemDao(ref.watch(appDatabaseProvider)));
 
 /// Where shuffle and repeat are remembered. Overridden in tests with one in
 /// memory.

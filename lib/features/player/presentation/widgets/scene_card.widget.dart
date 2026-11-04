@@ -7,8 +7,10 @@ import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
+import '../../controller/new_content.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../domain/scene.entity.dart';
+import 'new_dot.widget.dart';
 import 'scene_thumbnail.widget.dart';
 
 /// One room to step into: its cover with its name under it.
@@ -35,6 +37,7 @@ class SceneCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool locked = ref.watch(lockedScenesProvider).contains(scene.id);
+    final bool isNew = ref.watch(newScenesProvider).contains(scene.id);
     final double frame = size * 0.035;
     final BorderRadius radius = SceneThumbnail.radiusFor(size);
 
@@ -50,7 +53,11 @@ class SceneCard extends ConsumerWidget {
     return Semantics(
       button: true,
       selected: isActive,
-      label: locked ? '${scene.title}, Pro' : scene.title,
+      label: <String>[
+        scene.title,
+        if (locked) 'Pro',
+        if (isNew) 'new',
+      ].join(', '),
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -81,6 +88,13 @@ class SceneCard extends ConsumerWidget {
                         size: size - frame * 4,
                       ),
                     ),
+                    // Added since the listener last looked (#148).
+                    if (isNew)
+                      Positioned(
+                        right: context.spaceXs,
+                        top: context.spaceXs,
+                        child: const NewDot(),
+                      ),
                     if (locked)
                       Positioned(
                         right: context.spaceXs,
