@@ -515,6 +515,9 @@ Future<String> _upsertScene(
       'canvas_height': manifest.canvasHeight,
       'is_active': true,
       'thumbnail_url': ?coverUrl,
+      // The room's mood (#143), looked up by its slug.
+      if (manifest.mood case final String mood)
+        'mood_id': await _moodId(env, mood),
     }),
   );
 
@@ -525,6 +528,27 @@ Future<String> _upsertScene(
   }
 
   final List<dynamic> rows = jsonDecode(response.body) as List<dynamic>;
+  return (rows.first as Map<String, dynamic>)['id'] as String;
+}
+
+/// The id of the mood [slug] names. Fails loudly: a room pointing at a mood
+/// that is not there would play everything and nobody would notice.
+Future<String> _moodId(_Env env, String slug) async {
+  final http.Response response = await http.get(
+    Uri.parse(
+      '${env.url}/rest/v1/moods?slug=eq.${Uri.encodeQueryComponent(slug)}'
+      '&select=id',
+    ),
+    headers: env.headers,
+  );
+  final List<dynamic> rows = response.statusCode < 300
+      ? jsonDecode(response.body) as List<dynamic>
+      : const <dynamic>[];
+  if (rows.isEmpty) {
+    throw _UploadException(
+      'scene.json names mood "$slug", which does not exist',
+    );
+  }
   return (rows.first as Map<String, dynamic>)['id'] as String;
 }
 

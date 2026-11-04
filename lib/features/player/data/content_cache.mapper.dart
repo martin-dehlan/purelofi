@@ -84,6 +84,7 @@ extension CachedSceneX on CachedScene {
       thumbnailUrl: scene.thumbnailUrl,
       createdAt: scene.createdAt,
       ambients: AmbientSoundModel.fromCache(_decode(scene.ambients)),
+      moodId: scene.moodId,
       canvasWidth: scene.canvasWidth,
       canvasHeight: scene.canvasHeight,
       layers: layers
@@ -133,6 +134,7 @@ extension SceneEntityX on SceneEntity {
         ambients: Value<String>(
           jsonEncode(AmbientSoundModel.toCache(ambients)),
         ),
+        moodId: Value<String?>(moodId),
       );
 
   List<SceneLayerTableCompanion> toLayerCompanions({required DateTime now}) =>

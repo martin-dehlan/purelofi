@@ -23,6 +23,9 @@ class SceneTable extends Table {
   /// whole with its scene, so a table of its own would buy nothing.
   TextColumn get ambients => text().withDefault(const Constant('[]'))();
 
+  /// The mood the room plays (#143).
+  TextColumn get moodId => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(true))();

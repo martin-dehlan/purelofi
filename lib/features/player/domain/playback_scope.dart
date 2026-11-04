@@ -13,5 +13,9 @@ abstract class PlaybackScope with _$PlaybackScope {
     required ScopeKind kind,
     required String id,
     required String title,
+
+    /// Chosen by the room the listener is in (#143), not by the listener.
+    /// A scope they picked themselves is never replaced by a room's.
+    @Default(false) bool fromRoom,
   }) = _PlaybackScope;
 }

@@ -62,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +125,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 11) {
         await m.createTable(moodTable);
         await m.createTable(playlistTable);
+      }
+
+      // 12: the mood each room plays (#143).
+      if (from < 12 && !await _hasColumn('scenes', 'mood_id')) {
+        await m.addColumn(sceneTable, sceneTable.moodId);
       }
     },
   );

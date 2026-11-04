@@ -11,4 +11,9 @@ abstract class PlaybackPreferences {
   Future<bool> loadSoftTransitions();
 
   Future<void> saveSoftTransitions(bool enabled);
+
+  /// Whether the stream plays the room's mood (#143). Off unless turned on.
+  Future<bool> loadFollowRoom();
+
+  Future<void> saveFollowRoom(bool enabled);
 }

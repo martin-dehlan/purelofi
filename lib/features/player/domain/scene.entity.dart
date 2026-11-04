@@ -30,6 +30,9 @@ abstract class SceneEntity with _$SceneEntity {
 
     /// The sounds the room brings (#136), in the order they are listed.
     @Default(<AmbientSoundEntity>[]) List<AmbientSoundEntity> ambients,
+
+    /// The mood the room plays when the music follows the room (#143).
+    String? moodId,
   }) = _SceneEntity;
 
   const SceneEntity._();
