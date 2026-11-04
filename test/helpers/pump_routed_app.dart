@@ -209,7 +209,7 @@ Future<void> openFavorites(WidgetTester tester) async {
     await tester.tap(all);
     await tester.pumpAndSettle();
   }
-  await tester.tap(find.widgetWithText(ListTile, 'Favorites'));
+  await tester.tap(find.widgetWithText(InkWell, 'Favorites'));
   await tester.pumpAndSettle();
 }
 

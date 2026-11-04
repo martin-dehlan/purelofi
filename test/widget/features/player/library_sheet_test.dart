@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
@@ -126,6 +127,27 @@ void main() {
     await openFavorites(tester);
 
     expect(find.textContaining('Nothing marked yet'), findsOneWidget);
+  });
+
+  testWidgets('the overview tiles are square, not squeezed', (tester) async {
+    tester.view.physicalSize = const Size(1179, 2556);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpRoutedApp(overrides: overrides());
+    await tester.pumpAndSettle();
+    await openLibrary(tester);
+
+    final Size tile = tester.getSize(
+      find
+          .ancestor(
+            of: find.byWidgetPredicate(
+              (Widget w) => w is AppIcon && w.glyph == AppGlyph.heart,
+            ),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(tile.width, tile.height);
   });
 
   testWidgets('the track playing sits at the foot, with pause', (tester) async {

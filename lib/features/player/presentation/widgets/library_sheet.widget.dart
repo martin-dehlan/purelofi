@@ -459,22 +459,43 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      horizontalTitleGap: context.spaceM,
-      minVerticalPadding: context.spaceS,
-      leading: tile,
-      title: Text(
-        title,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: context.fontM, fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        subtitle,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
-      ),
+    // Not a ListTile: that holds its leading widget to 56 px high, and
+    // the tile is wider than that on most phones, so it came out squashed.
+    return InkWell(
       onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: context.spaceS),
+        child: Row(
+          children: <Widget>[
+            tile,
+            SizedBox(width: context.spaceM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: context.fontM,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: context.fontS,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
