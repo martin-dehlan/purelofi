@@ -11,7 +11,8 @@ abstract class MixPreferences {
 class MixSettings {
   const MixSettings({
     this.musicLevel = 1,
-    this.ambienceLevel = 1,
+    // Under the music from the start: the room is there, the music leads.
+    this.ambienceLevel = 0.5,
     this.ambienceOn = true,
     this.soundLevels = const <String, double>{},
   });
