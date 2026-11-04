@@ -6,6 +6,7 @@ import 'package:purelofi/features/player/controller/player.controller.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/controller/sleep_timer.controller.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/features/player/domain/volume_layer.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_favorites.repository.dart';
@@ -100,6 +101,79 @@ void main() {
 
       async.elapse(const Duration(seconds: 1));
       expect(fakeAudio.pauseCalls, before + 1);
+    });
+  });
+
+  group('fading out (#138)', () {
+    test('the music goes quiet over the last 30 seconds, not at once', () {
+      fakeAsync((FakeAsync async) {
+        final ProviderContainer container = playing(async);
+        container
+            .read(sleepTimerControllerProvider.notifier)
+            .start(const Duration(minutes: 15));
+
+        async.elapse(const Duration(minutes: 14, seconds: 29));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), 1);
+
+        // Halfway through the fade, about half as loud.
+        async.elapse(const Duration(seconds: 16));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), closeTo(0.5, 0.05));
+
+        // Every step down, never up.
+        final List<double> history =
+            fakeAudio.layerHistory[VolumeLayer.sleepTimer]!;
+        for (int i = 2; i < history.length; i++) {
+          expect(history[i], lessThanOrEqualTo(history[i - 1]));
+        }
+      });
+    });
+
+    test('it pauses at silence, and the next play is at full volume', () {
+      fakeAsync((FakeAsync async) {
+        final ProviderContainer container = playing(async);
+        final int before = fakeAudio.pauseCalls;
+        container
+            .read(sleepTimerControllerProvider.notifier)
+            .start(const Duration(minutes: 15));
+
+        async.elapse(const Duration(minutes: 15));
+
+        expect(fakeAudio.pauseCalls, before + 1);
+        expect(fakeAudio.layerHistory[VolumeLayer.sleepTimer], contains(0.0));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), 1);
+      });
+    });
+
+    test('turned off mid-fade, the music is back at once', () {
+      fakeAsync((FakeAsync async) {
+        final ProviderContainer container = playing(async);
+        final int before = fakeAudio.pauseCalls;
+        final SleepTimerController timer = container.read(
+          sleepTimerControllerProvider.notifier,
+        )..start(const Duration(minutes: 15));
+
+        async.elapse(const Duration(minutes: 14, seconds: 50));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), lessThan(1));
+
+        timer.cancel();
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), 1);
+
+        async.elapse(const Duration(minutes: 5));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), 1);
+        expect(fakeAudio.pauseCalls, before);
+      });
+    });
+
+    test('a timer shorter than the fade fades over all of it', () {
+      fakeAsync((FakeAsync async) {
+        final ProviderContainer container = playing(async);
+        container
+            .read(sleepTimerControllerProvider.notifier)
+            .start(const Duration(seconds: 10));
+
+        async.elapse(const Duration(seconds: 5));
+        expect(fakeAudio.layer(VolumeLayer.sleepTimer), closeTo(0.5, 0.05));
+      });
     });
   });
 }

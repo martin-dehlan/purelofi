@@ -20,6 +20,7 @@ import 'playback_mode.controller.dart';
 import 'playback_source.controller.dart';
 import 'player.provider.dart';
 import 'scene.controller.dart';
+import 'soft_transitions.controller.dart';
 import 'track.controller.dart';
 
 export '../domain/up_next.dart' show favoriteWeight, pickWeighted;
@@ -87,6 +88,10 @@ class PlayerController extends _$PlayerController {
       if (shuffle != null && shuffle != value.shuffles) unawaited(replan());
       shuffle = value.shuffles;
     }, fireImmediately: true);
+
+    // Soft transitions (#139) are the audio service's to play; the setting
+    // only has to reach it. Listening loads it as soon as the player starts.
+    ref.listen<AsyncValue<bool>>(softTransitionsControllerProvider, (_, _) {});
 
     // The lock screen shows the room, and follows it when the listener
     // switches scenes.

@@ -10,7 +10,9 @@ import '../domain/audio_interruption.dart';
 import '../domain/audio_interruption.source.dart';
 import '../domain/audio_player.service.dart';
 import '../domain/playback_mode.dart';
+import '../domain/soft_transition.dart';
 import '../domain/track.entity.dart';
+import '../domain/volume_layer.dart';
 
 /// `just_audio` playback wrapped in an `audio_service` handler.
 ///
@@ -24,9 +26,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
     MediaCache? cache,
     AudioInterruptionSource? interruptions,
     bool? roomInTitle,
+    AudioPlayer Function()? chimePlayer,
   }) : _player = player ?? AudioPlayer(),
        _cache = cache,
-       _roomInTitle = roomInTitle ?? Platform.isAndroid {
+       _roomInTitle = roomInTitle ?? Platform.isAndroid,
+       _chimePlayer = chimePlayer ?? _defaultChimePlayer {
     if (interruptions != null) _listenForInterruptions(interruptions);
 
     _subscriptions.addAll(<StreamSubscription<Object?>>[
@@ -36,11 +40,35 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       ),
       _player.processingStateStream.listen((ProcessingState processingState) {
         if (processingState == ProcessingState.completed) {
+          // The track ran out on its own: the next one may come in softly.
+          _fadeInNext = true;
           _nextRequests.add(null);
         }
       }),
+      // Often enough for a fade to sound smooth, not for every frame.
+      _player
+          .createPositionStream(
+            minPeriod: const Duration(milliseconds: 50),
+            maxPeriod: const Duration(milliseconds: 100),
+          )
+          .listen(_followPosition),
     ]);
   }
+
+  /// The chime's own player, beside the music's: it must neither stop the
+  /// track nor take the audio session from it.
+  static AudioPlayer _defaultChimePlayer() => AudioPlayer(
+    handleInterruptions: false,
+    handleAudioSessionActivation: false,
+  );
+
+  static const String chimeAsset = 'assets/sounds/chime.wav';
+
+  /// How loud the chime is over the music.
+  static const double chimeVolume = 0.6;
+
+  final AudioPlayer Function() _chimePlayer;
+  AudioPlayer? _chime;
 
   final AudioPlayer _player;
   final MediaCache? _cache;
@@ -72,6 +100,27 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
 
     return _roomInTitle && room != null ? '$title · $room' : title;
   }
+
+  /// The levels that make up the volume: ducking for another app, the
+  /// soft transition between tracks, and the app's own layers. The player
+  /// is set to their product.
+  double _duck = 1;
+  double _transition = 1;
+  final Map<VolumeLayer, double> _layers = <VolumeLayer, double>{};
+  double? _applied;
+
+  bool _softTransitions = true;
+
+  /// Whether the next track to load arrived because the last one ran out.
+  bool _fadeInNext = false;
+
+  /// Whether the track playing came in that way, and has not finished
+  /// coming in.
+  bool _fadingIn = false;
+
+  /// While a track loads, the playhead still reports the last one's end,
+  /// which says nothing about how loud the new one should be.
+  bool _loading = false;
 
   PlaybackMode _mode = PlaybackMode.shuffle;
   final StreamController<void> _nextRequests =
@@ -124,6 +173,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
   @override
   Future<void> playTrack(TrackEntity track) async {
     _trackTitle = track.title;
+    // Only a track that followed one running out fades in; one the listener
+    // picked or skipped to is there at full volume at once.
+    _fadingIn = _softTransitions && _fadeInNext;
+    _fadeInNext = false;
+    _transition = _fadingIn ? 0 : 1;
+    _applyVolume();
+
     mediaItem.add(
       MediaItem(
         id: track.id,
@@ -142,8 +198,13 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       ),
     );
 
+    _loading = true;
     await _guard(() async {
-      await _player.setAudioSource(await _sourceFor(track.audioUrl));
+      try {
+        await _player.setAudioSource(await _sourceFor(track.audioUrl));
+      } finally {
+        _loading = false;
+      }
       await _player.play();
     });
   }
@@ -205,9 +266,11 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
           case InterruptionAction.none:
             break;
           case InterruptionAction.duck:
-            unawaited(_guard(() => _player.setVolume(duckedVolume)));
+            _duck = duckedVolume;
+            _applyVolume();
           case InterruptionAction.restoreVolume:
-            unawaited(_guard(() => _player.setVolume(1)));
+            _duck = 1;
+            _applyVolume();
           case InterruptionAction.pause:
             _pausedByInterruption = true;
             unawaited(_guard(_player.pause));
@@ -217,6 +280,60 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
         }
       }),
     ]);
+  }
+
+  @override
+  Future<void> setVolumeLayer(VolumeLayer layer, double level) async {
+    _layers[layer] = level.clamp(0, 1).toDouble();
+    _applyVolume();
+  }
+
+  @override
+  Future<void> setSoftTransitions(bool enabled) async {
+    _softTransitions = enabled;
+    if (!enabled) {
+      _fadingIn = false;
+      _transition = 1;
+      _applyVolume();
+    }
+  }
+
+  @override
+  Future<void> playChime() => _guard(() async {
+    final AudioPlayer chime = _chime ??= _chimePlayer();
+    await chime.setAsset(chimeAsset);
+    await chime.setVolume(chimeVolume);
+    await chime.play();
+  });
+
+  /// The soft transition, following the playhead (#139).
+  void _followPosition(Duration position) {
+    if (_loading) return;
+    if (_fadingIn && position >= softFadeIn) _fadingIn = false;
+
+    final double level = softTransitionLevel(
+      position: position,
+      duration: _player.duration,
+      enabled: _softTransitions,
+      loops: _mode.loops,
+      fadesIn: _fadingIn,
+    );
+    if (level == _transition) return;
+
+    _transition = level;
+    _applyVolume();
+  }
+
+  /// Sets the player to the product of every level, when it has changed.
+  void _applyVolume() {
+    double volume = _duck * _transition;
+    for (final double level in _layers.values) {
+      volume *= level;
+    }
+    if (volume == _applied) return;
+
+    _applied = volume;
+    unawaited(_guard(() => _player.setVolume(volume)));
   }
 
   @override
@@ -295,6 +412,7 @@ class AudioPlayerServiceImpl extends BaseAudioHandler
       await subscription.cancel();
     }
     await _player.dispose();
+    await _chime?.dispose();
     await _nextRequests.close();
     await _modeRequests.close();
     await _errors.close();

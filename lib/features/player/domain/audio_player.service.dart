@@ -1,6 +1,7 @@
 import '../../../common/errors/app_error.dart';
 import 'playback_mode.dart';
 import 'track.entity.dart';
+import 'volume_layer.dart';
 
 /// Plays the audio stream. The implementation wraps `just_audio` and
 /// `audio_service`; the controller only ever sees this interface, so tests
@@ -51,4 +52,15 @@ abstract class AudioPlayerService {
 
   /// Jumps to [position] in the current track.
   Future<void> seek(Duration position);
+
+  /// Sets one of the reasons the music is turned down, 1 being not at all
+  /// and 0 silence. The layers multiply; see [VolumeLayer].
+  Future<void> setVolumeLayer(VolumeLayer layer, double level);
+
+  /// Whether a track fades out at its end and the next one fades in (#139).
+  Future<void> setSoftTransitions(bool enabled);
+
+  /// A soft chime over the music: the focus timer moving to its next half
+  /// (#137).
+  Future<void> playChime();
 }
