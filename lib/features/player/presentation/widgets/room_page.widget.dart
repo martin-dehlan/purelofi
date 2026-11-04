@@ -24,6 +24,7 @@ import 'settings_section.widget.dart';
 import 'focus_timer_chips.widget.dart';
 import 'sleep_timer_chips.widget.dart';
 import 'sound_mix.widget.dart';
+import 'week_line.widget.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
@@ -139,6 +140,8 @@ class RoomPage extends ConsumerWidget {
           heading('Room'),
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
+          // Only once something was heard this week (#151).
+          const WeekLine(),
           heading('Sound'),
           const MenuGroup(children: <Widget>[SoundMix()]),
           heading('Focus'),
