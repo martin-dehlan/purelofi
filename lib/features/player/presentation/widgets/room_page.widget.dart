@@ -21,7 +21,7 @@ import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../../pro/presentation/widgets/pro_pill.widget.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
-import 'sleep_timer_chips.widget.dart';
+import 'sleep_timer_slider.widget.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
 /// room they sit in, when the music stops, how the app behaves, and a way
@@ -136,7 +136,7 @@ class RoomPage extends ConsumerWidget {
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
           heading('Sleep timer'),
-          const MenuGroup(children: <Widget>[SleepTimerChips()]),
+          const MenuGroup(children: <Widget>[SleepTimerSlider()]),
           heading('Settings'),
           const SettingsSection(),
           SizedBox(height: context.spaceL),

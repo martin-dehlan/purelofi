@@ -11,7 +11,7 @@ import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget
 import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_section.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/sleep_timer_chips.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/sleep_timer_slider.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_media_cache.dart';
@@ -54,8 +54,26 @@ void main() {
   Finder onPage(Finder finder) =>
       find.descendant(of: find.byType(RoomPage), matching: finder);
 
-  ChoiceChip chip(WidgetTester tester, String label) =>
-      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+  Future<void> slideTo(WidgetTester tester, double fraction) async {
+    final Finder slider = onPage(find.byType(Slider));
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final Rect box = tester.getRect(slider);
+    // The track sits inset from the box by the thumb's reach.
+    final double inset = box.height / 2;
+    final Offset from = Offset(box.left + inset, box.center.dy);
+    final Offset to = Offset(
+      box.left + inset + (box.width - 2 * inset) * fraction,
+      box.center.dy,
+    );
+    final TestGesture gesture = await tester.startGesture(from);
+    await gesture.moveTo(to);
+    await gesture.up();
+    await tester.pumpAndSettle();
+  }
+
+  double sliderValue(WidgetTester tester) =>
+      tester.widget<Slider>(onPage(find.byType(Slider))).value;
 
   testWidgets('one page with the room, the timer and the settings open', (
     tester,
@@ -63,7 +81,7 @@ void main() {
     await start(tester);
 
     expect(onPage(find.byType(SceneStrip)), findsOneWidget);
-    expect(onPage(find.byType(SleepTimerChips)), findsOneWidget);
+    expect(onPage(find.byType(SleepTimerSlider)), findsOneWidget);
     expect(onPage(find.byType(SettingsSection)), findsOneWidget);
     // Nothing to open first, and no way back that is a page of its own.
     expect(find.byTooltip('Back'), findsNothing);
@@ -93,27 +111,32 @@ void main() {
     await start(tester);
     final double page = tester.getSize(find.byType(RoomPage)).height;
 
-    await tapMenuEntry(tester, '30 min');
+    await slideTo(tester, 0.25);
 
     expect(tester.getSize(find.byType(RoomPage)).height, page);
   });
 
   group('sleep timer', () {
-    testWidgets('is off until set, then says when it stops', (tester) async {
+    testWidgets('is off until dragged, then says when it stops', (
+      tester,
+    ) async {
       await start(tester);
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
+      expect(onPage(find.text('Off')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsNothing);
 
-      await tapMenuEntry(tester, '30 min');
+      // A quarter of two hours.
+      await slideTo(tester, 0.25);
 
-      expect(chip(tester, 'Off').selected, isFalse);
+      expect(onPage(find.text('30 min')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsOneWidget);
       // The page stays open.
       expect(find.byType(RoomPage), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Off');
+      // Past the left end, so the thumb lands on off for sure.
+      await slideTo(tester, -0.2);
 
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
       expect(find.textContaining('Stops at'), findsNothing);
     });
 
@@ -124,7 +147,16 @@ void main() {
 
       await tapMenuEntry(tester, 'End of track');
 
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
+      expect(find.textContaining('Stops at'), findsNothing);
+    });
+
+    test('lengths read the way people say them', () {
+      expect(SleepTimerSlider.lengthLabel(0), 'Off');
+      expect(SleepTimerSlider.lengthLabel(45), '45 min');
+      expect(SleepTimerSlider.lengthLabel(60), '1 h');
+      expect(SleepTimerSlider.lengthLabel(90), '1 h 30');
+      expect(SleepTimerSlider.lengthLabel(65), '1 h 05');
     });
   });
 
