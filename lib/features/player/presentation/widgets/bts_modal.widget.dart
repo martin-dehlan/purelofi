@@ -9,6 +9,7 @@ import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../domain/track.entity.dart';
 import 'bts_video.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The "this is real, not AI" proof: phone footage of the track being played.
 class BtsModal extends ConsumerWidget {
@@ -37,7 +38,7 @@ class BtsModal extends ConsumerWidget {
             ),
             SizedBox(height: context.spaceS),
             Text(
-              'Played on a real guitar, recorded on a phone.',
+              context.l10n.btsProof,
               style: TextStyle(
                 color: cs.onSurfaceVariant,
                 fontSize: context.fontS,
@@ -46,7 +47,7 @@ class BtsModal extends ConsumerWidget {
             SizedBox(height: context.spaceL),
             if (videoUrl == null)
               Text(
-                'No behind-the-scenes clip for this track yet.',
+                context.l10n.noBtsClip,
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
                   fontSize: context.fontM,

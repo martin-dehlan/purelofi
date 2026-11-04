@@ -7,6 +7,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../controller/collections.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/playback_scope.dart';
+import '../../../../l10n/l10n.dart';
 
 /// While a mood or playlist plays (#141), one quiet line on the player that
 /// says which, with the way back to everything. Nothing otherwise.
@@ -22,7 +23,7 @@ class ScopeLine extends ConsumerWidget {
 
     return Semantics(
       button: true,
-      label: 'Playing ${scope.title}. Play everything',
+      label: context.l10n.playingScope(scope.title),
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -38,7 +39,7 @@ class ScopeLine extends ConsumerWidget {
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 TextSpan(
-                  text: 'Play everything',
+                  text: context.l10n.playEverything,
                   style: TextStyle(color: cs.primary),
                 ),
               ],

@@ -33,7 +33,7 @@ class _AccountActionsState extends ConsumerState<AccountActions> {
     try {
       await action();
     } on AppError catch (error) {
-      if (mounted) setState(() => _error = error.userMessage);
+      if (mounted) setState(() => _error = error.userMessageIn(context.l10n));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

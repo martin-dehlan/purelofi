@@ -37,6 +37,8 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
   bool _sharing = false;
 
   Future<void> _share(double width) async {
+    // Read before any await: the context may be gone after one.
+    final String subject = context.l10n.myPurelofiWeek;
     setState(() => _sharing = true);
     try {
       final RenderRepaintBoundary boundary =
@@ -52,10 +54,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
       final File file = File('${temp.path}/purelofi-week.png');
       await file.writeAsBytes(png.buffer.asUint8List(), flush: true);
       await SharePlus.instance.share(
-        ShareParams(
-          files: <XFile>[XFile(file.path)],
-          subject: 'My PureLofi week',
-        ),
+        ShareParams(files: <XFile>[XFile(file.path)], subject: subject),
       );
     } on Object {
       // A share that did not happen is nothing to report.
@@ -127,14 +126,16 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
             SizedBox(height: context.spaceM),
             _WeekBars(perDay: stats.perDay),
             SizedBox(height: context.spaceM),
-            fact('Room', room?.title),
-            fact('Artist', stats.topArtist),
-            fact('Track', topTrack),
+            fact(context.l10n.room, room?.title),
+            fact(context.l10n.artist, stats.topArtist),
+            fact(context.l10n.track, topTrack),
             fact(
-              'Streak',
+              context.l10n.streak,
               stats.streak == 0
                   ? null
-                  : (stats.streak == 1 ? '1 day' : '${stats.streak} days'),
+                  : (stats.streak == 1
+                        ? '1 day'
+                        : context.l10n.dayCount(stats.streak)),
             ),
             if (!stats.isEmpty) ...<Widget>[
               SizedBox(height: context.spaceM),

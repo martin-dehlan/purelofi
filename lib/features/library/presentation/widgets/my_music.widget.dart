@@ -11,6 +11,7 @@ import '../../domain/import_report.dart';
 import '../../domain/library_view.dart';
 import 'library_toolbar.widget.dart';
 import 'local_track_row.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The listener's own music, in the library beside PureLofi's (#66).
 ///
@@ -82,11 +83,7 @@ class _MyMusicState extends ConsumerState<MyMusic> {
                 ),
               SizedBox(height: context.spaceM),
               if (all.isEmpty)
-                Text(
-                  'Your own music, played in these rooms. Files you add are '
-                  'copied into PureLofi, so they play without a connection.',
-                  style: quiet,
-                )
+                Text(context.l10n.myMusicExplain, style: quiet)
               else ...<Widget>[
                 LibraryToolbar(
                   showSearch: all.length >= LibraryToolbar.searchFrom,
@@ -94,7 +91,7 @@ class _MyMusicState extends ConsumerState<MyMusic> {
                 ),
                 SizedBox(height: context.spaceS),
                 if (tracks.isEmpty)
-                  Text('Nothing called "$_query".', style: quiet),
+                  Text(context.l10n.nothingCalled(_query), style: quiet),
               ],
             ],
           ),
@@ -126,7 +123,7 @@ class _AddButton extends StatelessWidget {
       child: TextButton.icon(
         icon: AppIcon(AppGlyph.add, size: context.fontL, color: cs.primary),
         label: Text(
-          busy ? 'Adding…' : 'Add music',
+          busy ? context.l10n.adding : context.l10n.addMusic,
           style: TextStyle(fontSize: context.fontM),
         ),
         onPressed: busy ? null : () => unawaited(onTap()),

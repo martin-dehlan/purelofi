@@ -57,7 +57,7 @@ class PlayerControls extends ConsumerWidget {
       return Padding(
         padding: EdgeInsets.all(context.spaceL),
         child: Text(
-          'No tracks yet.',
+          context.l10n.noTracksYet,
           textAlign: TextAlign.center,
           style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontM),
         ),
@@ -82,7 +82,7 @@ class PlayerControls extends ConsumerWidget {
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
-              error.userMessage,
+              error.userMessageIn(context.l10n),
               textAlign: TextAlign.center,
               style: TextStyle(color: cs.error, fontSize: context.fontS),
             ),
@@ -115,7 +115,7 @@ class PlayerControls extends ConsumerWidget {
               SizedBox(width: context.spaceM),
               _TransportButton(
                 glyph: isPlaying ? AppGlyph.pause : AppGlyph.play,
-                label: isPlaying ? 'Pause' : 'Play',
+                label: isPlaying ? context.l10n.pause : context.l10n.play,
                 size: context.screenWidth * 0.13,
                 onTap: ref
                     .read(playerControllerProvider.notifier)
@@ -209,7 +209,7 @@ class _Progress extends ConsumerWidget {
             if (track != null)
               Semantics(
                 button: true,
-                label: 'More: ${track!.title}',
+                label: context.l10n.moreFor(track!.title),
                 excludeSemantics: true,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -309,11 +309,14 @@ class _ModeButton extends StatelessWidget {
   final PlaybackMode mode;
   final Future<void> Function() onTap;
 
-  static const Map<PlaybackMode, (AppGlyph, String)> _looks =
-      <PlaybackMode, (AppGlyph, String)>{
-        PlaybackMode.shuffle: (AppGlyph.shuffle, 'Shuffle'),
-        PlaybackMode.repeatOne: (AppGlyph.repeatOne, 'Repeat track'),
-        PlaybackMode.inOrder: (AppGlyph.inOrder, 'In order'),
+  static (AppGlyph, String) _looks(BuildContext context, PlaybackMode mode) =>
+      switch (mode) {
+        PlaybackMode.shuffle => (AppGlyph.shuffle, context.l10n.shuffle),
+        PlaybackMode.repeatOne => (
+          AppGlyph.repeatOne,
+          context.l10n.repeatTrack,
+        ),
+        PlaybackMode.inOrder => (AppGlyph.inOrder, context.l10n.inOrder),
       };
 
   @override
@@ -322,7 +325,7 @@ class _ModeButton extends StatelessWidget {
     final double size = context.screenWidth * 0.055;
     final double dot = size * 0.18;
     final bool marked = mode != PlaybackMode.inOrder;
-    final (AppGlyph glyph, String name) = _looks[mode]!;
+    final (AppGlyph glyph, String name) = _looks(context, mode);
 
     return Semantics(
       button: true,
@@ -429,11 +432,11 @@ class _BackToPureLofi extends ConsumerWidget {
             TextSpan(
               children: <InlineSpan>[
                 TextSpan(
-                  text: 'Your music  ·  ',
+                  text: context.l10n.yourMusicPrefix,
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 TextSpan(
-                  text: 'Back to PureLofi',
+                  text: context.l10n.backToPurelofi,
                   style: TextStyle(color: cs.primary),
                 ),
               ],

@@ -86,12 +86,14 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
     duration: const Duration(milliseconds: 280),
   )..addStatusListener((_) => setState(() {}));
 
-  static const Map<LibraryFilter, String> names = <LibraryFilter, String>{
-    LibraryFilter.tracks: 'Tracks',
-    LibraryFilter.artists: 'Artists',
-    LibraryFilter.downloaded: 'Downloaded',
-    LibraryFilter.local: 'My music',
-  };
+  /// What each filter is called, in the listener's language (#140).
+  static String nameOf(BuildContext context, LibraryFilter filter) =>
+      switch (filter) {
+        LibraryFilter.tracks => context.l10n.tracks,
+        LibraryFilter.artists => context.l10n.artists,
+        LibraryFilter.downloaded => context.l10n.downloaded,
+        LibraryFilter.local => context.l10n.myMusic,
+      };
 
   @override
   void dispose() {
@@ -201,7 +203,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          'Your Library',
+                          context.l10n.yourLibrary,
                           style: TextStyle(
                             color: cs.onSurface,
                             fontSize: context.fontXl,
@@ -242,7 +244,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                   ],
                   for (final LibraryFilter f in filters) ...<Widget>[
                     _FilterPill(
-                      label: names[f]!,
+                      label: nameOf(context, f),
                       selected: filter == f,
                       onTap: () => _pick(f),
                     ),
@@ -336,7 +338,9 @@ class _PageFrame extends StatelessWidget {
                     Flexible(
                       child: Text(
                         page.scope?.title ??
-                            (page.recent ? 'Recent' : 'Favorites'),
+                            (page.recent
+                                ? context.l10n.recent
+                                : context.l10n.favorites),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: cs.onSurface,
@@ -381,9 +385,7 @@ class _FavoritesPage extends ConsumerWidget {
           ),
           sliver: _Tracks(
             tracks: ref.watch(favoriteTracksProvider),
-            empty:
-                'Nothing marked yet. Tap ⋯ on a track, or the heart '
-                'beside the one playing.',
+            empty: context.l10n.noFavoritesYet,
           ),
         ),
       ],
@@ -529,7 +531,7 @@ class _Overview extends ConsumerWidget {
             ),
           ),
           title: context.l10n.favorites,
-          subtitle: favorites == 1 ? '1 track' : '$favorites tracks',
+          subtitle: context.l10n.trackCount(favorites),
           onTap: onFavorites,
         ),
         // Only once something was heard: an empty row is a promise.
@@ -560,8 +562,8 @@ class _Overview extends ConsumerWidget {
             ),
             title: playlist.name,
             subtitle: playlist.items.length == 1
-                ? 'Playlist · 1 track'
-                : 'Playlist · ${playlist.items.length} tracks',
+                ? context.l10n.playlistOneTrack
+                : context.l10n.playlistTrackCount(playlist.items.length),
             onTap: () => onCollection(
               PlaybackScope(
                 kind: ScopeKind.playlist,
@@ -628,7 +630,7 @@ class _MoodCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${mood.title}, mood',
+      label: context.l10n.moodLabel(mood.title),
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

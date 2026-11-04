@@ -85,12 +85,11 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
   }
 
   Future<void> _restore() async {
+    // Read before any await: the context may be gone after one.
+    final AppLocalizations l10n = context.l10n;
     // Pro belongs to the account (#108): restoring needs one to land on.
     if (ref.read(authRepositoryProvider).current == null) {
-      await showAccountSheet(
-        context,
-        reason: 'Pro stays with your account, on every phone you sign in on.',
-      );
+      await showAccountSheet(context, reason: l10n.proStaysWithAccount);
       if (!mounted || ref.read(authRepositoryProvider).current == null) return;
     }
     setState(() {
@@ -100,10 +99,10 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
     String said;
     try {
       said = await ref.read(proControllerProvider.notifier).restore()
-          ? 'Pro is back'
-          : 'No earlier purchase on this store account';
+          ? l10n.proIsBack
+          : l10n.noEarlierPurchase;
     } on AppError catch (error) {
-      said = error.userMessage;
+      said = error.userMessageIn(l10n);
     }
     if (mounted) {
       setState(() {
@@ -114,9 +113,9 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
   }
 
   /// "3 tracks, 14 MB", or that there are none.
-  static String _downloadsLabel(int count, int? bytes) {
-    if (count == 0) return 'Nothing downloaded yet';
-    final String tracks = count == 1 ? '1 track' : '$count tracks';
+  static String _downloadsLabel(BuildContext context, int count, int? bytes) {
+    if (count == 0) return context.l10n.nothingDownloadedShort;
+    final String tracks = context.l10n.trackCount(count);
 
     return bytes == null
         ? tracks
@@ -231,8 +230,10 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                 glyph: AppGlyph.storage,
                 title: context.l10n.savedMusicAndRooms,
                 subtitle: bytes == null
-                    ? 'Counting…'
-                    : '${SettingsSection.sizeLabel(bytes)} on this phone',
+                    ? context.l10n.counting
+                    : context.l10n.onThisPhone(
+                        SettingsSection.sizeLabel(bytes),
+                      ),
                 trailing: TextButton(
                   onPressed: clear,
                   child: Text(context.l10n.clear),
@@ -242,7 +243,11 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
               MenuRow(
                 glyph: AppGlyph.download,
                 title: context.l10n.downloads,
-                subtitle: _downloadsLabel(downloadCount, downloadedBytes),
+                subtitle: _downloadsLabel(
+                  context,
+                  downloadCount,
+                  downloadedBytes,
+                ),
                 trailing: TextButton(
                   onPressed: downloadCount == 0
                       ? null
@@ -263,7 +268,7 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
               MenuRow(
                 glyph: AppGlyph.inOrder,
                 title: context.l10n.restorePurchases,
-                subtitle: _restoring ? 'Asking the store…' : _restored,
+                subtitle: _restoring ? context.l10n.askingTheStore : _restored,
                 onTap: _restoring ? null : () => unawaited(_restore()),
               ),
               if (pro.isPro && manage != null)

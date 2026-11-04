@@ -8,6 +8,7 @@ import '../../controller/artist.controller.dart';
 import '../../domain/artist.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'library_scope.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The library's artists pill: everyone with music in PureLofi, by name.
 /// Tapping one opens their page.
@@ -26,8 +27,8 @@ class ArtistList extends ConsumerWidget {
       final String? message = loaded.isLoading
           ? null
           : loaded.hasError
-          ? 'The artists did not load. Check the connection and try again.'
-          : 'No artists yet.';
+          ? context.l10n.artistsDidNotLoad
+          : context.l10n.noArtistsYet;
       return SliverToBoxAdapter(
         child: message == null
             ? const SizedBox.shrink()
@@ -65,7 +66,7 @@ class ArtistList extends ConsumerWidget {
             ),
           ),
           subtitle: Text(
-            count == 1 ? '1 track' : '$count tracks',
+            context.l10n.trackCount(count),
             style: TextStyle(
               color: cs.onSurfaceVariant,
               fontSize: context.fontS,

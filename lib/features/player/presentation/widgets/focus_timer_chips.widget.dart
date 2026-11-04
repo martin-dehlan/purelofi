@@ -5,6 +5,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../controller/focus_timer.controller.dart';
 import '../../domain/focus_session.dart';
 import 'sleep_timer_chips.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The focus timer (#137), one tap away: off, or a plan. While it runs, the
 /// line under the chips says which half it is in and until when.
@@ -18,9 +19,9 @@ class FocusTimerChips extends ConsumerWidget {
     return switch (session.phase) {
       FocusPhase.focus =>
         session.round == 1
-            ? 'Focus until $until'
-            : 'Focus until $until · round ${session.round}',
-      FocusPhase.rest => 'Break until $until',
+            ? context.l10n.focusUntil(until)
+            : context.l10n.focusUntilRound(until, session.round),
+      FocusPhase.rest => context.l10n.breakUntil(until),
     };
   }
 
@@ -62,10 +63,10 @@ class FocusTimerChips extends ConsumerWidget {
           child: Row(
             children: <Widget>[
               for (final Widget c in <Widget>[
-                chip('Off', timer.stop, selected: session == null),
+                chip(context.l10n.off, timer.stop, selected: session == null),
                 for (final FocusPlan plan in FocusPlan.offered)
                   chip(
-                    '${plan.label} min',
+                    context.l10n.minutesShort(plan.label),
                     () => timer.start(plan),
                     selected: session?.plan == plan,
                   ),

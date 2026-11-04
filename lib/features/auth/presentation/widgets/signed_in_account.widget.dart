@@ -32,11 +32,12 @@ class SignedInAccount extends StatelessWidget {
   /// at its foot instead (`AccountActions`).
   final bool actions;
 
-  static String methodLabel(SignInMethod method) => switch (method) {
-    SignInMethod.apple => 'Signed in with Apple',
-    SignInMethod.google => 'Signed in with Google',
-    SignInMethod.email => 'Signed in with email',
-  };
+  static String methodLabel(BuildContext context, SignInMethod method) =>
+      switch (method) {
+        SignInMethod.apple => context.l10n.signedInWithApple,
+        SignInMethod.google => context.l10n.signedInWithGoogle,
+        SignInMethod.email => context.l10n.signedInWithEmail,
+      };
 
   @override
   Widget build(BuildContext context) {

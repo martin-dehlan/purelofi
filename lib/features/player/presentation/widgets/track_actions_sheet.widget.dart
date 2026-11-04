@@ -146,8 +146,8 @@ class TrackActionsSheet extends ConsumerWidget {
                   MenuRow(
                     glyph: isFavorite ? AppGlyph.heart : AppGlyph.heartOutline,
                     title: isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites',
+                        ? context.l10n.removeFromFavorites
+                        : context.l10n.addToFavorites,
                     onTap: then(
                       () => ref
                           .read(favoritesControllerProvider.notifier)
@@ -192,8 +192,8 @@ class TrackActionsSheet extends ConsumerWidget {
                       glyph: AppGlyph.download,
                       title: context.l10n.download,
                       subtitle: downloadsOpen
-                          ? 'To listen offline'
-                          : 'With Pro',
+                          ? context.l10n.toListenOffline
+                          : context.l10n.withPro,
                       onTap: downloadsOpen
                           ? then(
                               () => downloader.download(<TrackEntity>[track]),
@@ -221,7 +221,10 @@ class TrackActionsSheet extends ConsumerWidget {
                   MenuRow(
                     glyph: AppGlyph.heart,
                     title: context.l10n.supportThisArtist,
-                    subtitle: 'Opens ${supportPlatform(artist!.supportUrl!)}',
+                    subtitle: context.l10n.opensPlatform(
+                      supportPlatform(artist!.supportUrl!) ??
+                          context.l10n.theirPage,
+                    ),
                     onTap: then(() => SupportArtistButton.open(ref, artist)),
                   ),
               ],

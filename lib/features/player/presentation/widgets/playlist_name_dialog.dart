@@ -6,13 +6,15 @@ import '../../../../l10n/l10n.dart';
 Future<String?> askPlaylistName(
   BuildContext context, {
   String initial = '',
-  String title = 'New playlist',
-  String action = 'Create',
+  String? title,
+  String? action,
 }) async {
+  final String heading = title ?? context.l10n.newPlaylist;
+  final String verb = action ?? context.l10n.create;
   final String? name = await showDialog<String>(
     context: context,
     builder: (BuildContext context) =>
-        _PlaylistNameDialog(initial: initial, title: title, action: action),
+        _PlaylistNameDialog(initial: initial, title: heading, action: verb),
   );
 
   final String trimmed = name?.trim() ?? '';
@@ -76,7 +78,7 @@ Future<bool> confirmDeletePlaylist(BuildContext context, String name) async {
   final bool? delete = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) => AlertDialog(
-      title: Text('Delete "$name"?'),
+      title: Text(context.l10n.deleteNamedQuestion(name)),
       content: Text(context.l10n.theTracksStayInPurelofiOnly),
       actions: <Widget>[
         TextButton(

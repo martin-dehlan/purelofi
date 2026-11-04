@@ -21,7 +21,7 @@ void main() {
     expect(supportPlatform('https://ko-fi.com/adatapes'), 'Ko-fi');
     expect(supportPlatform('https://www.patreon.com/adatapes'), 'Patreon');
     expect(supportPlatform('https://paypal.me/adatapes'), 'PayPal');
-    expect(supportPlatform('https://adatapes.com/tip'), 'their page');
+    expect(supportPlatform('https://adatapes.com/tip'), isNull);
   });
 
   test('a support link that is not a web link is dropped', () {

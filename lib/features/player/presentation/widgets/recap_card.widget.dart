@@ -55,7 +55,11 @@ class RecapCard extends StatelessWidget {
           if (room != null) ...<Widget>[
             SceneThumbnail(scene: room, size: unit * 60),
             SizedBox(height: unit * 3),
-            Text('Mostly in ${room.title}', style: text(5), maxLines: 1),
+            Text(
+              context.l10n.mostlyIn(room.title),
+              style: text(5),
+              maxLines: 1,
+            ),
           ],
           SizedBox(height: unit * 10),
           Text(

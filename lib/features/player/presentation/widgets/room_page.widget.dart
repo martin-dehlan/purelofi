@@ -116,13 +116,13 @@ class RoomPage extends ConsumerWidget {
                       : ProPill(
                           label: pro.isPro
                               ? switch (pro.plan) {
-                                  PlanPeriod.yearly => 'Pro · yearly',
-                                  PlanPeriod.monthly => 'Pro · monthly',
+                                  PlanPeriod.yearly => context.l10n.proYearly,
+                                  PlanPeriod.monthly => context.l10n.proMonthly,
                                   null => 'Pro',
                                 }
                               : switch (trial) {
-                                  final int days => '$days days free',
-                                  null => 'Get Pro',
+                                  final int days => context.l10n.daysFree(days),
+                                  null => context.l10n.getPro,
                                 },
                           filled: !pro.isPro,
                           onTap: pro.isPro
@@ -137,16 +137,16 @@ class RoomPage extends ConsumerWidget {
               ),
             ),
           ),
-          heading('Room'),
+          heading(context.l10n.room),
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
           // Only once something was heard this week (#151).
           const WeekLine(),
-          heading('Sound'),
+          heading(context.l10n.sound),
           const MenuGroup(children: <Widget>[SoundMix()]),
-          heading('Focus'),
+          heading(context.l10n.focus),
           const MenuGroup(children: <Widget>[FocusTimerChips()]),
-          heading('Sleep timer'),
+          heading(context.l10n.sleepTimer),
           const MenuGroup(children: <Widget>[SleepTimerChips()]),
           // The room alone on a stand, the screen kept on (#149).
           MenuGroup(
@@ -162,7 +162,7 @@ class RoomPage extends ConsumerWidget {
               ),
             ],
           ),
-          heading('Settings'),
+          heading(context.l10n.settings),
           const SettingsSection(),
           SizedBox(height: context.spaceL),
           MenuGroup(

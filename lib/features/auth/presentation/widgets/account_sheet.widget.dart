@@ -87,7 +87,7 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
     try {
       await action();
     } on AppError catch (error) {
-      if (mounted) setState(() => _error = error.userMessage);
+      if (mounted) setState(() => _error = error.userMessageIn(context.l10n));
     }
   }
 
@@ -176,7 +176,9 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      widget.welcome ? 'Welcome to PureLofi' : 'Sign in',
+                      widget.welcome
+                          ? context.l10n.welcomeToPurelofi
+                          : context.l10n.signIn,
                       style: TextStyle(
                         color: cs.onSurface,
                         fontSize: context.fontL,
@@ -185,8 +187,7 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
                     ),
                     SizedBox(height: context.spaceXs),
                     Text(
-                      reason ??
-                          'Optional. The music plays the same either way.',
+                      reason ?? context.l10n.signInOptional,
                       style: TextStyle(
                         color: cs.onSurfaceVariant,
                         fontSize: context.fontS,

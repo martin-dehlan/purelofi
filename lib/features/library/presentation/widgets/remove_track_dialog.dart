@@ -11,10 +11,8 @@ Future<bool> confirmRemoveTrack(BuildContext context, TrackEntity track) async {
   final bool? remove = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) => AlertDialog(
-      title: Text('Remove "${track.title}"?'),
-      content: const Text(
-        'This deletes the copy in PureLofi. The file on your phone stays.',
-      ),
+      title: Text(context.l10n.removeTrackQuestion(track.title)),
+      content: Text(context.l10n.removeTrackExplain),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),

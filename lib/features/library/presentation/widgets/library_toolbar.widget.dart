@@ -61,11 +61,13 @@ class _SortChip extends StatelessWidget {
   final LibrarySort sort;
   final ValueChanged<LibrarySort> onSort;
 
-  static const Map<LibrarySort, String> names = <LibrarySort, String>{
-    LibrarySort.recent: 'Recently added',
-    LibrarySort.title: 'Title',
-    LibrarySort.artist: 'Artist',
-  };
+  /// What each sort is called, in the listener's language (#140).
+  static String nameOf(BuildContext context, LibrarySort sort) =>
+      switch (sort) {
+        LibrarySort.recent => context.l10n.recentlyAdded,
+        LibrarySort.title => context.l10n.title,
+        LibrarySort.artist => context.l10n.artist,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,7 @@ class _SortChip extends StatelessWidget {
             ),
             onPressed: () => onSort(option),
             child: Text(
-              names[option]!,
+              nameOf(context, option),
               style: TextStyle(fontSize: context.fontM),
             ),
           ),
@@ -100,11 +102,14 @@ class _SortChip extends StatelessWidget {
               size: context.fontM,
               color: cs.onSurfaceVariant,
             ),
-            tooltip: 'Sort by: ${names[sort]}',
+            tooltip: context.l10n.sortBy(nameOf(context, sort)),
             label: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(names[sort]!, style: TextStyle(fontSize: context.fontS)),
+                Text(
+                  nameOf(context, sort),
+                  style: TextStyle(fontSize: context.fontS),
+                ),
                 AppIcon(
                   AppGlyph.dropDown,
                   size: context.fontM,

@@ -42,7 +42,7 @@ class AddToPlaylistSheet extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'Add to playlist',
+              context.l10n.addToPlaylist,
               style: TextStyle(
                 fontSize: context.fontL,
                 fontWeight: FontWeight.w700,
@@ -62,7 +62,7 @@ class AddToPlaylistSheet extends ConsumerWidget {
               MenuRow(
                 glyph: AppGlyph.queue,
                 title: playlist.name,
-                subtitle: _count(playlist.items.length),
+                subtitle: context.l10n.trackCount(playlist.items.length),
                 onTap: () => unawaited(into(playlist.id)),
               ),
             SizedBox(height: context.spaceM),
@@ -71,8 +71,6 @@ class AddToPlaylistSheet extends ConsumerWidget {
       ),
     );
   }
-
-  static String _count(int n) => n == 1 ? '1 track' : '$n tracks';
 }
 
 Future<void> showAddToPlaylistSheet(BuildContext context, TrackEntity track) =>

@@ -29,7 +29,7 @@ class ErrorState extends StatelessWidget {
               Icon(Icons.error_outline, color: cs.error),
               SizedBox(height: context.spaceM),
               Text(
-                appError.userMessage,
+                appError.userMessageIn(context.l10n),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: cs.onSurface, fontSize: context.fontM),
               ),

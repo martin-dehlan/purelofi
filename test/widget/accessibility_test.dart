@@ -77,4 +77,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  for (final String where in <String>['player', 'room page', 'library']) {
+    testWidgets('the $where holds together in German (#140)', (tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpRoutedApp(
+        overrides: overrides(),
+        theme: appTheme,
+        locale: const Locale('de'),
+      );
+      await tester.pumpAndSettle();
+      if (where == 'room page') await openMenu(tester);
+      if (where == 'library') await openLibrary(tester);
+
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

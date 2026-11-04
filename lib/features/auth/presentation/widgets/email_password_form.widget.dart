@@ -107,7 +107,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
     try {
       await action();
     } on AppError catch (error) {
-      if (mounted) setState(() => _error = error.userMessage);
+      if (mounted) setState(() => _error = error.userMessageIn(context.l10n));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -187,7 +187,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           if (waitingOnCode) ...<Widget>[
-            Text('We sent a code to $_address.', style: quiet),
+            Text(context.l10n.weSentACodeTo(_address), style: quiet),
             SizedBox(height: context.spaceM),
             CodeField(
               controller: _code,
@@ -233,10 +233,10 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
               onSubmitted: (_) => _canSubmit ? _submit() : null,
               decoration: InputDecoration(
                 labelText: _step == EmailStep.reset
-                    ? 'New password'
-                    : 'Password',
+                    ? context.l10n.newPassword
+                    : context.l10n.password,
                 helperText: newPassword
-                    ? 'At least ${PasswordRules.minLength} characters'
+                    ? context.l10n.atLeastCharacters(PasswordRules.minLength)
                     : null,
               ),
             ),
@@ -245,10 +245,11 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
             SizedBox(height: context.spaceM),
             AuthButton(
               label: switch (_step) {
-                EmailStep.signIn => 'Sign in',
-                EmailStep.createAccount => 'Create account',
-                EmailStep.forgot => 'Send reset code',
-                EmailStep.reset || EmailStep.confirm => 'Set password',
+                EmailStep.signIn => context.l10n.signIn,
+                EmailStep.createAccount => context.l10n.createAccount,
+                EmailStep.forgot => context.l10n.sendResetCode,
+                EmailStep.reset ||
+                EmailStep.confirm => context.l10n.setPassword,
               },
               busy: _busy,
               onPressed: _canSubmit ? _submit : null,
@@ -302,8 +303,8 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
                     onPressed: _busy || _secondsLeft > 0 ? null : _resend,
                     child: Text(
                       _secondsLeft > 0
-                          ? 'Resend in ${_secondsLeft}s'
-                          : 'Send a new code',
+                          ? context.l10n.resendIn(_secondsLeft)
+                          : context.l10n.sendANewCode,
                     ),
                   ),
                 ],

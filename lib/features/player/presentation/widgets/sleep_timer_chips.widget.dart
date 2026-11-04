@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../controller/sleep_timer.controller.dart';
+import '../../../../l10n/l10n.dart';
 
 /// When the music should stop, one tap away: off, a few lengths, or the
 /// end of this track. While it runs, the line under the chips says when.
@@ -58,13 +59,13 @@ class SleepTimerChips extends ConsumerWidget {
           child: Row(
             children: <Widget>[
               for (final Widget c in <Widget>[
-                chip('Off', timer.cancel, selected: stopsAt == null),
+                chip(context.l10n.off, timer.cancel, selected: stopsAt == null),
                 for (final int length in minutes)
                   chip(
-                    length == 60 ? '1 h' : '$length min',
+                    length == 60 ? '1 h' : context.l10n.minutesShort('$length'),
                     () => timer.start(Duration(minutes: length)),
                   ),
-                chip('End of track', timer.endOfTrack),
+                chip(context.l10n.endOfTrack, timer.endOfTrack),
               ]) ...<Widget>[c, SizedBox(width: gap)],
             ],
           ),
@@ -78,7 +79,7 @@ class SleepTimerChips extends ConsumerWidget {
               context.spaceM,
             ),
             child: Text(
-              'Stops at ${timeOfDay(context, stopsAt)}',
+              context.l10n.stopsAt(timeOfDay(context, stopsAt)),
               style: TextStyle(
                 color: cs.onSurfaceVariant,
                 fontSize: context.fontS,

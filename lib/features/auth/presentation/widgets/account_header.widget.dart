@@ -4,6 +4,7 @@ import '../../../../common/utils/responsive.dart';
 import '../../domain/account.entity.dart';
 import '../../domain/member_since.dart';
 import 'profile_avatar.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Who is signed in, in one row: the avatar, the name, the address and one
 /// quiet line for how and since when. [badge] sits at the row's end, such
@@ -23,7 +24,8 @@ class AccountHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final String headline = account.name ?? account.email ?? 'Signed in';
+    final String headline =
+        account.name ?? account.email ?? context.l10n.signedIn;
     // The address under the name, unless it already is the headline or
     // Apple kept it private.
     final String? address = account.name != null ? account.email : null;

@@ -146,7 +146,7 @@ class _TrackMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'More: ${track.title}',
+      tooltip: context.l10n.moreFor(track.title),
       icon: AppIcon(
         AppGlyph.more,
         size: context.fontL,

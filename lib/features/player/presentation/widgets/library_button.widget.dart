@@ -8,6 +8,7 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/new_content.controller.dart';
 import 'library_sheet.widget.dart';
 import 'new_dot.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The library, top right of the scene, opposite the menu: one place for
 /// the music, the queue alone beside the controls. A dot on it when tracks
@@ -21,7 +22,7 @@ class LibraryButton extends ConsumerWidget {
 
     return Semantics(
       button: true,
-      label: hasNew ? 'Library, new tracks' : 'Library',
+      label: hasNew ? context.l10n.libraryNewTracks : context.l10n.library,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

@@ -184,6 +184,7 @@ extension PumpRouted on WidgetTester {
   /// chrome as a listener does.
   Future<void> pumpRoutedApp({
     String initialRoute = '/',
+    Locale? locale,
     ThemeData? theme,
     List<Override> overrides = const <Override>[],
     FakeFavoritesRepository? favorites,
@@ -217,6 +218,7 @@ extension PumpRouted on WidgetTester {
         ],
         retry: retry ?? (_, _) => null,
         child: MaterialApp.router(
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: theme ?? ThemeData.dark(useMaterial3: true),

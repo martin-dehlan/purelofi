@@ -10,6 +10,7 @@ import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
 import 'now_playing_bars.widget.dart';
 import 'track_cover.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// The track playing, as a card at the foot of the library: the cover,
 /// what it is, the bars that dance while it plays, and pause. Skipping
@@ -108,7 +109,7 @@ class MiniPlayer extends ConsumerWidget {
                   // The one thing to do here, in the accent like the other
                   // main buttons of the app.
                   Tooltip(
-                    message: isPlaying ? 'Pause' : 'Play',
+                    message: isPlaying ? context.l10n.pause : context.l10n.play,
                     child: Material(
                       color: cs.primary,
                       shape: const CircleBorder(),

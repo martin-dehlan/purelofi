@@ -12,10 +12,7 @@ Future<bool> confirmDeleteAccount(BuildContext context) async {
     context: context,
     builder: (BuildContext context) => AlertDialog(
       title: Text(context.l10n.deleteYourAccount),
-      content: const Text(
-        'This removes your account and everything tied to it for good. '
-        'PureLofi keeps playing — you just will not be signed in.',
-      ),
+      content: Text(context.l10n.deleteAccountExplain),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),

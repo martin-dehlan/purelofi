@@ -57,9 +57,8 @@ void main() {
   });
 
   test('no new hard-coded text in the interface', () {
-    // What is left still holds a placeholder ("Support \$name") and moves
-    // to ARB with one. This number may only go down.
-    const int stillInEnglish = 13;
+    // Every interface string is in ARB now; keep it that way.
+    const int stillInEnglish = 0;
     final RegExp literal = RegExp(
       r"""\b(?:Text\(|title:\s*|subtitle:\s*|tooltip:\s*|label:\s*|hintText:\s*)'[^']*[A-Za-z]{2}""",
     );

@@ -89,9 +89,7 @@ class CollectionPage extends ConsumerWidget {
         children: <Widget>[
           header,
           Text(
-            _isPlaylist
-                ? 'Nothing here yet. Tap ⋯ on a track to add it.'
-                : 'Nothing in this mood yet.',
+            _isPlaylist ? context.l10n.emptyPlaylist : context.l10n.emptyMood,
             style: TextStyle(
               color: cs.onSurfaceVariant,
               fontSize: context.fontS,

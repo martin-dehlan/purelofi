@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/utils/responsive.dart';
 import '../../domain/pro_plan.entity.dart';
+import '../../../../l10n/l10n.dart';
 
 /// One plan to pick, as a card: the period, the store's price, and the free
 /// trial when there is one. The chosen one is outlined in the accent.
@@ -17,10 +18,11 @@ class PlanOption extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
-  static String titleFor(PlanPeriod period) => switch (period) {
-    PlanPeriod.yearly => 'Yearly',
-    PlanPeriod.monthly => 'Monthly',
-  };
+  static String titleFor(BuildContext context, PlanPeriod period) =>
+      switch (period) {
+        PlanPeriod.yearly => context.l10n.yearly,
+        PlanPeriod.monthly => context.l10n.monthly,
+      };
 
   static String perFor(PlanPeriod period) => switch (period) {
     PlanPeriod.yearly => 'a year',
@@ -61,7 +63,7 @@ class PlanOption extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        titleFor(plan.period),
+                        titleFor(context, plan.period),
                         style: TextStyle(
                           color: cs.onSurface,
                           fontSize: context.fontM,
@@ -73,7 +75,7 @@ class PlanOption extends StatelessWidget {
                         perMonth == null
                             ? '${plan.price} ${perFor(plan.period)}'
                             : '${plan.price} ${perFor(plan.period)} · '
-                                  '$perMonth a month',
+                                  '${context.l10n.perMonthPrice(perMonth)}',
                         style: TextStyle(
                           color: cs.onSurfaceVariant,
                           fontSize: context.fontS,
@@ -93,7 +95,7 @@ class PlanOption extends StatelessWidget {
                       color: cs.primary,
                     ),
                     child: Text(
-                      '$trial days free',
+                      context.l10n.daysFree(trial),
                       style: TextStyle(
                         color: cs.onPrimary,
                         fontSize: context.fontXs,

@@ -12,6 +12,7 @@ import '../../controller/stats.controller.dart';
 import '../../domain/listening_stats.dart';
 import '../../domain/scene.entity.dart';
 import 'stats_sheet.widget.dart';
+import '../../../../l10n/l10n.dart';
 
 /// "Your week" on the room page (#151): one line, and the details a tap
 /// away. Nothing until something was heard this week.
@@ -36,8 +37,8 @@ class WeekLine extends ConsumerWidget {
         children: <Widget>[
           MenuRow(
             glyph: AppGlyph.timer,
-            title: '${listeningTimeLabel(stats.total)} this week',
-            subtitle: room == null ? null : 'Mostly in $room',
+            title: context.l10n.timeThisWeek(listeningTimeLabel(stats.total)),
+            subtitle: room == null ? null : context.l10n.mostlyIn(room),
             onTap: () => unawaited(showStatsSheet(context)),
           ),
         ],
