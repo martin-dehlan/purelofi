@@ -16,6 +16,7 @@ abstract class ArtistModel with _$ArtistModel {
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     @JsonKey(name: 'link_url') String? linkUrl,
     @Default(<String>[]) List<String> links,
+    @JsonKey(name: 'support_url') String? supportUrl,
   }) = _ArtistModel;
 
   factory ArtistModel.fromJson(Map<String, dynamic> json) =>
@@ -33,5 +34,8 @@ extension ArtistModelX on ArtistModel {
     links: (links.isNotEmpty ? links : <String>[?linkUrl])
         .where(isWebLink)
         .toList(),
+    supportUrl: supportUrl != null && isWebLink(supportUrl!)
+        ? supportUrl
+        : null,
   );
 }

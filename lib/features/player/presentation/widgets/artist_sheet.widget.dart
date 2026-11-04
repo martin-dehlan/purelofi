@@ -11,6 +11,7 @@ import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
 import 'artist_links_bar.widget.dart';
+import 'support_artist_button.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/artist.entity.dart';
@@ -191,6 +192,11 @@ class ArtistSheet extends ConsumerWidget {
                   ),
                 ],
               ),
+              // Straight to the artist, when they take support (#152).
+              if (artist.supportUrl != null) ...<Widget>[
+                SizedBox(height: context.spaceM),
+                SupportArtistButton(artist: artist),
+              ],
               SizedBox(height: context.spaceM),
             ],
           ),

@@ -13,12 +13,16 @@ import '../../../library/controller/library.controller.dart';
 import '../../../library/presentation/widgets/remove_track_dialog.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
+import '../../controller/artist.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
+import '../../domain/artist.entity.dart';
+import '../../domain/artist_link.dart';
 import '../../domain/track.entity.dart';
 import 'add_to_playlist_sheet.widget.dart';
 import 'artist_sheet.widget.dart';
+import 'support_artist_button.widget.dart';
 import 'library_scope.widget.dart';
 import 'track_cover.widget.dart';
 
@@ -67,6 +71,9 @@ class TrackActionsSheet extends ConsumerWidget {
     );
 
     final String? artistId = isCatalogue ? track.artistId : null;
+    final ArtistEntity? artist = artistId == null
+        ? null
+        : ref.watch(artistByIdProvider(artistId));
     final Downloads downloads =
         ref.watch(downloadsControllerProvider).value ?? const Downloads();
     final bool downloadsOpen = ref.watch(downloadsOpenProvider);
@@ -207,6 +214,14 @@ class TrackActionsSheet extends ConsumerWidget {
                           ? openArtist!(artistId)
                           : showArtistSheet(navigator.context, artistId),
                     ),
+                  ),
+                // Straight to the artist, when they take support (#152).
+                if (artist?.supportUrl != null)
+                  MenuRow(
+                    glyph: AppGlyph.heart,
+                    title: 'Support this artist',
+                    subtitle: 'Opens ${supportPlatform(artist!.supportUrl!)}',
+                    onTap: then(() => SupportArtistButton.open(ref, artist)),
                   ),
               ],
             ),
