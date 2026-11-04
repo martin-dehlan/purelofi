@@ -38,7 +38,10 @@ class SceneEventScheduler {
   String? get runningLayerId => _runningId;
 
   /// Moves the schedule to [elapsed]: starts what is due, ends what is over.
-  void update(Duration elapsed) {
+  ///
+  /// With [startTimed] off nothing starts on its own — reduced motion
+  /// (#153) — but what the listener triggered still plays out and ends.
+  void update(Duration elapsed, {bool startTimed = true}) {
     final String? running = _runningId;
 
     if (running != null) {
@@ -56,6 +59,8 @@ class SceneEventScheduler {
         return;
       }
     }
+
+    if (!startTimed) return;
 
     for (final MapEntry<String, Duration> entry in _nextFireAt.entries) {
       if (elapsed >= entry.value) {

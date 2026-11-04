@@ -36,6 +36,10 @@ abstract class SceneLayerEntity with _$SceneLayerEntity {
     /// its idle loop.
     @Default(false) bool tappable,
 
+    /// What a screen reader says for a tappable layer, "Pet the cat" (#153).
+    /// Without one the layer stays out of the screen reader's way.
+    String? tapLabel,
+
     /// How many frames at the start of the strip form the idle loop. The
     /// rest are the reaction. Zero means the layer simply rests on its first
     /// frame until tapped.

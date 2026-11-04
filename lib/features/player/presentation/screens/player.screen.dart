@@ -133,57 +133,62 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       // The room stays put when the keyboard comes up for a search in a
       // sheet; only the sheet makes room for it.
       resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (starting) return;
-          // A tap that woke the cat is not a request for the transport.
-          if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
+      // The whole room is the tap that brings the controls back, so it
+      // needs a name for screen readers too (#153).
+      body: Semantics(
+        label: 'Show the controls',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (starting) return;
+            // A tap that woke the cat is not a request for the transport.
+            if (ref.read(sceneTouchControllerProvider.notifier).take()) return;
 
-          ref.read(controlsVisibilityControllerProvider.notifier).reveal();
-        },
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            const SceneBackground(),
-            // Keeps text and icons readable over a bright video frame.
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
-            ),
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              // Hidden controls are not tappable: the first tap brings them
-              // back, it does not pause the music by accident.
-              child: IgnorePointer(
-                ignoring: !controlsVisible,
-                child: const Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(child: PlayerControls()),
+            ref.read(controlsVisibilityControllerProvider.notifier).reveal();
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              const SceneBackground(),
+              // Keeps text and icons readable over a bright video frame.
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: ColoredBox(color: cs.scrim.withValues(alpha: 0.3)),
+              ),
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                // Hidden controls are not tappable: the first tap brings them
+                // back, it does not pause the music by accident.
+                child: IgnorePointer(
+                  ignoring: !controlsVisible,
+                  child: const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(child: PlayerControls()),
+                  ),
                 ),
               ),
-            ),
-            AnimatedOpacity(
-              opacity: controlsVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: IgnorePointer(
-                ignoring: !controlsVisible,
-                // The menu top left, the library top right, as music apps
-                // hold them; the queue stays with the controls.
-                child: const SafeArea(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[MenuButton(), LibraryButton()],
+              AnimatedOpacity(
+                opacity: controlsVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: IgnorePointer(
+                  ignoring: !controlsVisible,
+                  // The menu top left, the library top right, as music apps
+                  // hold them; the queue stays with the controls.
+                  child: const SafeArea(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[MenuButton(), LibraryButton()],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

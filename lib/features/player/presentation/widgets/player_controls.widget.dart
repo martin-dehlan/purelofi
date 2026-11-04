@@ -233,6 +233,12 @@ class _Progress extends ConsumerWidget {
         Waveform(
           seed: track?.id ?? 'purelofi',
           progress: progress,
+          // Read out as a slider: where it is, of how long (#153).
+          semanticValueAt: duration == null
+              ? null
+              : (double fraction) =>
+                    '${PlayerControls._clock(duration * fraction)} of '
+                    '${PlayerControls._clock(duration)}',
           height: context.screenHeight * 0.06,
           onSeek: (double fraction) {
             if (duration == null) return;
@@ -270,9 +276,20 @@ class _TransportButton extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => unawaited(onTap()),
-        child: Padding(
-          padding: EdgeInsets.all(context.spaceS),
-          child: AppIcon(glyph, size: size),
+        // Never smaller than a finger, however small the icon (#153).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: kMinInteractiveDimension,
+            minHeight: kMinInteractiveDimension,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(context.spaceS),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: AppIcon(glyph, size: size),
+            ),
+          ),
         ),
       ),
     );

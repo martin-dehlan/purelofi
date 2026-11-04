@@ -115,25 +115,36 @@ class MiniPlayer extends ConsumerWidget {
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => unawaited(player.togglePlayPause()),
-                        child: Padding(
-                          padding: EdgeInsets.all(context.spaceS),
-                          // Play and pause turn into each other.
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            transitionBuilder:
-                                (Widget child, Animation<double> t) =>
-                                    ScaleTransition(
-                                      scale: t,
-                                      child: FadeTransition(
-                                        opacity: t,
-                                        child: child,
-                                      ),
-                                    ),
-                            child: AppIcon(
-                              isPlaying ? AppGlyph.pause : AppGlyph.play,
-                              key: ValueKey<bool>(isPlaying),
-                              size: context.fontL,
-                              color: cs.onPrimary,
+                        // A finger's size at the least (#153).
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minWidth: kMinInteractiveDimension,
+                            minHeight: kMinInteractiveDimension,
+                          ),
+                          child: Center(
+                            widthFactor: 1,
+                            heightFactor: 1,
+                            child: Padding(
+                              padding: EdgeInsets.all(context.spaceS),
+                              // Play and pause turn into each other.
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                transitionBuilder:
+                                    (Widget child, Animation<double> t) =>
+                                        ScaleTransition(
+                                          scale: t,
+                                          child: FadeTransition(
+                                            opacity: t,
+                                            child: child,
+                                          ),
+                                        ),
+                                child: AppIcon(
+                                  isPlaying ? AppGlyph.pause : AppGlyph.play,
+                                  key: ValueKey<bool>(isPlaying),
+                                  size: context.fontL,
+                                  color: cs.onPrimary,
+                                ),
+                              ),
                             ),
                           ),
                         ),

@@ -283,6 +283,7 @@ An animation is a **horizontal strip**: 6 frames of a 64×64 sprite is one
 | `only_while_playing` | `false` | Advances only while audio plays. |
 | `hide_when_paused` | `false` | Not drawn while paused; fades in and out over 2.2s. |
 | `tappable` | `false` | Plays its reaction once when touched. |
+| `tap_label` | none | What a screen reader says for a tappable layer, e.g. "Pet the cat" (#153). Without it the layer is hidden from screen readers. |
 | `idle_frames` | `0` | How many frames at the start of the strip are the idle loop; the rest are the reaction. |
 | `on_track_change` | `false` | Plays its reaction once when a new track starts. |
 | `hide_when_clipped` | `false` | Drawn only when all of it fits on screen. |

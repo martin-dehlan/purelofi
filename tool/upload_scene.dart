@@ -561,6 +561,7 @@ Future<void> _replaceLayers(
         'only_while_playing': settings.onlyWhilePlaying,
         'hide_when_paused': settings.hideWhenPaused,
         'tappable': settings.tappable,
+        'tap_label': settings.tapLabel,
         'idle_frame_count': settings.idleFrameCount,
         'on_track_change': settings.onTrackChange,
         'hide_when_clipped': settings.hideWhenClipped,
