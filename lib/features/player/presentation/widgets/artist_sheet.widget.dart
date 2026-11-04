@@ -11,6 +11,7 @@ import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../controller/artist.controller.dart';
 import 'artist_links_bar.widget.dart';
+import 'follow_button.widget.dart';
 import 'support_artist_button.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.controller.dart';
@@ -131,6 +132,8 @@ class ArtistSheet extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      SizedBox(height: context.spaceS),
+                      FollowButton(artistId: artist.id),
                     ],
                   ),
                   if (links.isNotEmpty)

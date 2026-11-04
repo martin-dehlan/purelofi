@@ -5,6 +5,7 @@ import 'common/routes/app_router.dart';
 import 'common/utils/app_fonts.dart';
 import 'features/player/controller/collections.controller.dart';
 import 'features/player/controller/favorites_sync.controller.dart';
+import 'features/player/controller/follows.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
 import 'features/player/controller/play_history.controller.dart';
@@ -77,6 +78,8 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(playlistSyncControllerProvider);
     // The room's mood, when the music follows the room (#143).
     ref.watch(roomMusicProvider);
+    // Followed artists follow a signed-in listener too (#147).
+    ref.watch(followSyncControllerProvider);
 
     return MaterialApp.router(
       title: 'PureLofi',

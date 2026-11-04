@@ -3,6 +3,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 import 'daos/artist.dao.dart';
 import 'daos/cached_file.dao.dart';
+import 'daos/followed_artist.dao.dart';
 import 'daos/local_track.dao.dart';
 import 'daos/mood.dao.dart';
 import 'daos/play_event.dao.dart';
@@ -12,6 +13,7 @@ import 'daos/seen_item.dao.dart';
 import 'daos/track.dao.dart';
 import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
+import 'tables/followed_artist.table.dart';
 import 'tables/local_track.table.dart';
 import 'tables/mood.table.dart';
 import 'tables/play_event.table.dart';
@@ -42,6 +44,7 @@ part 'app_database.g.dart';
     SeenItemTable,
     MoodTable,
     PlaylistTable,
+    FollowedArtistTable,
   ],
   daos: <Type>[
     TrackDao,
@@ -53,6 +56,7 @@ part 'app_database.g.dart';
     SeenItemDao,
     MoodDao,
     PlaylistDao,
+    FollowedArtistDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -62,7 +66,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -136,6 +140,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 13 && !await _hasColumn('artists', 'support_url')) {
         await m.addColumn(artistTable, artistTable.supportUrl);
       }
+
+      // 14: the artists the listener follows (#147).
+      if (from < 14) await m.createTable(followedArtistTable);
     },
   );
 
