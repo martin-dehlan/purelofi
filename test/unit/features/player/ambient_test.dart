@@ -141,7 +141,7 @@ void main() {
       return container;
     }
 
-    test('the room the app opens in brings its sounds at its levels', () {
+    test('the room the app opens in brings its sounds at its levels, under the music', () {
       fakeAsync((FakeAsync async) {
         start(async);
 
@@ -150,7 +150,7 @@ void main() {
           AmbientLoop(id: 'fire', url: fire.audioUrl, level: 0.3),
         ]);
         expect(audio.layer(VolumeLayer.music), 1);
-        expect(audio.layer(VolumeLayer.ambience), 1);
+        expect(audio.layer(VolumeLayer.ambience), 0.5);
       });
     });
 
