@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Typed access to the values in `.env`.
@@ -36,6 +38,7 @@ abstract final class Env {
   static const List<String> bannedKeys = <String>[
     'SUPABASE_SERVICE_ROLE_KEY',
     'SUPABASE_DB_PASSWORD',
+    'VERCEL_TOKEN',
   ];
 
   /// Loads `.env` into memory. Call once, before [runApp].
@@ -50,9 +53,39 @@ abstract final class Env {
   }
 
   /// Which of [values] must not be in a bundled `.env`.
-  static List<String> bannedIn(Map<String, String> values) => bannedKeys
-      .where((String key) => (values[key] ?? '').trim().isNotEmpty)
-      .toList();
+  ///
+  /// By name, and by shape: a secret pasted under a harmless name — the
+  /// service role key in `SUPABASE_ANON_KEY`, RevenueCat's secret key in
+  /// `REVENUECAT_APPLE_KEY` — is just as public once it ships.
+  static List<String> bannedIn(Map<String, String> values) => <String>[
+    for (final MapEntry<String, String> entry in values.entries)
+      if (entry.value.trim().isNotEmpty &&
+          (bannedKeys.contains(entry.key) || looksSecret(entry.value)))
+        entry.key,
+  ];
+
+  /// Whether [value] has the shape of a key that grants more than reading.
+  ///
+  /// - `sb_secret_…`: Supabase's new secret API key.
+  /// - `sk_…`: RevenueCat's secret API key (the SDK keys are `appl_`/`goog_`).
+  /// - a JWT whose `role` is `service_role`: Supabase's legacy service key.
+  static bool looksSecret(String value) {
+    final String trimmed = value.trim();
+    if (trimmed.startsWith('sb_secret_') || trimmed.startsWith('sk_')) {
+      return true;
+    }
+
+    final List<String> parts = trimmed.split('.');
+    if (parts.length != 3) return false;
+    try {
+      final Object? claims = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      return claims is Map && claims['role'] == 'service_role';
+    } on Object {
+      return false;
+    }
+  }
 
   /// What to tell whoever built this.
   static String bannedKeyMessage(List<String> found) =>
