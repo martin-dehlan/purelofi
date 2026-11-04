@@ -410,6 +410,19 @@ class _Env {
         '';
 
     if (url.isEmpty) throw const _UploadException('SUPABASE_URL is not set');
+    // The service role key goes out in every request header. Over plain
+    // http it is readable by anything on the way; only a local stack may
+    // skip TLS.
+    final Uri? parsed = Uri.tryParse(url);
+    final bool local =
+        parsed != null &&
+        (parsed.host == 'localhost' || parsed.host == '127.0.0.1');
+    if (parsed == null || (parsed.scheme != 'https' && !local)) {
+      throw _UploadException(
+        'SUPABASE_URL must be https:// (got "$url"). The service role key '
+        'would travel in the clear.',
+      );
+    }
     if (key.isEmpty) {
       throw const _UploadException(
         'SUPABASE_SERVICE_ROLE_KEY is not set. Uploading needs it and the '
