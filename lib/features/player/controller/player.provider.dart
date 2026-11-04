@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -17,6 +19,8 @@ import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/follows.impl.dart';
 import '../data/home_widget.service.impl.dart';
+import '../data/wake_alarm_store.impl.dart';
+import '../data/wake_scheduler.impl.dart';
 import '../data/screen_awake.service.impl.dart';
 import '../data/mix_preferences.service.impl.dart';
 import '../data/mood.repository.impl.dart';
@@ -33,6 +37,7 @@ import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
 import '../domain/home_widget.service.dart';
+import '../domain/wake_alarm.dart';
 import '../domain/mix_preferences.service.dart';
 import '../domain/screen_awake.service.dart';
 import '../domain/mood.entity.dart';
@@ -137,6 +142,19 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// The wake-up alarm with the platform (#146). Asks at start whether the
+/// alarm is what opened the app.
+@Riverpod(keepAlive: true)
+WakeScheduler wakeScheduler(Ref ref) {
+  final WakeSchedulerImpl scheduler = WakeSchedulerImpl();
+  unawaited(scheduler.checkLaunch());
+  return scheduler;
+}
+
+/// Where the alarm is kept (#146).
+@Riverpod(keepAlive: true)
+WakeAlarmStore wakeAlarmStore(Ref ref) => WakeAlarmStoreImpl();
 
 /// The home and lock screen widgets (#144).
 @Riverpod(keepAlive: true)

@@ -13,6 +13,7 @@ import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
 import 'features/player/controller/play_history.controller.dart';
 import 'features/player/controller/room_music.controller.dart';
+import 'features/player/controller/wake_alarm.controller.dart';
 
 /// Dark, with quiet type.
 ///
@@ -87,6 +88,9 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(mediaLibraryProvider);
     // The home and lock screen widgets follow the room and the track (#144).
     ref.watch(homeWidgetSyncProvider);
+    // The wake-up alarm, set again on every launch and answered when it
+    // rings (#146).
+    ref.watch(wakeAlarmControllerProvider);
 
     return MaterialApp.router(
       title: 'PureLofi',
