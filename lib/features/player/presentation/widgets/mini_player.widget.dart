@@ -78,22 +78,33 @@ class MiniPlayer extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Text(
-                          track.artist ?? 'PureLofi',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: cs.onSurfaceVariant,
-                            fontSize: context.fontS,
-                          ),
+                        // The bars from the list's cover, small, in front of
+                        // who made it: they dance while the music plays and
+                        // rest on pause. One button stays on the right.
+                        Row(
+                          children: <Widget>[
+                            NowPlayingBars(
+                              size: context.fontS * 1.1,
+                              color: cs.primary,
+                            ),
+                            SizedBox(width: context.spaceXs),
+                            Flexible(
+                              child: Text(
+                                track.artist ?? 'PureLofi',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: cs.onSurfaceVariant,
+                                  fontSize: context.fontS,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  // The same bars as on the cover in the list: they dance
-                  // while the music plays and rest on pause.
-                  NowPlayingBars(size: context.fontXl, color: cs.primary),
-                  SizedBox(width: context.spaceM),
+                  SizedBox(width: context.spaceS),
                   // The one thing to do here, in the accent like the other
                   // main buttons of the app.
                   Tooltip(
