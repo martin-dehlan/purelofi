@@ -74,7 +74,7 @@ void main() {
     expect(find.text('Your Library'), findsOneWidget);
     expect(chipSelected(tester, 'Tracks'), isFalse);
     // Favorites pinned on top; My music is a filter, not a row as well.
-    expect(find.widgetWithText(ListTile, 'Favorites'), findsOneWidget);
+    expect(find.widgetWithText(InkWell, 'Favorites'), findsOneWidget);
     expect(find.byType(MyMusic), findsNothing);
   });
 
