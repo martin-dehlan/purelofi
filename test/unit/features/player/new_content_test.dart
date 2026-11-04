@@ -9,6 +9,7 @@ import 'package:purelofi/features/player/controller/new_content.controller.dart'
 import 'package:purelofi/features/player/controller/player.controller.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/controller/scene.controller.dart';
+import 'package:purelofi/features/player/data/content_cache.mapper.dart';
 import 'package:purelofi/features/player/data/new_content.repository.impl.dart';
 import 'package:purelofi/features/player/domain/new_content.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
@@ -166,5 +167,15 @@ void main() {
         expect(container.read(newTracksProvider), isEmpty);
       },
     );
+  });
+
+  test('the cache keeps a room\'s own date, not the moment it was cached', () {
+    // Otherwise every room read back offline would look new (#148).
+    final DateTime added = DateTime(2026, 9, 1);
+    final SceneTableCompanion row = makeScene(
+      's',
+    ).copyWith(createdAt: added).toCompanion(now: DateTime(2026, 11, 5));
+
+    expect(row.createdAt.value, added);
   });
 }
