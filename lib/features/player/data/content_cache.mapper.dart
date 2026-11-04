@@ -121,7 +121,9 @@ extension SceneEntityX on SceneEntity {
         sortOrder: Value<int>(sortOrder),
         canvasWidth: Value<int>(canvasWidth),
         canvasHeight: Value<int>(canvasHeight),
-        createdAt: Value<DateTime>(now),
+        // The server's date, not the moment of caching: the "new" marks
+        // (#148) compare it with the first launch.
+        createdAt: Value<DateTime>(createdAt ?? now),
         updatedAt: Value<DateTime>(now),
       );
 
