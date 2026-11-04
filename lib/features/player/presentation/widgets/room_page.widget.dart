@@ -56,6 +56,7 @@ class RoomPage extends ConsumerWidget {
     final ProStatus pro =
         ref.watch(proControllerProvider).value ?? ProStatus.free;
     final String? manage = pro.manageUrl;
+    final int? trial = ref.watch(trialDaysProvider).value;
 
     Widget heading(String text) => Padding(
       padding: EdgeInsets.fromLTRB(
@@ -114,7 +115,10 @@ class RoomPage extends ConsumerWidget {
                                   PlanPeriod.monthly => 'Pro · monthly',
                                   null => 'Pro',
                                 }
-                              : 'Get Pro',
+                              : switch (trial) {
+                                  final int days => '$days days free',
+                                  null => 'Get Pro',
+                                },
                           filled: !pro.isPro,
                           onTap: pro.isPro
                               ? (manage == null
@@ -131,9 +135,10 @@ class RoomPage extends ConsumerWidget {
             ),
           ),
           heading('Room'),
-          const SceneStrip(),
+          // Cards like every other part of the page.
+          const MenuGroup(children: <Widget>[SceneStrip()]),
           heading('Sleep timer'),
-          const SleepTimerChips(),
+          const MenuGroup(children: <Widget>[SleepTimerChips()]),
           heading('Settings'),
           const SettingsSection(),
           SizedBox(height: context.spaceL),

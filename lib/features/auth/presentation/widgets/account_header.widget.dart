@@ -75,7 +75,14 @@ class AccountHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (badge != null) ...<Widget>[SizedBox(width: context.spaceS), badge],
+        if (badge != null) ...<Widget>[
+          SizedBox(width: context.spaceS),
+          // Shrinks rather than pushes the name off a small screen.
+          Flexible(
+            flex: 0,
+            child: FittedBox(fit: BoxFit.scaleDown, child: badge),
+          ),
+        ],
       ],
     );
   }

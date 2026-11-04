@@ -168,6 +168,48 @@ class _PaywallSheetState extends ConsumerState<PaywallSheet> {
               textAlign: TextAlign.center,
               style: quiet.copyWith(fontSize: context.fontM),
             ),
+            // The trial, said up top and in the accent, not only on a
+            // plan's corner: it is what makes trying it easy.
+            FutureBuilder<List<ProPlan>>(
+              future: _plans,
+              builder:
+                  (BuildContext context, AsyncSnapshot<List<ProPlan>> snap) {
+                    final int? days =
+                        <int?>[
+                          for (final ProPlan plan
+                              in snap.data ?? const <ProPlan>[])
+                            plan.trialDays,
+                        ].whereType<int>().fold<int?>(
+                          null,
+                          (int? a, int b) => a == null || b > a ? b : a,
+                        );
+                    if (days == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: EdgeInsets.only(top: context.spaceM),
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.spaceM,
+                            vertical: context.spaceS,
+                          ),
+                          decoration: ShapeDecoration(
+                            shape: const StadiumBorder(),
+                            color: cs.primary.withValues(alpha: 0.16),
+                          ),
+                          child: Text(
+                            '$days days free. Cancel before, pay nothing.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: cs.primary,
+                              fontSize: context.fontS,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+            ),
             if (rooms.isNotEmpty) ...<Widget>[
               SizedBox(height: context.spaceM),
               LockedRoomsStrip(scenes: rooms),

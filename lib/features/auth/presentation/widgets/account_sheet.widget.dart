@@ -195,13 +195,13 @@ class _AccountPanelState extends ConsumerState<AccountPanel> {
                   ],
                 ),
               ),
-              // Same place as for a signed-in listener: the row's end.
-              if (badge != null && !_email) ...<Widget>[
-                SizedBox(width: context.spaceS),
-                badge,
-              ],
             ],
           ),
+          // Under the line, so the words keep the card's width.
+          if (badge != null && !_email) ...<Widget>[
+            SizedBox(height: context.spaceM),
+            Align(alignment: Alignment.centerLeft, child: badge),
+          ],
           SizedBox(height: context.spaceL),
         ],
         body,
