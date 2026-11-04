@@ -322,10 +322,10 @@ void main() {
       await tester.pumpAndSettle();
       await openMenu(tester);
 
-      expect(find.text('PureLofi Pro'), findsOneWidget);
-      expect(find.text('Unlock every room'), findsOneWidget);
+      // A pill in the account card, not a row of its own.
+      expect(find.text('Get Pro'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'PureLofi Pro');
+      await tapMenuEntry(tester, 'Get Pro');
       expect(find.byType(PaywallSheet), findsOneWidget);
     });
 
@@ -342,12 +342,12 @@ void main() {
       expect(find.text('Pro · yearly'), findsOneWidget);
     });
 
-    testWidgets('has no Pro row where Pro is not for sale', (tester) async {
+    testWidgets('has no Pro pill where Pro is not for sale', (tester) async {
       await tester.pumpRoutedApp(overrides: overrides());
       await tester.pumpAndSettle();
       await openMenu(tester);
 
-      expect(find.text('PureLofi Pro'), findsNothing);
+      expect(find.text('Get Pro'), findsNothing);
     });
   });
 
@@ -409,7 +409,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await tapMenuEntry(tester, 'PureLofi Pro');
+    await tapMenuEntry(tester, 'Get Pro');
 
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();

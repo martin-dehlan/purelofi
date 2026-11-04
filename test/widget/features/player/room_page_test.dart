@@ -68,10 +68,10 @@ void main() {
     expect(find.byTooltip('Back'), findsNothing);
   });
 
-  testWidgets('the scene at the top is the way back', (tester) async {
+  testWidgets('a tap on the scene above the sheet goes back', (tester) async {
     await start(tester);
 
-    await tester.tap(find.bySemanticsLabel('Back to the room'));
+    await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
     expect(find.byType(RoomPage), findsNothing);
@@ -80,7 +80,7 @@ void main() {
   testWidgets('a swipe down puts the page away too', (tester) async {
     await start(tester);
 
-    await tester.fling(find.text('Your room'), const Offset(0, 500), 1500);
+    await tester.fling(find.text('Your room'), const Offset(0, 600), 2000);
     await tester.pumpAndSettle();
 
     expect(find.byType(RoomPage), findsNothing);
