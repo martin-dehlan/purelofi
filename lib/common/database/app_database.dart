@@ -4,14 +4,18 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'daos/artist.dao.dart';
 import 'daos/cached_file.dao.dart';
 import 'daos/local_track.dao.dart';
+import 'daos/mood.dao.dart';
 import 'daos/play_event.dao.dart';
+import 'daos/playlist.dao.dart';
 import 'daos/scene.dao.dart';
 import 'daos/seen_item.dao.dart';
 import 'daos/track.dao.dart';
 import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
 import 'tables/local_track.table.dart';
+import 'tables/mood.table.dart';
 import 'tables/play_event.table.dart';
+import 'tables/playlist.table.dart';
 import 'tables/scene.table.dart';
 import 'tables/scene_layer.table.dart';
 import 'tables/seen_item.table.dart';
@@ -36,6 +40,8 @@ part 'app_database.g.dart';
     ArtistTable,
     PlayEventTable,
     SeenItemTable,
+    MoodTable,
+    PlaylistTable,
   ],
   daos: <Type>[
     TrackDao,
@@ -45,6 +51,8 @@ part 'app_database.g.dart';
     ArtistDao,
     PlayEventDao,
     SeenItemDao,
+    MoodDao,
+    PlaylistDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -54,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -111,6 +119,12 @@ class AppDatabase extends _$AppDatabase {
       // 10: the sounds each room brings (#136), as a JSON column.
       if (from < 10 && !await _hasColumn('scenes', 'ambients')) {
         await m.addColumn(sceneTable, sceneTable.ambients);
+      }
+
+      // 11: moods and the listener's playlists (#141).
+      if (from < 11) {
+        await m.createTable(moodTable);
+        await m.createTable(playlistTable);
       }
     },
   );

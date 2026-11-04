@@ -17,6 +17,7 @@ import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/track.entity.dart';
+import 'add_to_playlist_sheet.widget.dart';
 import 'artist_sheet.widget.dart';
 import 'library_scope.widget.dart';
 import 'track_cover.widget.dart';
@@ -154,6 +155,13 @@ class TrackActionsSheet extends ConsumerWidget {
                   glyph: AppGlyph.queue,
                   title: 'Add to queue',
                   onTap: then(() => player.addToQueue(track)),
+                ),
+                MenuRow(
+                  glyph: AppGlyph.add,
+                  title: 'Add to playlist',
+                  onTap: then(
+                    () => showAddToPlaylistSheet(navigator.context, track),
+                  ),
                 ),
                 if (isCatalogue)
                   if (downloads.isLoading(track))

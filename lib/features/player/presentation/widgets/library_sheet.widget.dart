@@ -9,16 +9,24 @@ import '../../../library/presentation/widgets/my_music.widget.dart';
 import '../../controller/artist.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
+import '../../controller/collections.controller.dart';
 import '../../controller/play_history.controller.dart';
 import '../../controller/player.controller.dart';
+import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/artist.entity.dart';
+import '../../domain/mood.entity.dart';
+import '../../domain/playback_scope.dart';
+import '../../domain/playlist.entity.dart';
 import '../../domain/track.entity.dart';
 import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
 import 'artist_sheet.widget.dart';
+import 'cached_picture.widget.dart';
+import 'collection_page.widget.dart';
 import 'library_scope.widget.dart';
 import 'mini_player.widget.dart';
+import 'playlist_name_dialog.dart';
 import 'search_results.widget.dart';
 import 'track_tile.widget.dart';
 
@@ -28,12 +36,23 @@ enum LibraryFilter { tracks, artists, downloaded, local }
 /// A page that slides in over the library: an artist's, the favourites, or
 /// what was played lately (#142).
 class _LibraryPage {
-  const _LibraryPage.artist(String this.artistId) : recent = false;
-  const _LibraryPage.favorites() : artistId = null, recent = false;
-  const _LibraryPage.recent() : artistId = null, recent = true;
+  const _LibraryPage.artist(String this.artistId)
+    : recent = false,
+      scope = null;
+  const _LibraryPage.favorites()
+    : artistId = null,
+      recent = false,
+      scope = null;
+  const _LibraryPage.recent() : artistId = null, recent = true, scope = null;
+
+  /// A mood or one of the listener's playlists (#141).
+  const _LibraryPage.collection(PlaybackScope this.scope)
+    : artistId = null,
+      recent = false;
 
   final String? artistId;
   final bool recent;
+  final PlaybackScope? scope;
 }
 
 /// "Your Library", the way music apps lay theirs out (#110): a big title
@@ -241,6 +260,8 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                   null => _Overview(
                     onFavorites: () => _open(const _LibraryPage.favorites()),
                     onRecent: () => _open(const _LibraryPage.recent()),
+                    onCollection: (PlaybackScope scope) =>
+                        _open(_LibraryPage.collection(scope)),
                   ),
                   LibraryFilter.tracks => _Tracks(
                     tracks: catalogue,
@@ -313,7 +334,8 @@ class _PageFrame extends StatelessWidget {
                   if (artistId == null)
                     Flexible(
                       child: Text(
-                        page.recent ? 'Recent' : 'Favorites',
+                        page.scope?.title ??
+                            (page.recent ? 'Recent' : 'Favorites'),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: cs.onSurface,
@@ -328,6 +350,8 @@ class _PageFrame extends StatelessWidget {
             Expanded(
               child: artistId != null
                   ? ArtistSheet(artistId: artistId)
+                  : page.scope != null
+                  ? CollectionPage(scope: page.scope!, onGone: onBack)
                   : page.recent
                   ? const _RecentPage()
                   : const _FavoritesPage(),
@@ -439,10 +463,17 @@ class _SearchField extends StatelessWidget {
 /// Everything at a glance: the favourites pinned on top in the accent, as
 /// music apps set liked songs apart, then every artist.
 class _Overview extends ConsumerWidget {
-  const _Overview({required this.onFavorites, required this.onRecent});
+  const _Overview({
+    required this.onFavorites,
+    required this.onRecent,
+    required this.onCollection,
+  });
 
   final VoidCallback onFavorites;
   final VoidCallback onRecent;
+
+  /// Opens a mood or a playlist (#141).
+  final ValueChanged<PlaybackScope> onCollection;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -450,9 +481,40 @@ class _Overview extends ConsumerWidget {
     final int favorites = ref.watch(favoriteTracksProvider).length;
     final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
     final List<TrackEntity> recent = ref.watch(recentlyPlayedTracksProvider);
+    final List<MoodEntity> moods =
+        ref.watch(moodsProvider).value ?? const <MoodEntity>[];
+    final List<PlaylistEntity> playlists =
+        ref.watch(playlistsProvider).value ?? const <PlaylistEntity>[];
+    final double tile = _Tile.sizeFor(context);
 
     return SliverList.list(
       children: <Widget>[
+        // PureLofi's moods first, as a row of covers to swipe (#141).
+        if (moods.isNotEmpty) ...<Widget>[
+          SizedBox(
+            height: tile * 1.6 + context.fontS * 2,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: moods.length,
+              separatorBuilder: (_, _) => SizedBox(width: context.spaceM),
+              itemBuilder: (BuildContext context, int i) {
+                final MoodEntity mood = moods[i];
+                return _MoodCard(
+                  mood: mood,
+                  size: tile * 1.6,
+                  onTap: () => onCollection(
+                    PlaybackScope(
+                      kind: ScopeKind.mood,
+                      id: mood.id,
+                      title: mood.title,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: context.spaceM),
+        ],
         _Row(
           tile: _Tile(
             background: cs.primary,
@@ -481,6 +543,46 @@ class _Overview extends ConsumerWidget {
             subtitle: recent.first.title,
             onTap: onRecent,
           ),
+        // The listener's own playlists, newest change first (#141).
+        for (final PlaylistEntity playlist in playlists)
+          _Row(
+            tile: _Tile(
+              background: cs.secondaryContainer,
+              child: AppIcon(
+                AppGlyph.queue,
+                size: context.fontXl,
+                color: cs.onSecondaryContainer,
+              ),
+            ),
+            title: playlist.name,
+            subtitle: playlist.items.length == 1
+                ? 'Playlist · 1 track'
+                : 'Playlist · ${playlist.items.length} tracks',
+            onTap: () => onCollection(
+              PlaybackScope(
+                kind: ScopeKind.playlist,
+                id: playlist.id,
+                title: playlist.name,
+              ),
+            ),
+          ),
+        _Row(
+          tile: _Tile(
+            background: cs.surfaceContainerHighest,
+            child: AppIcon(
+              AppGlyph.add,
+              size: context.fontXl,
+              color: cs.onSurface,
+            ),
+          ),
+          title: 'New playlist',
+          subtitle: 'Your own list',
+          onTap: () async {
+            final String? name = await askPlaylistName(context);
+            if (name == null) return;
+            await ref.read(playlistRepositoryProvider).create(name);
+          },
+        ),
         for (final ArtistEntity artist in artists)
           _Row(
             tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
@@ -489,6 +591,72 @@ class _Overview extends ConsumerWidget {
             onTap: () => unawaited(openArtistPage(context, artist.id)),
           ),
       ],
+    );
+  }
+}
+
+/// One of PureLofi's moods: its cover, square, with its name under it.
+class _MoodCard extends StatelessWidget {
+  const _MoodCard({
+    required this.mood,
+    required this.size,
+    required this.onTap,
+  });
+
+  final MoodEntity mood;
+  final double size;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String? cover = mood.coverUrl;
+    final Widget plain = ColoredBox(
+      color: cs.tertiaryContainer,
+      child: Center(
+        child: AppIcon(
+          AppGlyph.scene,
+          size: size * 0.3,
+          color: cs.onTertiaryContainer,
+        ),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      label: '${mood.title}, mood',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(size * 0.08),
+                child: SizedBox.square(
+                  dimension: size,
+                  child: cover == null
+                      ? plain
+                      : CachedPicture(url: cover, fallback: plain),
+                ),
+              ),
+              SizedBox(height: context.spaceXs),
+              Text(
+                mood.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontSize: context.fontS,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

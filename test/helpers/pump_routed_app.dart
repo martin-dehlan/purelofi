@@ -14,6 +14,7 @@ import 'package:purelofi/features/library/controller/library.provider.dart';
 import 'package:purelofi/features/pro/controller/pro.provider.dart';
 
 import 'fake_auth.repository.dart';
+import 'fake_collections.dart';
 import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
@@ -73,12 +74,17 @@ List<Override> _fakeLibrary(
   FakeTrackPicker? picker, [
   FakePlayHistoryRepository? playHistory,
   FakeNewContentRepository? newContent,
+  FakeMoodRepository? moods,
+  FakePlaylistRepository? playlistStore,
 ]) {
   final FakeLibraryRepository fake = library ?? FakeLibraryRepository();
   addTearDown(fake.dispose);
   final FakePlayHistoryRepository history =
       playHistory ?? FakePlayHistoryRepository();
   addTearDown(history.dispose);
+  final FakePlaylistRepository playlists =
+      playlistStore ?? FakePlaylistRepository();
+  addTearDown(playlists.dispose);
   final FakeNewContentRepository seen =
       newContent ?? FakeNewContentRepository();
   addTearDown(seen.dispose);
@@ -92,6 +98,10 @@ List<Override> _fakeLibrary(
     playHistoryRepositoryProvider.overrideWithValue(history),
     newContentRepositoryProvider.overrideWithValue(seen),
     mixPreferencesProvider.overrideWithValue(FakeMixPreferences()),
+    moodRepositoryProvider.overrideWithValue(moods ?? FakeMoodRepository()),
+    playlistRepositoryProvider.overrideWithValue(playlists),
+    devicePlaylistsProvider.overrideWithValue(playlists),
+    accountPlaylistsProvider.overrideWithValue(FakeAccountPlaylists()),
   ];
 }
 
@@ -124,6 +134,8 @@ extension PumpRouted on WidgetTester {
     FakeTrackPicker? picker,
     FakePlayHistoryRepository? playHistory,
     FakeNewContentRepository? newContent,
+    FakeMoodRepository? moods,
+    FakePlaylistRepository? playlistStore,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -133,7 +145,14 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker, playHistory, newContent),
+          ..._fakeLibrary(
+            library,
+            picker,
+            playHistory,
+            newContent,
+            moods,
+            playlistStore,
+          ),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),
@@ -162,6 +181,8 @@ extension PumpRouted on WidgetTester {
     FakeTrackPicker? picker,
     FakePlayHistoryRepository? playHistory,
     FakeNewContentRepository? newContent,
+    FakeMoodRepository? moods,
+    FakePlaylistRepository? playlistStore,
     FakeAuthRepository? auth,
     FakeProRepository? pro,
     FakeWelcomePreferences? welcome,
@@ -171,7 +192,14 @@ extension PumpRouted on WidgetTester {
       ProviderScope(
         overrides: <Override>[
           _fakeFavorites(favorites),
-          ..._fakeLibrary(library, picker, playHistory, newContent),
+          ..._fakeLibrary(
+            library,
+            picker,
+            playHistory,
+            newContent,
+            moods,
+            playlistStore,
+          ),
           _fakeAuth(auth),
           _fakePro(pro),
           _fakeWelcome(welcome),

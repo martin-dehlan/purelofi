@@ -17,6 +17,7 @@ import '../../domain/track.entity.dart';
 import 'favorite_button.widget.dart';
 import 'focus_status.widget.dart';
 import 'queue_sheet.widget.dart';
+import 'scope_line.widget.dart';
 import 'track_actions_sheet.widget.dart';
 import 'waveform.widget.dart';
 
@@ -76,6 +77,7 @@ class PlayerControls extends ConsumerWidget {
           _Progress(track: track),
           const _BackToPureLofi(),
           const FocusStatus(),
+          const ScopeLine(),
           if (error != null) ...<Widget>[
             SizedBox(height: context.spaceS),
             Text(
