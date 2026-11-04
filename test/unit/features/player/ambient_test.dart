@@ -141,18 +141,21 @@ void main() {
       return container;
     }
 
-    test('the room the app opens in brings its sounds at its levels, under the music', () {
-      fakeAsync((FakeAsync async) {
-        start(async);
+    test(
+      'the room the app opens in brings its sounds at its levels, under the music',
+      () {
+        fakeAsync((FakeAsync async) {
+          start(async);
 
-        expect(audio.ambience, <AmbientLoop>[
-          AmbientLoop(id: 'rain', url: rain.audioUrl, level: 0.6),
-          AmbientLoop(id: 'fire', url: fire.audioUrl, level: 0.3),
-        ]);
-        expect(audio.layer(VolumeLayer.music), 1);
-        expect(audio.layer(VolumeLayer.ambience), 0.5);
-      });
-    });
+          expect(audio.ambience, <AmbientLoop>[
+            AmbientLoop(id: 'rain', url: rain.audioUrl, level: 0.6),
+            AmbientLoop(id: 'fire', url: fire.audioUrl, level: 0.3),
+          ]);
+          expect(audio.layer(VolumeLayer.music), 1);
+          expect(audio.layer(VolumeLayer.ambience), 0.5);
+        });
+      },
+    );
 
     test('a quiet room has none, and switching back brings them again', () {
       fakeAsync((FakeAsync async) {

@@ -145,6 +145,25 @@
   "getPro": "Get Pro",
   "goToArtist": "Go to artist",
   "hideControls": "Hide controls",
+  "hoursMinutesShort": "{hours} h {minutes}",
+  "@hoursMinutesShort": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "hoursShort": "{hours} h",
+  "@hoursShort": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
   "iHaveAnAccount": "I have an account",
   "ideasBugsOrAHello": "Ideas, bugs or a hello",
   "imprint": "Imprint",
@@ -299,6 +318,7 @@
     }
   },
   "playsOfflineNow": "Plays offline now",
+  "playsOn": "Plays on",
   "position": "Position",
   "previousTrack": "Previous track",
   "privacy": "Privacy",
@@ -438,6 +458,7 @@
     }
   },
   "tryAgain": "Try again",
+  "underAMinute": "Under a minute",
   "waitingForStore": "Waiting for the store to confirm. Pro opens when it does.",
   "wakeMusicFadesIn": "The music comes in slowly",
   "wakeUp": "Wake up",

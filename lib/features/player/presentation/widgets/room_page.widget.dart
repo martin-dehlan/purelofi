@@ -24,7 +24,7 @@ import '../../controller/window_mode.controller.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
 import 'focus_timer_chips.widget.dart';
-import 'sleep_timer_chips.widget.dart';
+import 'sleep_timer_slider.widget.dart';
 import 'sound_mix.widget.dart';
 import 'wake_alarm_card.widget.dart';
 import 'week_line.widget.dart';
@@ -149,7 +149,7 @@ class RoomPage extends ConsumerWidget {
           heading(context.l10n.focus),
           const MenuGroup(children: <Widget>[FocusTimerChips()]),
           heading(context.l10n.sleepTimer),
-          const MenuGroup(children: <Widget>[SleepTimerChips()]),
+          const MenuGroup(children: <Widget>[SleepTimerSlider()]),
           // The wake-up alarm, where the platform can ring one (#146).
           if (ref.watch(wakeSchedulerProvider).isSupported) ...<Widget>[
             heading(context.l10n.wakeUp),
