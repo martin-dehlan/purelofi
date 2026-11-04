@@ -13,6 +13,7 @@ import 'package:purelofi/features/player/presentation/widgets/scene_card.widget.
 import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/pro/domain/pro.repository.dart';
 import 'package:purelofi/features/pro/domain/pro_plan.entity.dart';
+import 'package:purelofi/features/pro/presentation/widgets/pro_pill.widget.dart';
 import 'package:purelofi/features/pro/domain/pro_status.entity.dart';
 import 'package:purelofi/features/pro/presentation/widgets/paywall_sheet.widget.dart';
 
@@ -322,11 +323,27 @@ void main() {
       await tester.pumpAndSettle();
       await openMenu(tester);
 
-      // A pill in the account card, not a row of its own.
-      expect(find.text('Get Pro'), findsOneWidget);
+      // A pill in the account card that leads with the trial.
+      expect(find.text('7 days free'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Get Pro');
+      await tapMenuEntry(tester, '7 days free');
       expect(find.byType(PaywallSheet), findsOneWidget);
+    });
+
+    testWidgets('without a trial the pill just offers Pro', (tester) async {
+      await tester.pumpRoutedApp(
+        overrides: overrides(),
+        pro: FakeProRepository(
+          plans: <ProPlan>[
+            for (final ProPlan plan in FakeProRepository.defaultPlans)
+              plan.copyWith(trialDays: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+
+      expect(find.text('Get Pro'), findsOneWidget);
     });
 
     testWidgets('says which plan a Pro listener has', (tester) async {
@@ -347,7 +364,7 @@ void main() {
       await tester.pumpAndSettle();
       await openMenu(tester);
 
-      expect(find.text('Get Pro'), findsNothing);
+      expect(find.byType(ProPill), findsNothing);
     });
   });
 
@@ -409,7 +426,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await openMenu(tester);
-    await tapMenuEntry(tester, 'Get Pro');
+    await tapMenuEntry(tester, '7 days free');
 
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();

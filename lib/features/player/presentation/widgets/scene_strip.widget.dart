@@ -33,10 +33,11 @@ class SceneStrip extends ConsumerWidget {
 
     Widget row(int count, Widget Function(int index) item) => SizedBox(
       // The cover and a line of title under it.
-      height: card + context.spaceXs + context.fontS * 1.6,
+      height: card + context.spaceXs + context.fontS * 1.6 + 2 * context.spaceM,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
+        // Inside its card: the covers scroll to the card's edge.
+        padding: EdgeInsets.all(context.spaceM),
         itemCount: count,
         separatorBuilder: (_, _) => SizedBox(width: gap),
         itemBuilder: (BuildContext context, int index) => item(index),

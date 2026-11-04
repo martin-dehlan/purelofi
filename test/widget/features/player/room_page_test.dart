@@ -7,6 +7,7 @@ import 'package:purelofi/features/player/presentation/widgets/menu_button.widget
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
+import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_section.widget.dart';
@@ -80,7 +81,7 @@ void main() {
   testWidgets('a swipe down puts the page away too', (tester) async {
     await start(tester);
 
-    await tester.fling(find.byType(SceneStrip), const Offset(0, 600), 2000);
+    await tester.fling(find.byType(AccountPanel), const Offset(0, 600), 2000);
     await tester.pumpAndSettle();
 
     expect(find.byType(RoomPage), findsNothing);

@@ -36,7 +36,8 @@ class SleepTimerChips extends ConsumerWidget {
           shape: const StadiumBorder(),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          backgroundColor: cs.surfaceContainerHigh,
+          // On its card, a step lighter than the card.
+          backgroundColor: cs.surfaceContainerHighest,
           selectedColor: cs.onSurface,
           labelStyle: TextStyle(
             color: selected ? cs.surface : cs.onSurface,
@@ -53,7 +54,7 @@ class SleepTimerChips extends ConsumerWidget {
       children: <Widget>[
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
+          padding: EdgeInsets.all(context.spaceM),
           child: Row(
             children: <Widget>[
               for (final Widget c in <Widget>[
@@ -71,10 +72,10 @@ class SleepTimerChips extends ConsumerWidget {
         if (stopsAt != null)
           Padding(
             padding: EdgeInsets.fromLTRB(
-              context.horizontalPadding,
-              context.spaceS,
-              context.horizontalPadding,
+              context.spaceM,
               0,
+              context.spaceM,
+              context.spaceM,
             ),
             child: Text(
               'Stops at ${timeOfDay(context, stopsAt)}',

@@ -58,7 +58,8 @@ class SceneCard extends ConsumerWidget {
         child: SizedBox(
           width: size,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // The title centred under its cover.
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
                 padding: EdgeInsets.all(frame),
@@ -103,6 +104,7 @@ class SceneCard extends ConsumerWidget {
               SizedBox(height: context.spaceXs),
               Text(
                 scene.title,
+                textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

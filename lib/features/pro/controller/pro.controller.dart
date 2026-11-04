@@ -157,3 +157,25 @@ bool downloadsOpen(Ref ref) {
 
   return ref.watch(proControllerProvider).value?.isPro ?? false;
 }
+
+/// The longest free trial a plan offers this listener, for the places that
+/// point to Pro: "Try 7 days free" reads better than "Get Pro". `null`
+/// with no trial, with Pro already, or where Pro is not for sale.
+@riverpod
+Future<int?> trialDays(Ref ref) async {
+  if (!ref.watch(proRepositoryProvider).isAvailable) return null;
+  if (ref.watch(proControllerProvider).value?.isPro ?? false) return null;
+
+  try {
+    final List<ProPlan> plans = await ref.watch(proRepositoryProvider).plans();
+    int? longest;
+    for (final ProPlan plan in plans) {
+      final int? days = plan.trialDays;
+      if (days != null && (longest == null || days > longest)) longest = days;
+    }
+    return longest;
+  } on Object {
+    // No prices, no promise: the plain "Get Pro" stays.
+    return null;
+  }
+}
