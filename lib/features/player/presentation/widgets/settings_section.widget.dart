@@ -16,6 +16,7 @@ import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/downloads.controller.dart';
+import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/soft_transitions.controller.dart';
 
@@ -138,6 +139,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool softTransitions =
         ref.watch(softTransitionsControllerProvider).value ?? true;
+    final bool hasHistory =
+        ref.watch(recentPlaysProvider).value?.isNotEmpty ?? false;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
     final int? bytes = _bytes;
     final VoidCallback? clear = bytes == null || bytes == 0
@@ -181,6 +184,22 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                     .read(softTransitionsControllerProvider.notifier)
                     .set(!softTransitions),
               ),
+            ),
+            // The log behind "Recently played" (#142): only ever on the
+            // phone, and the listener's to throw away.
+            MenuRow(
+              glyph: AppGlyph.timer,
+              title: 'Listening history',
+              subtitle: 'Kept on this phone only',
+              trailing: TextButton(
+                onPressed: hasHistory
+                    ? () => unawaited(
+                        ref.read(playHistoryRepositoryProvider).clear(),
+                      )
+                    : null,
+                child: const Text('Clear'),
+              ),
+              onTap: null,
             ),
           ],
         ),

@@ -4,11 +4,13 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'daos/artist.dao.dart';
 import 'daos/cached_file.dao.dart';
 import 'daos/local_track.dao.dart';
+import 'daos/play_event.dao.dart';
 import 'daos/scene.dao.dart';
 import 'daos/track.dao.dart';
 import 'tables/artist.table.dart';
 import 'tables/cached_file.table.dart';
 import 'tables/local_track.table.dart';
+import 'tables/play_event.table.dart';
 import 'tables/scene.table.dart';
 import 'tables/scene_layer.table.dart';
 import 'tables/track.table.dart';
@@ -30,8 +32,16 @@ part 'app_database.g.dart';
     CachedFileTable,
     LocalTrackTable,
     ArtistTable,
+    PlayEventTable,
   ],
-  daos: <Type>[TrackDao, SceneDao, CachedFileDao, LocalTrackDao, ArtistDao],
+  daos: <Type>[
+    TrackDao,
+    SceneDao,
+    CachedFileDao,
+    LocalTrackDao,
+    ArtistDao,
+    PlayEventDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -40,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +88,10 @@ class AppDatabase extends _$AppDatabase {
         await m.deleteTable(artistTable.actualTableName);
         await m.createTable(artistTable);
       }
+
+      // 7: the listening log (#142). Rows no fetch can bring back, so the
+      // table is created and never rebuilt.
+      if (from < 7) await m.createTable(playEventTable);
     },
   );
 

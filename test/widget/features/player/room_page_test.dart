@@ -216,7 +216,14 @@ void main() {
 
       expect(find.text('84 MB on this phone'), findsOneWidget);
 
-      await tapMenuEntry(tester, 'Clear');
+      // The saved files' Clear, not the listening history's.
+      await tapChip(
+        tester,
+        find.descendant(
+          of: find.widgetWithText(MenuRow, 'Saved music and rooms'),
+          matching: find.widgetWithText(TextButton, 'Clear'),
+        ),
+      );
 
       expect(cache.cleared, isTrue);
       expect(find.text('0 MB on this phone'), findsOneWidget);
