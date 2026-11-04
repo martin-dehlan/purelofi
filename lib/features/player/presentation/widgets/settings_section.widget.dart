@@ -21,8 +21,11 @@ import '../../controller/player.provider.dart';
 /// The few things about the app a listener may want differently: whether
 /// the controls step aside, the room the saved files take up and, where Pro
 /// is for sale, getting a purchase back or changing it.
-class SettingsSheet extends ConsumerStatefulWidget {
-  const SettingsSheet({super.key});
+///
+/// A part of the room page, not a page of its own: it lays out at its full
+/// height and the page scrolls.
+class SettingsSection extends ConsumerStatefulWidget {
+  const SettingsSection({super.key});
 
   /// "84 MB", "1.2 GB" — whole megabytes are precise enough here.
   static String sizeLabel(int bytes) {
@@ -34,10 +37,10 @@ class SettingsSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<SettingsSheet> createState() => _SettingsSheetState();
+  ConsumerState<SettingsSection> createState() => _SettingsSectionState();
 }
 
-class _SettingsSheetState extends ConsumerState<SettingsSheet> {
+class _SettingsSectionState extends ConsumerState<SettingsSection> {
   /// What the saved files take up; `null` while it is being counted, and
   /// when there is no cache to count.
   int? _bytes;
@@ -113,7 +116,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
 
     return bytes == null
         ? tracks
-        : '$tracks, ${SettingsSheet.sizeLabel(bytes)}';
+        : '$tracks, ${SettingsSection.sizeLabel(bytes)}';
   }
 
   Future<void> _removeDownloads() async {
@@ -138,101 +141,84 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
         ? null
         : () => unawaited(_clear());
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: context.spaceM),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        MenuGroup(
           children: <Widget>[
-            MenuGroup(
-              children: <Widget>[
-                MenuRow(
-                  glyph: AppGlyph.eye,
-                  title: 'Hide controls',
-                  subtitle: 'After a few seconds without a tap',
-                  trailing: Switch(
-                    value: autoHide,
-                    onChanged: (bool on) => unawaited(
-                      ref
-                          .read(autoHideControlsControllerProvider.notifier)
-                          .set(on),
-                    ),
-                  ),
-                  onTap: () => unawaited(
-                    ref
-                        .read(autoHideControlsControllerProvider.notifier)
-                        .set(!autoHide),
-                  ),
+            MenuRow(
+              glyph: AppGlyph.eye,
+              title: 'Hide controls',
+              subtitle: 'After a few seconds without a tap',
+              trailing: Switch(
+                value: autoHide,
+                onChanged: (bool on) => unawaited(
+                  ref.read(autoHideControlsControllerProvider.notifier).set(on),
                 ),
-              ],
+              ),
+              onTap: () => unawaited(
+                ref
+                    .read(autoHideControlsControllerProvider.notifier)
+                    .set(!autoHide),
+              ),
             ),
-            if (hasCache) ...<Widget>[
-              SizedBox(height: context.spaceM),
-              MenuGroup(
-                children: <Widget>[
-                  MenuRow(
-                    glyph: AppGlyph.storage,
-                    title: 'Saved music and rooms',
-                    subtitle: bytes == null
-                        ? 'Counting…'
-                        : '${SettingsSheet.sizeLabel(bytes)} on this phone',
-                    trailing: TextButton(
-                      onPressed: clear,
-                      child: const Text('Clear'),
-                    ),
-                    onTap: clear,
-                  ),
-                  MenuRow(
-                    glyph: AppGlyph.download,
-                    title: 'Downloads',
-                    subtitle: _downloadsLabel(downloadCount, downloadedBytes),
-                    trailing: TextButton(
-                      onPressed: downloadCount == 0
-                          ? null
-                          : () => unawaited(_removeDownloads()),
-                      child: const Text('Remove all'),
-                    ),
-                    // Nothing to open: the row says what is kept, the button
-                    // takes it back. Greyed while there is nothing.
-                    onTap: downloadCount == 0 ? null : () {},
-                  ),
-                ],
-              ),
-            ],
-            if (sellsPro) ...<Widget>[
-              SizedBox(height: context.spaceM),
-              MenuGroup(
-                children: <Widget>[
-                  MenuRow(
-                    glyph: AppGlyph.inOrder,
-                    title: 'Restore purchases',
-                    subtitle: _restoring ? 'Asking the store…' : _restored,
-                    onTap: _restoring ? null : () => unawaited(_restore()),
-                  ),
-                  if (pro.isPro && manage != null)
-                    MenuRow(
-                      glyph: AppGlyph.settings,
-                      title: 'Manage subscription',
-                      subtitle: 'Change or cancel in your store',
-                      onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
-                    ),
-                ],
-              ),
-            ],
           ],
         ),
-      ),
+        if (hasCache) ...<Widget>[
+          SizedBox(height: context.spaceM),
+          MenuGroup(
+            children: <Widget>[
+              MenuRow(
+                glyph: AppGlyph.storage,
+                title: 'Saved music and rooms',
+                subtitle: bytes == null
+                    ? 'Counting…'
+                    : '${SettingsSection.sizeLabel(bytes)} on this phone',
+                trailing: TextButton(
+                  onPressed: clear,
+                  child: const Text('Clear'),
+                ),
+                onTap: clear,
+              ),
+              MenuRow(
+                glyph: AppGlyph.download,
+                title: 'Downloads',
+                subtitle: _downloadsLabel(downloadCount, downloadedBytes),
+                trailing: TextButton(
+                  onPressed: downloadCount == 0
+                      ? null
+                      : () => unawaited(_removeDownloads()),
+                  child: const Text('Remove all'),
+                ),
+                // Nothing to open: the row says what is kept, the button
+                // takes it back. Greyed while there is nothing.
+                onTap: downloadCount == 0 ? null : () {},
+              ),
+            ],
+          ),
+        ],
+        if (sellsPro) ...<Widget>[
+          SizedBox(height: context.spaceM),
+          MenuGroup(
+            children: <Widget>[
+              MenuRow(
+                glyph: AppGlyph.inOrder,
+                title: 'Restore purchases',
+                subtitle: _restoring ? 'Asking the store…' : _restored,
+                onTap: _restoring ? null : () => unawaited(_restore()),
+              ),
+              if (pro.isPro && manage != null)
+                MenuRow(
+                  glyph: AppGlyph.settings,
+                  title: 'Manage subscription',
+                  subtitle: 'Change or cancel in your store',
+                  onTap: () => unawaited(AppLinks.open(Uri.parse(manage))),
+                ),
+            ],
+          ),
+        ],
+      ],
     );
   }
-}
-
-/// Opens the settings.
-Future<void> showSettingsSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (BuildContext context) => const SettingsSheet(),
-  );
 }

@@ -69,13 +69,14 @@ void main() {
     expect(find.text('Sign in'), findsNothing);
   });
 
-  testWidgets('the room row names the room playing', (tester) async {
+  testWidgets('the room page names the room playing', (tester) async {
     await tester.pumpRoutedApp(overrides: overrides());
     await tester.pumpAndSettle();
     await openMenu(tester);
 
-    expect(find.text('Change room'), findsOneWidget);
-    expect(find.text(makeScene('scene-1').title), findsOneWidget);
+    expect(find.text('Room'), findsOneWidget);
+    // On the way back at the top, and on its card.
+    expect(find.text(makeScene('scene-1').title), findsNWidgets(2));
   });
 
   testWidgets('behind the scenes is gone from the menu', (tester) async {

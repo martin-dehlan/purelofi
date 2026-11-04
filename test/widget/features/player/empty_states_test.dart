@@ -12,7 +12,7 @@ import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/player_controls.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_background.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/mock_repositories.dart';
@@ -58,7 +58,7 @@ void main() {
       when(() => mockRepo.getTracks()).thenAnswer((_) async => <TrackEntity>[]);
 
       await tester.pumpProviderApp(
-        child: const SceneSwitcherSheet(),
+        child: const SceneStrip(),
         overrides: overrides(),
       );
       await tester.pumpAndSettle();

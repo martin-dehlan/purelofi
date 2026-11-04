@@ -13,7 +13,9 @@ import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/screens/player.screen.dart';
-import 'package:purelofi/features/player/presentation/widgets/scene_switcher_sheet.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_card.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/mock_repositories.dart';
@@ -46,11 +48,7 @@ void main() {
     ),
   ];
 
-  // The menu stays laid out under its page and names the room too.
-  Finder inSwitcher(String text) => find.descendant(
-    of: find.byType(SceneSwitcherSheet),
-    matching: find.text(text),
-  );
+  Finder card(String title) => find.widgetWithText(SceneCard, title);
 
   Future<void> openSwitcher(WidgetTester tester) async {
     await tester.pumpProviderApp(
@@ -69,13 +67,13 @@ void main() {
     when(() => mockRepo.getScenes()).thenAnswer((_) => pending.future);
 
     await tester.pumpProviderApp(
-      child: const Scaffold(body: SceneSwitcherSheet()),
+      child: const Scaffold(body: SceneStrip()),
       overrides: overrides(),
     );
     await tester.pump();
 
-    // A thumbnail and a title bar for each of the four rows.
-    expect(find.byType(Skeleton), findsNWidgets(8));
+    // A card for each of the four places.
+    expect(find.byType(Skeleton), findsNWidgets(SceneStrip.placeholders));
     expect(find.bySemanticsLabel('Loading scenes'), findsOneWidget);
 
     pending.complete(scenes);
@@ -96,7 +94,7 @@ void main() {
     );
 
     await tester.pumpProviderApp(
-      child: const Scaffold(body: SceneSwitcherSheet()),
+      child: const Scaffold(body: SceneStrip()),
       overrides: <Override>[
         ...overrides(),
         mediaCacheProvider.overrideWithValue(cache),
@@ -117,25 +115,28 @@ void main() {
     expect((image.image as ResizeImage).imageProvider, FileImage(cover));
   });
 
-  testWidgets('lists the active scenes in sort_order', (tester) async {
+  testWidgets('shows the active scenes side by side in sort_order', (
+    tester,
+  ) async {
     await openSwitcher(tester);
 
-    expect(find.byType(SceneSwitcherSheet), findsOneWidget);
-    final Offset rainy = tester.getTopLeft(inSwitcher('Rainy Room'));
-    final Offset night = tester.getTopLeft(inSwitcher('Night Bus'));
-    expect(rainy.dy, lessThan(night.dy));
+    expect(find.byType(SceneStrip), findsOneWidget);
+    final Offset rainy = tester.getTopLeft(card('Rainy Room'));
+    final Offset night = tester.getTopLeft(card('Night Bus'));
+    expect(rainy.dx, lessThan(night.dx));
+    expect(rainy.dy, night.dy);
   });
 
   testWidgets(
-    'picking a scene switches the background and the list stays open',
+    'picking a scene switches the background and the page stays open',
     (tester) async {
       await openSwitcher(tester);
       expect(find.text('scene scene-a'), findsOneWidget);
 
-      await tester.tap(find.text('Night Bus'));
+      await tester.tap(card('Night Bus'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(SceneSwitcherSheet), findsOneWidget);
+      expect(find.byType(RoomPage), findsOneWidget);
       expect(find.text('scene scene-b'), findsOneWidget);
     },
   );
@@ -144,7 +145,7 @@ void main() {
     await openSwitcher(tester);
     final int playedBefore = fakeAudio.playedTracks.length;
 
-    await tester.tap(find.text('Night Bus'));
+    await tester.tap(card('Night Bus'));
     await tester.pumpAndSettle();
 
     expect(fakeAudio.playedTracks, hasLength(playedBefore));
@@ -158,7 +159,7 @@ void main() {
     when(() => mockRepo.getScenes()).thenThrow(const AppError.network());
 
     await tester.pumpProviderApp(
-      child: const SceneSwitcherSheet(),
+      child: const SceneStrip(),
       overrides: overrides(),
     );
     await tester.pumpAndSettle();
@@ -169,13 +170,8 @@ void main() {
   testWidgets('marks the scene that is already playing', (tester) async {
     await openSwitcher(tester);
 
-    final ListTile active = tester.widget<ListTile>(
-      find.ancestor(
-        of: inSwitcher('Rainy Room'),
-        matching: find.byType(ListTile),
-      ),
-    );
-    expect(active.selected, isTrue);
+    expect(tester.widget<SceneCard>(card('Rainy Room')).isActive, isTrue);
+    expect(tester.widget<SceneCard>(card('Night Bus')).isActive, isFalse);
   });
 }
 
