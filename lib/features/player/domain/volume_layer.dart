@@ -17,6 +17,9 @@ enum VolumeLayer {
 
   /// The listener's own level for the room's sounds (#136, #154).
   ambience,
+
+  /// The wake-up alarm bringing the music in from silence (#146).
+  alarm,
 }
 
 /// The layers that turn the room's sounds down too. The music's own level
@@ -24,6 +27,7 @@ enum VolumeLayer {
 const Set<VolumeLayer> ambienceLayers = <VolumeLayer>{
   VolumeLayer.sleepTimer,
   VolumeLayer.ambience,
+  VolumeLayer.alarm,
 };
 
 /// The layers that turn the music down.
@@ -31,4 +35,5 @@ const Set<VolumeLayer> musicLayers = <VolumeLayer>{
   VolumeLayer.sleepTimer,
   VolumeLayer.focusBreak,
   VolumeLayer.music,
+  VolumeLayer.alarm,
 };

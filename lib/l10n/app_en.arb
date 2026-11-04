@@ -7,6 +7,7 @@
   "adding": "Adding…",
   "afterAFewSecondsWithoutA": "After a few seconds without a tap",
   "all": "All",
+  "allowAlarms": "Allow alarms for PureLofi in the system settings.",
   "artist": "Artist",
   "artistGone": "This artist is not on PureLofi any more.",
   "artists": "Artists",
@@ -34,6 +35,7 @@
   "btsProof": "Played for real, recorded on a phone.",
   "cancel": "Cancel",
   "changeOrCancelInYourStore": "Change or cancel in your store",
+  "changeTime": "Change the time",
   "clear": "Clear",
   "continueWithApple": "Continue with Apple",
   "continueWithEmail": "Continue with email",
@@ -437,6 +439,8 @@
   },
   "tryAgain": "Try again",
   "waitingForStore": "Waiting for the store to confirm. Pro opens when it does.",
+  "wakeMusicFadesIn": "The music comes in slowly",
+  "wakeUp": "Wake up",
   "weSentACodeTo": "We sent a code to {address}.",
   "@weSentACodeTo": {
     "placeholders": {
