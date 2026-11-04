@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../controller/focus_timer.controller.dart';
 import '../../domain/focus_session.dart';
-import 'sleep_timer_chips.widget.dart';
+import 'sleep_timer_slider.widget.dart';
 import '../../../../l10n/l10n.dart';
 
 /// The focus timer (#137), one tap away: off, or a plan. While it runs, the
@@ -14,7 +14,7 @@ class FocusTimerChips extends ConsumerWidget {
 
   /// "Focus until 14:25 · round 2" or "Break until 14:30".
   static String status(BuildContext context, FocusSession session) {
-    final String until = SleepTimerChips.timeOfDay(context, session.endsAt);
+    final String until = SleepTimerSlider.timeOfDay(context, session.endsAt);
 
     return switch (session.phase) {
       FocusPhase.focus =>

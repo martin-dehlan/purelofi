@@ -8,7 +8,7 @@ import '../../../../l10n/l10n.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/wake_alarm.controller.dart';
 import '../../domain/wake_alarm.dart';
-import 'sleep_timer_chips.widget.dart';
+import 'sleep_timer_slider.widget.dart';
 
 /// "Wake up" on the room page (#146): on or off, the time, the days. Only
 /// where the platform can set an alarm — Android for now.
@@ -28,7 +28,7 @@ class WakeAlarmCard extends ConsumerWidget {
     final WakeAlarmController controller = ref.read(
       wakeAlarmControllerProvider.notifier,
     );
-    final String time = SleepTimerChips.timeOfDay(
+    final String time = SleepTimerSlider.timeOfDay(
       context,
       DateTime(2000, 1, 1, alarm.hour, alarm.minute),
     );

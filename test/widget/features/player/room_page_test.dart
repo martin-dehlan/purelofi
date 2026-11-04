@@ -13,7 +13,8 @@ import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget
 import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/scene_strip.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/settings_section.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/sleep_timer_chips.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/sleep_timer_slider.widget.dart';
+import 'package:purelofi/l10n/l10n.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_media_cache.dart';
@@ -56,14 +57,10 @@ void main() {
   Finder onPage(Finder finder) =>
       find.descendant(of: find.byType(RoomPage), matching: finder);
 
-  /// A chip of the sleep timer; the focus timer has an "Off" of its own.
-  Finder sleepChip(String label) => find.descendant(
-    of: find.byType(SleepTimerChips),
-    matching: find.widgetWithText(ChoiceChip, label),
-  );
-
-  ChoiceChip chip(WidgetTester tester, String label) =>
-      tester.widget<ChoiceChip>(sleepChip(label));
+  /// Within the sleep timer: the sound card and the focus timer have a
+  /// slider and an "Off" of their own.
+  Finder inTimer(Finder finder) =>
+      find.descendant(of: find.byType(SleepTimerSlider), matching: finder);
 
   Finder focusChip(String label) => find.descendant(
     of: find.byType(FocusTimerChips),
@@ -82,6 +79,26 @@ void main() {
     of: find.widgetWithText(MenuRow, title),
     matching: find.byType(Switch),
   );
+  Future<void> slideTo(WidgetTester tester, double fraction) async {
+    final Finder slider = inTimer(find.byType(Slider));
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final Rect box = tester.getRect(slider);
+    // The track sits inset from the box by the thumb's reach.
+    final double inset = box.height / 2;
+    final Offset from = Offset(box.left + inset, box.center.dy);
+    final Offset to = Offset(
+      box.left + inset + (box.width - 2 * inset) * fraction,
+      box.center.dy,
+    );
+    final TestGesture gesture = await tester.startGesture(from);
+    await gesture.moveTo(to);
+    await gesture.up();
+    await tester.pumpAndSettle();
+  }
+
+  double sliderValue(WidgetTester tester) =>
+      tester.widget<Slider>(inTimer(find.byType(Slider))).value;
 
   testWidgets('one page with the room, the timer and the settings open', (
     tester,
@@ -89,7 +106,7 @@ void main() {
     await start(tester);
 
     expect(onPage(find.byType(SceneStrip)), findsOneWidget);
-    expect(onPage(find.byType(SleepTimerChips)), findsOneWidget);
+    expect(onPage(find.byType(SleepTimerSlider)), findsOneWidget);
     expect(onPage(find.byType(SettingsSection)), findsOneWidget);
     // Nothing to open first, and no way back that is a page of its own.
     expect(find.byTooltip('Back'), findsNothing);
@@ -119,27 +136,32 @@ void main() {
     await start(tester);
     final double page = tester.getSize(find.byType(RoomPage)).height;
 
-    await tapMenuEntry(tester, '30 min');
+    await slideTo(tester, 0.25);
 
     expect(tester.getSize(find.byType(RoomPage)).height, page);
   });
 
   group('sleep timer', () {
-    testWidgets('is off until set, then says when it stops', (tester) async {
+    testWidgets('is off until dragged, then says when it stops', (
+      tester,
+    ) async {
       await start(tester);
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
+      expect(inTimer(find.text('Off')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsNothing);
 
-      await tapMenuEntry(tester, '30 min');
+      // A quarter of two hours.
+      await slideTo(tester, 0.25);
 
-      expect(chip(tester, 'Off').selected, isFalse);
+      expect(inTimer(find.text('30 min')), findsOneWidget);
       expect(find.textContaining('Stops at'), findsOneWidget);
       // The page stays open.
       expect(find.byType(RoomPage), findsOneWidget);
 
-      await tapChip(tester, sleepChip('Off'));
+      // Past the left end, so the thumb lands on off for sure.
+      await slideTo(tester, -0.2);
 
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
       expect(find.textContaining('Stops at'), findsNothing);
     });
 
@@ -150,7 +172,25 @@ void main() {
 
       await tapMenuEntry(tester, 'End of track');
 
-      expect(chip(tester, 'Off').selected, isTrue);
+      expect(sliderValue(tester), 0);
+      expect(find.textContaining('Stops at'), findsNothing);
+    });
+
+    test('lengths read the way people say them', () async {
+      final AppLocalizations en = await AppLocalizations.delegate.load(
+        const Locale('en'),
+      );
+      expect(SleepTimerSlider.lengthLabel(en, 0), 'Off');
+      expect(SleepTimerSlider.lengthLabel(en, 45), '45 min');
+      expect(SleepTimerSlider.lengthLabel(en, 60), '1 h');
+      expect(SleepTimerSlider.lengthLabel(en, 90), '1 h 30');
+      expect(SleepTimerSlider.lengthLabel(en, 65), '1 h 05');
+
+      final AppLocalizations de = await AppLocalizations.delegate.load(
+        const Locale('de'),
+      );
+      expect(SleepTimerSlider.lengthLabel(de, 0), 'Aus');
+      expect(SleepTimerSlider.lengthLabel(de, 90), '1 Std. 30');
     });
   });
 
