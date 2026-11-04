@@ -16,6 +16,7 @@ import '../../../common/database/daos/scene.dao.dart';
 import '../../../common/database/daos/seen_item.dao.dart';
 import '../../../common/database/daos/track.dao.dart';
 import '../data/follows.impl.dart';
+import '../data/home_widget.service.impl.dart';
 import '../data/screen_awake.service.impl.dart';
 import '../data/mix_preferences.service.impl.dart';
 import '../data/mood.repository.impl.dart';
@@ -31,6 +32,7 @@ import '../data/display_preferences.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
+import '../domain/home_widget.service.dart';
 import '../domain/mix_preferences.service.dart';
 import '../domain/screen_awake.service.dart';
 import '../domain/mood.entity.dart';
@@ -135,6 +137,10 @@ PlayEventDao playEventDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlayHistoryRepository playHistoryRepository(Ref ref) =>
     PlayHistoryRepositoryImpl(ref.watch(playEventDaoProvider));
+
+/// The home and lock screen widgets (#144).
+@Riverpod(keepAlive: true)
+HomeWidgetService homeWidgetService(Ref ref) => HomeWidgetServiceImpl();
 
 /// Keeps the screen on in window mode (#149).
 @Riverpod(keepAlive: true)

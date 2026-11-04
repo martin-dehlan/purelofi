@@ -7,6 +7,7 @@ import 'common/utils/app_fonts.dart';
 import 'features/player/controller/collections.controller.dart';
 import 'features/player/controller/favorites_sync.controller.dart';
 import 'features/player/controller/follows.controller.dart';
+import 'features/player/controller/home_widget.controller.dart';
 import 'features/player/controller/media_library.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
@@ -84,6 +85,8 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(followSyncControllerProvider);
     // What Android Auto and other media browsers can open (#145).
     ref.watch(mediaLibraryProvider);
+    // The home and lock screen widgets follow the room and the track (#144).
+    ref.watch(homeWidgetSyncProvider);
 
     return MaterialApp.router(
       title: 'PureLofi',

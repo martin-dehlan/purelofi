@@ -67,6 +67,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- The home screen widget (#144). -->
+        <receiver
+            android:name=".PureLofiWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/purelofi_widget_info" />
+        </receiver>
+
         <!-- Android Auto (#145): a media app, browsed through AudioService. -->
         <meta-data
             android:name="com.google.android.gms.car.application"
