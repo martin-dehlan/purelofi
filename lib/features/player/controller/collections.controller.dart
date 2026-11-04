@@ -62,9 +62,15 @@ Future<List<TrackEntity>> scopeTracks(Ref ref, PlaybackScope scope) async {
           ?catalogue[id],
       ];
     case ScopeKind.playlist:
-      final PlaylistEntity? playlist = (await ref.read(
-        playlistsProvider.future,
-      )).where((PlaylistEntity p) => p.id == scope.id).firstOrNull;
+      // Straight from the store: a stream provider read with no one
+      // listening may never deliver.
+      final List<PlaylistEntity> all = await ref
+          .read(playlistRepositoryProvider)
+          .watchPlaylists()
+          .first;
+      final PlaylistEntity? playlist = all
+          .where((PlaylistEntity p) => p.id == scope.id)
+          .firstOrNull;
       if (playlist == null) return const <TrackEntity>[];
       final Map<String, TrackEntity> local = <String, TrackEntity>{
         if (playlist.items.any(
