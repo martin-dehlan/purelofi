@@ -17,6 +17,7 @@ import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/player.provider.dart';
+import '../../controller/soft_transitions.controller.dart';
 
 /// The few things about the app a listener may want differently: whether
 /// the controls step aside, the room the saved files take up and, where Pro
@@ -135,6 +136,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
     final int? downloadedBytes = _downloadedBytes;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
+    final bool softTransitions =
+        ref.watch(softTransitionsControllerProvider).value ?? true;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
     final int? bytes = _bytes;
     final VoidCallback? clear = bytes == null || bytes == 0
@@ -161,6 +164,22 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                 ref
                     .read(autoHideControlsControllerProvider.notifier)
                     .set(!autoHide),
+              ),
+            ),
+            MenuRow(
+              glyph: AppGlyph.next,
+              title: 'Soft transitions',
+              subtitle: 'Tracks fade into each other',
+              trailing: Switch(
+                value: softTransitions,
+                onChanged: (bool on) => unawaited(
+                  ref.read(softTransitionsControllerProvider.notifier).set(on),
+                ),
+              ),
+              onTap: () => unawaited(
+                ref
+                    .read(softTransitionsControllerProvider.notifier)
+                    .set(!softTransitions),
               ),
             ),
           ],
