@@ -15,6 +15,7 @@ class SignedInAccount extends StatelessWidget {
     required this.busy,
     required this.onSignOut,
     required this.onDelete,
+    this.badge,
     super.key,
   });
 
@@ -22,6 +23,9 @@ class SignedInAccount extends StatelessWidget {
   final bool busy;
   final VoidCallback onSignOut;
   final VoidCallback onDelete;
+
+  /// Under the name: what else this listener has, such as Pro.
+  final Widget? badge;
 
   static String methodLabel(SignInMethod method) => switch (method) {
     SignInMethod.apple => 'Signed in with Apple',
@@ -69,6 +73,10 @@ class SignedInAccount extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: quiet,
                     ),
+                  if (badge case final Widget badge) ...<Widget>[
+                    SizedBox(height: context.spaceS),
+                    badge,
+                  ],
                 ],
               ),
             ),
