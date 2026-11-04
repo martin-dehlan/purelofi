@@ -16,6 +16,7 @@ import 'package:purelofi/features/pro/controller/pro.provider.dart';
 import 'fake_auth.repository.dart';
 import 'fake_collections.dart';
 import 'fake_follows.dart';
+import 'fake_screen_awake.dart';
 import 'fake_display_preferences.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
@@ -106,6 +107,7 @@ List<Override> _fakeLibrary(
     devicePlaylistsProvider.overrideWithValue(playlists),
     accountPlaylistsProvider.overrideWithValue(FakeAccountPlaylists()),
     deviceFollowsProvider.overrideWithValue(follows),
+    screenAwakeProvider.overrideWithValue(FakeScreenAwake()),
     accountFollowsProvider.overrideWithValue(FakeAccountFollows()),
   ];
 }

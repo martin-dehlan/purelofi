@@ -19,6 +19,7 @@ import '../../../pro/domain/pro_plan.entity.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../../pro/presentation/widgets/pro_pill.widget.dart';
+import '../../controller/window_mode.controller.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
 import 'focus_timer_chips.widget.dart';
@@ -146,6 +147,20 @@ class RoomPage extends ConsumerWidget {
           const MenuGroup(children: <Widget>[FocusTimerChips()]),
           heading('Sleep timer'),
           const MenuGroup(children: <Widget>[SleepTimerChips()]),
+          // The room alone on a stand, the screen kept on (#149).
+          MenuGroup(
+            children: <Widget>[
+              MenuRow(
+                glyph: AppGlyph.scene,
+                title: 'Window mode',
+                subtitle: 'Just the room, the screen stays on',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ref.read(windowModeControllerProvider.notifier).enter();
+                },
+              ),
+            ],
+          ),
           heading('Settings'),
           const SettingsSection(),
           SizedBox(height: context.spaceL),
