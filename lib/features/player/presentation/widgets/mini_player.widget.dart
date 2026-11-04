@@ -105,12 +105,23 @@ class MiniPlayer extends ConsumerWidget {
                           clipBehavior: Clip.antiAlias,
                           child: InkWell(
                             onTap: () => unawaited(player.togglePlayPause()),
-                            child: Padding(
-                              padding: EdgeInsets.all(context.spaceS),
-                              child: AppIcon(
-                                isPlaying ? AppGlyph.pause : AppGlyph.play,
-                                size: context.fontL,
-                                color: cs.onPrimary,
+                            // A finger's size at the least (#153).
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: kMinInteractiveDimension,
+                                minHeight: kMinInteractiveDimension,
+                              ),
+                              child: Center(
+                                widthFactor: 1,
+                                heightFactor: 1,
+                                child: Padding(
+                                  padding: EdgeInsets.all(context.spaceS),
+                                  child: AppIcon(
+                                    isPlaying ? AppGlyph.pause : AppGlyph.play,
+                                    size: context.fontL,
+                                    color: cs.onPrimary,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

@@ -33,7 +33,12 @@ class SceneStrip extends ConsumerWidget {
 
     Widget row(int count, Widget Function(int index) item) => SizedBox(
       // The cover and a line of title under it.
-      height: card + context.spaceXs + context.fontS * 1.6 + 2 * context.spaceM,
+      // The title line grows with the text size the listener chose (#153).
+      height:
+          card +
+          context.spaceXs +
+          MediaQuery.textScalerOf(context).scale(context.fontS) * 1.6 +
+          2 * context.spaceM,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         // Inside its card: the covers scroll to the card's edge.

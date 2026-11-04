@@ -54,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -99,8 +99,24 @@ class AppDatabase extends _$AppDatabase {
 
       // 8: what the listener has already met, for the "new" marks (#148).
       if (from < 8) await m.createTable(seenItemTable);
+
+      // 9: what a screen reader says for a tappable layer (#153). Only a
+      // copy of the server's, but a column is cheap to add in place.
+      // Checked first: a database whose layers table was made from the
+      // current definition already has the column.
+      if (from < 9 && !await _hasColumn('scene_layers', 'tap_label')) {
+        await m.addColumn(sceneLayerTable, sceneLayerTable.tapLabel);
+      }
     },
   );
+
+  Future<bool> _hasColumn(String table, String column) async {
+    final List<QueryRow> rows = await customSelect(
+      'PRAGMA table_info($table)',
+    ).get();
+
+    return rows.any((QueryRow row) => row.read<String>('name') == column);
+  }
 
   static QueryExecutor _openConnection() => driftDatabase(name: 'purelofi_db');
 }
