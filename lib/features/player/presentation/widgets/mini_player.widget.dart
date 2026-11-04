@@ -8,12 +8,14 @@ import '../../../../common/widgets/app_icon.widget.dart';
 import '../../controller/player.controller.dart';
 import '../../domain/player.state.dart';
 import '../../domain/track.entity.dart';
+import 'now_playing_bars.widget.dart';
 import 'track_cover.widget.dart';
 
 /// The track playing, as a card at the foot of the library: the cover,
-/// what it is, pause, and how far it is along its foot. Skipping waits in the room: the bare next triangle beside
-/// pause reads as a second play at this size. The library stays open while the music changes, so the
-/// music needs a place in it. Tapping the bar goes back to the room.
+/// what it is, the bars that dance while it plays, and pause. Skipping
+/// waits in the room: the bare next triangle beside pause reads as a second
+/// play at this size. The library stays open while the music changes, so
+/// the music needs a place in it. Tapping the card goes back to the room.
 ///
 /// Nothing while nothing plays.
 class MiniPlayer extends ConsumerWidget {
@@ -50,110 +52,99 @@ class MiniPlayer extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => Navigator.of(context).pop(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    context.spaceS,
-                    context.spaceS,
-                    context.spaceM,
-                    context.spaceS,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      TrackCover(
-                        track: track,
-                        size: context.screenWidth * 0.12,
-                      ),
-                      SizedBox(width: context.spaceM),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.spaceS,
+                context.spaceS,
+                context.spaceM,
+                context.spaceS,
+              ),
+              child: Row(
+                children: <Widget>[
+                  TrackCover(track: track, size: context.screenWidth * 0.12),
+                  SizedBox(width: context.spaceM),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: cs.onSurface,
+                            fontSize: context.fontM,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        // The bars from the list's cover, small, in front of
+                        // who made it: they dance while the music plays and
+                        // rest on pause. One button stays on the right.
+                        Row(
                           children: <Widget>[
-                            Text(
-                              track.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: cs.onSurface,
-                                fontSize: context.fontM,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            NowPlayingBars(
+                              size: context.fontS * 1.1,
+                              color: cs.primary,
                             ),
-                            Text(
-                              track.artist ?? 'PureLofi',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: cs.onSurfaceVariant,
-                                fontSize: context.fontS,
+                            SizedBox(width: context.spaceXs),
+                            Flexible(
+                              child: Text(
+                                track.artist ?? 'PureLofi',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: cs.onSurfaceVariant,
+                                  fontSize: context.fontS,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      SizedBox(width: context.spaceS),
-                      // The one thing to do here, in the accent like the
-                      // other main buttons of the app.
-                      Tooltip(
-                        message: isPlaying ? 'Pause' : 'Play',
-                        child: Material(
-                          color: cs.primary,
-                          shape: const CircleBorder(),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => unawaited(player.togglePlayPause()),
-                            child: Padding(
-                              padding: EdgeInsets.all(context.spaceS),
-                              child: AppIcon(
-                                isPlaying ? AppGlyph.pause : AppGlyph.play,
-                                size: context.fontL,
-                                color: cs.onPrimary,
-                              ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: context.spaceS),
+                  // The one thing to do here, in the accent like the other
+                  // main buttons of the app.
+                  Tooltip(
+                    message: isPlaying ? 'Pause' : 'Play',
+                    child: Material(
+                      color: cs.primary,
+                      shape: const CircleBorder(),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () => unawaited(player.togglePlayPause()),
+                        child: Padding(
+                          padding: EdgeInsets.all(context.spaceS),
+                          // Play and pause turn into each other.
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            transitionBuilder:
+                                (Widget child, Animation<double> t) =>
+                                    ScaleTransition(
+                                      scale: t,
+                                      child: FadeTransition(
+                                        opacity: t,
+                                        child: child,
+                                      ),
+                                    ),
+                            child: AppIcon(
+                              isPlaying ? AppGlyph.pause : AppGlyph.play,
+                              key: ValueKey<bool>(isPlaying),
+                              size: context.fontL,
+                              color: cs.onPrimary,
                             ),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const _Progress(),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// How far the track is, as a hairline along the card's foot. Its own
-/// widget, so the ticking position rebuilds only the line.
-class _Progress extends ConsumerWidget {
-  const _Progress();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final double progress = ref.watch(
-      playerControllerProvider.select((PlayerState s) => s.progress),
-    );
-
-    return SizedBox(
-      height: context.spaceXs * 0.5,
-      child: Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: ColoredBox(color: cs.onSurface.withValues(alpha: 0.08)),
-          ),
-          FractionallySizedBox(
-            widthFactor: progress,
-            heightFactor: 1,
-            child: ColoredBox(color: cs.primary),
-          ),
-        ],
       ),
     );
   }
