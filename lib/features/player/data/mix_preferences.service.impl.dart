@@ -27,7 +27,7 @@ class MixPreferencesImpl implements MixPreferences {
 
       return MixSettings(
         musicLevel: level(data['music'], 1),
-        ambienceLevel: level(data['ambience'], 1),
+        ambienceLevel: level(data['ambience'], 0.5),
         ambienceOn: data['ambienceOn'] as bool? ?? true,
         soundLevels: <String, double>{
           if (data['sounds'] case final Map<String, dynamic> sounds)
