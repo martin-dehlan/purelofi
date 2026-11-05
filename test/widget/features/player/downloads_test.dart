@@ -155,6 +155,8 @@ void main() {
 
     expect(find.text('2 tracks, 8 MB'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Remove all'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Remove all'));
     await tester.pumpAndSettle();
 

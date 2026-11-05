@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../l10n/l10n.dart';
 
 /// Asks once before an account is deleted. `true` means go ahead.

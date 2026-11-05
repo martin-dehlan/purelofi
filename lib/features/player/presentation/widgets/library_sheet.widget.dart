@@ -153,9 +153,9 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                         slide: _slide,
                         onBack: () => unawaited(_back()),
                         background:
-                            Theme.of(
-                              context,
-                            ).bottomSheetTheme.backgroundColor ??
+                            Theme.of(context)
+                                .bottomSheetTheme
+                                .backgroundColor ??
                             cs.surfaceContainerLow,
                       ),
                     ),

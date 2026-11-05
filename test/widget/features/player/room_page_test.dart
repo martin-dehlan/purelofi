@@ -4,9 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/common/widgets/menu_row.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/focus_timer_chips.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/focus_timer_card.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
+import 'package:purelofi/features/player/domain/focus_session.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/auth/presentation/widgets/account_sheet.widget.dart';
@@ -62,10 +63,8 @@ void main() {
   Finder inTimer(Finder finder) =>
       find.descendant(of: find.byType(SleepTimerSlider), matching: finder);
 
-  Finder focusChip(String label) => find.descendant(
-    of: find.byType(FocusTimerChips),
-    matching: find.widgetWithText(ChoiceChip, label),
-  );
+  Finder inFocus(Finder finder) =>
+      find.descendant(of: find.byType(FocusTimerCard), matching: finder);
 
   Future<void> tapChip(WidgetTester tester, Finder target) async {
     await tester.ensureVisible(target);
@@ -195,24 +194,62 @@ void main() {
   });
 
   group('focus timer (#137)', () {
-    testWidgets('is off until a plan is picked, then says until when', (
+    testWidgets('plans are tiles; running, it counts down until stopped', (
       tester,
     ) async {
       await start(tester);
-      expect(tester.widget<ChoiceChip>(focusChip('Off')).selected, isTrue);
-
-      await tapChip(tester, focusChip('25 / 5 min'));
-
       expect(
-        tester.widget<ChoiceChip>(focusChip('25 / 5 min')).selected,
-        isTrue,
+        inFocus(find.text('25 / 5 min', findRichText: true)),
+        findsOneWidget,
       );
+      expect(inFocus(find.byType(LinearProgressIndicator)), findsNothing);
+
+      await tapChip(
+        tester,
+        inFocus(find.text('25 / 5 min', findRichText: true)),
+      );
+
+      // The count, the line under it and the bar.
+      // The clock is real here, so a slow run may already read 24:59.
+      final Finder count = find.textContaining(RegExp(r'^2[45]:\d\d$'));
+      expect(inFocus(count), findsOneWidget);
+      expect(inFocus(find.byType(LinearProgressIndicator)), findsOneWidget);
       // On the page, and on the player behind it.
       expect(find.textContaining('Focus until'), findsWidgets);
+      // Under the gear too.
+      expect(
+        find.descendant(of: find.byType(MenuButton), matching: count),
+        findsOneWidget,
+      );
 
-      await tapChip(tester, focusChip('Off'));
+      await tapChip(tester, inFocus(find.widgetWithText(ActionChip, 'Off')));
 
       expect(find.textContaining('Focus until'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(MenuButton),
+          matching: find.textContaining(':'),
+        ),
+        findsNothing,
+      );
+    });
+
+    test('what is left reads in minutes and seconds, rounded up', () {
+      final DateTime now = DateTime(2026, 11, 5, 9);
+      final FocusSession session = FocusSession.start(FocusPlan.classic, now);
+
+      expect(FocusTimerCard.remaining(session, now), '25:00');
+      expect(
+        FocusTimerCard.remaining(
+          session,
+          now.add(const Duration(minutes: 1, milliseconds: 500)),
+        ),
+        '24:00',
+      );
+      expect(
+        FocusTimerCard.remaining(session, now.add(const Duration(hours: 1))),
+        '0:00',
+      );
     });
   });
 

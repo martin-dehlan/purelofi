@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../../l10n/l10n.dart';
 
 part 'app_error.freezed.dart';
@@ -34,9 +35,7 @@ sealed class AppError with _$AppError implements Exception {
 extension AppErrorX on AppError {
   /// The message shown to the user. Never raw exception text.
   String get userMessage => switch (this) {
-    NetworkError(:final String? message) =>
-      message ??
-          'Can’t reach PureLofi right now. Check your connection and try again.',
+    NetworkError(:final String? message) => message ?? 'Can’t reach PureLofi right now. Check your connection and try again.',
     NotFoundError(:final String resource) => '$resource not found.',
     ServerError(:final String? message, :final int? statusCode) =>
       message ?? 'Server error (${statusCode ?? '?'}). Try again.',
