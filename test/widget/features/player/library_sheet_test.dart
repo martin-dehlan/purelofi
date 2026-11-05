@@ -198,7 +198,7 @@ void main() {
     testWidgets('is not offered before anything was heard', (tester) async {
       await openOverview(tester, FakePlayHistoryRepository());
 
-      expect(find.text('Recently played'), findsNothing);
+      expect(find.text('History'), findsNothing);
     });
 
     testWidgets('lists what was heard, newest first, each once', (
@@ -222,9 +222,9 @@ void main() {
         ]),
       );
 
-      expect(find.text('Recently played'), findsOneWidget);
+      expect(find.text('History'), findsOneWidget);
 
-      await tester.tap(find.text('Recently played'));
+      await tester.tap(find.text('History'));
       await tester.pumpAndSettle();
 
       final double dusk = tester.getTopLeft(row('Dusk Tape')).dy;
