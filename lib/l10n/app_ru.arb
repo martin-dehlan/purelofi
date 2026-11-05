@@ -67,6 +67,7 @@
   "getPro": "Оформить Pro",
   "goToArtist": "К исполнителю",
   "hideControls": "Скрывать управление",
+  "hideWithTheControls": "Скрывать вместе с управлением",
   "hoursMinutesShort": "{hours} ч {minutes}",
   "hoursShort": "{hours} ч",
   "iHaveAnAccount": "У меня есть аккаунт",

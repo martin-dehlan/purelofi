@@ -19,6 +19,7 @@ import '../../../pro/domain/pro_plan.entity.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../../pro/presentation/widgets/pro_pill.widget.dart';
+import '../../controller/focus_clock_hides.controller.dart';
 import '../../controller/player.provider.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
@@ -57,6 +58,8 @@ class RoomPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool focusClockHides =
+        ref.watch(focusClockHidesControllerProvider).value ?? true;
     final bool sellsPro = ref.read(proControllerProvider.notifier).isAvailable;
     final ProStatus pro =
         ref.watch(proControllerProvider).value ?? ProStatus.free;
@@ -143,7 +146,29 @@ class RoomPage extends ConsumerWidget {
           heading(context.l10n.sound),
           const MenuGroup(children: <Widget>[SoundMix()]),
           heading(context.l10n.focus),
-          const MenuGroup(children: <Widget>[FocusTimerCard()]),
+          MenuGroup(
+            children: <Widget>[
+              const FocusTimerCard(),
+              // The clock on the scene: with the controls, or always.
+              MenuRow(
+                glyph: AppGlyph.eye,
+                title: context.l10n.hideWithTheControls,
+                trailing: Switch(
+                  value: focusClockHides,
+                  onChanged: (bool on) => unawaited(
+                    ref
+                        .read(focusClockHidesControllerProvider.notifier)
+                        .set(on),
+                  ),
+                ),
+                onTap: () => unawaited(
+                  ref
+                      .read(focusClockHidesControllerProvider.notifier)
+                      .set(!focusClockHides),
+                ),
+              ),
+            ],
+          ),
           heading(context.l10n.sleepTimer),
           const MenuGroup(children: <Widget>[SleepTimerSlider()]),
           // The wake-up alarm, where the platform can ring one (#146).

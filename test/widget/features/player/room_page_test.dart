@@ -195,6 +195,21 @@ void main() {
   });
 
   group('focus timer (#137)', () {
+    testWidgets('its clock hides with the controls unless switched off', (
+      tester,
+    ) async {
+      await start(tester);
+      final Finder toggle = toggleOf('Hide with the controls');
+      await tester.ensureVisible(toggle);
+      await tester.pumpAndSettle();
+      expect(tester.widget<Switch>(toggle).value, isTrue);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(toggle).value, isFalse);
+    });
+
     testWidgets('plans are tiles; running, it counts down until stopped', (
       tester,
     ) async {

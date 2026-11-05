@@ -7,6 +7,7 @@ import '../../../../common/utils/responsive.dart';
 
 import '../../../auth/controller/welcome.controller.dart';
 import '../../../auth/presentation/widgets/account_sheet.widget.dart';
+import '../../controller/focus_clock_hides.controller.dart';
 import '../../controller/controls_visibility.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/scene_touch.controller.dart';
@@ -201,14 +202,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ),
               ),
               // The focus timer, top and centre, between the menu and the
-              // library; it stays when the controls step aside.
+              // library. It steps aside with the controls unless the
+              // listener keeps it in view.
               if (!windowMode)
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: context.spaceM),
-                      child: const FocusClock(),
+                AnimatedOpacity(
+                  opacity:
+                      controlsVisible ||
+                          !(ref
+                                  .watch(focusClockHidesControllerProvider)
+                                  .value ??
+                              true)
+                      ? 1
+                      : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: SafeArea(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(top: context.spaceM),
+                        child: const FocusClock(),
+                      ),
                     ),
                   ),
                 ),

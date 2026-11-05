@@ -67,6 +67,7 @@
   "getPro": "开通 Pro",
   "goToArtist": "前往艺人",
   "hideControls": "隐藏控制按钮",
+  "hideWithTheControls": "随控件一起隐藏",
   "hoursMinutesShort": "{hours} 小时 {minutes} 分",
   "hoursShort": "{hours} 小时",
   "iHaveAnAccount": "我已有账号",

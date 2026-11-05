@@ -67,6 +67,7 @@
   "getPro": "Pro 시작하기",
   "goToArtist": "아티스트로 이동",
   "hideControls": "컨트롤 숨기기",
+  "hideWithTheControls": "컨트롤과 함께 숨기기",
   "hoursMinutesShort": "{hours}시간 {minutes}분",
   "hoursShort": "{hours}시간",
   "iHaveAnAccount": "계정이 있어요",
