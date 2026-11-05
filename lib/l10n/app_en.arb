@@ -233,6 +233,10 @@
   "noFavoritesYet": "Nothing marked yet. Tap ⋯ on a track, or the heart beside the one playing.",
   "noScenesToSwitchToYet": "No scenes to switch to yet.",
   "noScenesYet": "No scenes yet.",
+  "nothingHeardThisWeek": "Nothing heard this week yet. Your week fills in as you listen.",
+  "@nothingHeardThisWeek": {
+    "description": "Stats, before anything was heard this week."
+  },
   "noTracksYet": "No tracks yet.",
   "notNow": "Not now",
   "nothingCalled": "Nothing called \"{query}\".",
@@ -404,6 +408,10 @@
         "type": "int"
       }
     }
+  },
+  "stats": "Stats",
+  "@stats": {
+    "description": "The library filter for the week in listening (#151)."
   },
   "stopsAt": "Stops at {time}",
   "@stopsAt": {

@@ -8,8 +8,8 @@ import 'package:purelofi/features/player/domain/play_event.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/recap_card.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/stats_sheet.widget.dart';
-import 'package:purelofi/features/player/presentation/widgets/week_line.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/stats_view.widget.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
 import '../../../helpers/fake_play_history.repository.dart';
@@ -50,16 +50,21 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpRoutedApp(overrides: overrides(), playHistory: history);
     await tester.pumpAndSettle();
-    await openMenu(tester);
+    await openLibrary(tester);
+    await tapPill(tester, 'Stats');
   }
 
-  testWidgets('nothing heard this week, nothing shown', (tester) async {
+  testWidgets('a tab of the library, saying how it fills while empty', (
+    tester,
+  ) async {
     await open(tester, FakePlayHistoryRepository());
 
-    expect(find.textContaining('this week'), findsNothing);
+    expect(find.byType(StatsView), findsOneWidget);
+    expect(find.textContaining('Nothing heard this week'), findsOneWidget);
+    expect(find.byType(RecapCard), findsNothing);
   });
 
-  testWidgets('the week in a line, the details and the recap a tap away', (
+  testWidgets('the week, the details and the recap, in the Stats tab', (
     tester,
   ) async {
     final DateTime start = ListeningStats.weekStartOf(DateTime.now());
@@ -77,16 +82,27 @@ void main() {
       ]),
     );
 
-    expect(find.text('1 h 35 min this week'), findsOneWidget);
-    expect(find.text('Mostly in Rainy Room'), findsOneWidget);
-
-    await tester.tap(find.byType(WeekLine));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(StatsSheet), findsOneWidget);
+    // Once in the tab, once on the recap card.
+    expect(find.text('1 h 35 min'), findsWidgets);
+    expect(find.text('Rainy Room'), findsWidgets);
     expect(find.byType(RecapCard), findsOneWidget);
     expect(find.text('Share your week'), findsOneWidget);
     expect(find.text('Dusk Tape'), findsWidgets);
+  });
+
+  testWidgets('the room page no longer carries the week', (tester) async {
+    await open(tester, FakePlayHistoryRepository());
+    Navigator.of(tester.element(find.byType(StatsView))).pop();
+    await tester.pumpAndSettle();
+    await openMenu(tester);
+
+    expect(
+      find.descendant(
+        of: find.byType(RoomPage),
+        matching: find.textContaining('this week'),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('the recap card fits at any width it is drawn', (tester) async {
