@@ -44,8 +44,9 @@ final ColorScheme _scheme =
 final ThemeData appTheme = ThemeData(
   useMaterial3: true,
   colorScheme: _scheme,
-  textTheme: ThemeData.dark(useMaterial3: true).textTheme
-      .apply(fontFamily: AppFonts.body),
+  textTheme: ThemeData.dark(
+    useMaterial3: true,
+  ).textTheme.apply(fontFamily: AppFonts.body),
   // Every sheet in the app is a Material sheet: a handle to drag it by and
   // the low container tone, a step off the scene's darkest colours.
   bottomSheetTheme: BottomSheetThemeData(

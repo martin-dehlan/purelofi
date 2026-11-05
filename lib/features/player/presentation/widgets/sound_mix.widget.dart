@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../../common/widgets/menu_row.widget.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../../pro/presentation/widgets/pro_pill.widget.dart';
 import '../../controller/mix.controller.dart';
+import '../../controller/room_music.controller.dart';
+import '../../controller/soft_transitions.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../domain/ambient_sound.entity.dart';
 import '../../domain/mix_preferences.service.dart';
@@ -29,6 +33,10 @@ class SoundMix extends ConsumerWidget {
     final List<AmbientSoundEntity> sounds =
         scene?.ambients ?? const <AmbientSoundEntity>[];
     final bool open = ref.watch(mixerOpenProvider);
+    final bool softTransitions =
+        ref.watch(softTransitionsControllerProvider).value ?? true;
+    final bool followRoom =
+        ref.watch(followRoomControllerProvider).value ?? false;
 
     TextStyle label([bool dim = false]) => TextStyle(
       color: dim ? cs.onSurfaceVariant : cs.onSurface,
@@ -120,6 +128,38 @@ class SoundMix extends ConsumerWidget {
                 ),
             ],
           ],
+          // How the music runs, beside how loud it is: one card for all
+          // of the sound, not half of it under Settings.
+          MenuRow(
+            glyph: AppGlyph.next,
+            title: context.l10n.softTransitions,
+            subtitle: context.l10n.tracksFadeIntoEachOther,
+            trailing: Switch(
+              value: softTransitions,
+              onChanged: (bool on) => unawaited(
+                ref.read(softTransitionsControllerProvider.notifier).set(on),
+              ),
+            ),
+            onTap: () => unawaited(
+              ref
+                  .read(softTransitionsControllerProvider.notifier)
+                  .set(!softTransitions),
+            ),
+          ),
+          MenuRow(
+            glyph: AppGlyph.scene,
+            title: context.l10n.musicFollowsTheRoom,
+            subtitle: context.l10n.eachRoomPlaysItsOwnMood,
+            trailing: Switch(
+              value: followRoom,
+              onChanged: (bool on) => unawaited(
+                ref.read(followRoomControllerProvider.notifier).set(on),
+              ),
+            ),
+            onTap: () => unawaited(
+              ref.read(followRoomControllerProvider.notifier).set(!followRoom),
+            ),
+          ),
         ],
       ),
     );

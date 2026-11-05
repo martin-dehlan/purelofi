@@ -18,8 +18,6 @@ import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
-import '../../controller/room_music.controller.dart';
-import '../../controller/soft_transitions.controller.dart';
 import '../../controller/window_mode.controller.dart';
 import '../../../../l10n/l10n.dart';
 
@@ -139,10 +137,6 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
     final int? downloadedBytes = _downloadedBytes;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
-    final bool softTransitions =
-        ref.watch(softTransitionsControllerProvider).value ?? true;
-    final bool followRoom =
-        ref.watch(followRoomControllerProvider).value ?? false;
     final bool hasHistory =
         ref.watch(recentPlaysProvider).value?.isNotEmpty ?? false;
     final bool hasCache = ref.watch(mediaCacheProvider) != null;
@@ -182,38 +176,6 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                 ref
                     .read(autoHideControlsControllerProvider.notifier)
                     .set(!autoHide),
-              ),
-            ),
-            MenuRow(
-              glyph: AppGlyph.next,
-              title: context.l10n.softTransitions,
-              subtitle: context.l10n.tracksFadeIntoEachOther,
-              trailing: Switch(
-                value: softTransitions,
-                onChanged: (bool on) => unawaited(
-                  ref.read(softTransitionsControllerProvider.notifier).set(on),
-                ),
-              ),
-              onTap: () => unawaited(
-                ref
-                    .read(softTransitionsControllerProvider.notifier)
-                    .set(!softTransitions),
-              ),
-            ),
-            MenuRow(
-              glyph: AppGlyph.scene,
-              title: context.l10n.musicFollowsTheRoom,
-              subtitle: context.l10n.eachRoomPlaysItsOwnMood,
-              trailing: Switch(
-                value: followRoom,
-                onChanged: (bool on) => unawaited(
-                  ref.read(followRoomControllerProvider.notifier).set(on),
-                ),
-              ),
-              onTap: () => unawaited(
-                ref
-                    .read(followRoomControllerProvider.notifier)
-                    .set(!followRoom),
               ),
             ),
             // The log behind "Recently played" (#142): only ever on the

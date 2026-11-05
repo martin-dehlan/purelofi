@@ -44,8 +44,9 @@ class FollowedArtistDao extends DatabaseAccessor<AppDatabase>
   /// Makes the synced marks match the account; one still waiting to be
   /// pushed is newer than the account's copy and stays.
   Future<void> apply(Set<String> accountIds) => transaction(() async {
-    final List<FollowedArtistTableData> rows = await select(followedArtistTable)
-        .get();
+    final List<FollowedArtistTableData> rows = await select(
+      followedArtistTable,
+    ).get();
     final Set<String> pending = <String>{
       for (final FollowedArtistTableData r in rows)
         if (!r.isSynced) r.artistId,
