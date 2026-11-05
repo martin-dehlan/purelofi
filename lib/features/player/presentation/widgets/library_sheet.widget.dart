@@ -28,11 +28,12 @@ import 'library_scope.widget.dart';
 import 'mini_player.widget.dart';
 import 'playlist_name_dialog.dart';
 import 'search_results.widget.dart';
+import 'stats_view.widget.dart';
 import 'track_tile.widget.dart';
 import '../../../../l10n/l10n.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
-enum LibraryFilter { tracks, artists, downloaded, local }
+enum LibraryFilter { tracks, artists, downloaded, local, stats }
 
 /// A page that slides in over the library: an artist's, the favourites, or
 /// what was played lately (#142).
@@ -93,6 +94,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
         LibraryFilter.artists => context.l10n.artists,
         LibraryFilter.downloaded => context.l10n.downloaded,
         LibraryFilter.local => context.l10n.myMusic,
+        LibraryFilter.stats => context.l10n.stats,
       };
 
   @override
@@ -153,9 +155,9 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                         slide: _slide,
                         onBack: () => unawaited(_back()),
                         background:
-                            Theme.of(
-                              context,
-                            ).bottomSheetTheme.backgroundColor ??
+                            Theme.of(context)
+                                .bottomSheetTheme
+                                .backgroundColor ??
                             cs.surfaceContainerLow,
                       ),
                     ),
@@ -276,6 +278,10 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                     empty: context.l10n.nothingDownloadedYet,
                   ),
                   LibraryFilter.local => const MyMusic(),
+                  // The week in listening (#151), a tab of its own.
+                  LibraryFilter.stats => const SliverToBoxAdapter(
+                    child: StatsView(),
+                  ),
                 },
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),

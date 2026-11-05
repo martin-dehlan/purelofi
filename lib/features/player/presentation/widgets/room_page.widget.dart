@@ -26,7 +26,6 @@ import 'focus_timer_card.widget.dart';
 import 'sleep_timer_slider.widget.dart';
 import 'sound_mix.widget.dart';
 import 'wake_alarm_card.widget.dart';
-import 'week_line.widget.dart';
 import '../../../../l10n/l10n.dart';
 
 /// Everything that is not the music, on one page: who is listening, which
@@ -141,8 +140,6 @@ class RoomPage extends ConsumerWidget {
           heading(context.l10n.room),
           // Cards like every other part of the page.
           const MenuGroup(children: <Widget>[SceneStrip()]),
-          // Only once something was heard this week (#151).
-          const WeekLine(),
           heading(context.l10n.sound),
           const MenuGroup(children: <Widget>[SoundMix()]),
           heading(context.l10n.focus),

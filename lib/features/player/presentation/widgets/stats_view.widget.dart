@@ -20,19 +20,20 @@ import '../../domain/track.entity.dart';
 import 'recap_card.widget.dart';
 import '../../../../l10n/l10n.dart';
 
-/// The week in more detail (#151): the days as bars, the room, the artist,
-/// the track, the streak, and the recap card to share.
-class StatsSheet extends ConsumerStatefulWidget {
-  const StatsSheet({super.key});
+/// The week in listening (#151), as the library's Stats tab: the days as
+/// bars, the room, the artist, the track, the streak, and the recap card to
+/// share. Before anything was heard, one line says how it fills.
+class StatsView extends ConsumerStatefulWidget {
+  const StatsView({super.key});
 
   /// The recap is captured at this width: a phone screen's, sharp anywhere.
   static const double recapPixels = 1080;
 
   @override
-  ConsumerState<StatsSheet> createState() => _StatsSheetState();
+  ConsumerState<StatsView> createState() => _StatsViewState();
 }
 
-class _StatsSheetState extends ConsumerState<StatsSheet> {
+class _StatsViewState extends ConsumerState<StatsView> {
   final GlobalKey _recap = GlobalKey();
   bool _sharing = false;
 
@@ -44,7 +45,7 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
       final RenderRepaintBoundary boundary =
           _recap.currentContext!.findRenderObject()! as RenderRepaintBoundary;
       final ui.Image image = await boundary.toImage(
-        pixelRatio: StatsSheet.recapPixels / width,
+        pixelRatio: StatsView.recapPixels / width,
       );
       final ByteData? png = await image.toByteData(
         format: ui.ImageByteFormat.png,
@@ -108,60 +109,63 @@ class _StatsSheetState extends ConsumerState<StatsSheet> {
             ),
           );
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(context.l10n.thisWeek, style: label()),
-            Text(
-              listeningTimeLabel(stats.total),
-              style: TextStyle(
-                color: cs.primary,
-                fontSize: context.fontXl,
-                fontFamily: AppFonts.mono,
-              ),
-            ),
-            SizedBox(height: context.spaceM),
-            _WeekBars(perDay: stats.perDay),
-            SizedBox(height: context.spaceM),
-            fact(context.l10n.room, room?.title),
-            fact(context.l10n.artist, stats.topArtist),
-            fact(context.l10n.track, topTrack),
-            fact(
-              context.l10n.streak,
-              stats.streak == 0
-                  ? null
-                  : (stats.streak == 1
-                        ? '1 day'
-                        : context.l10n.dayCount(stats.streak)),
-            ),
-            if (!stats.isEmpty) ...<Widget>[
-              SizedBox(height: context.spaceM),
-              Center(
-                child: RepaintBoundary(
-                  key: _recap,
-                  child: RecapCard(
-                    stats: stats,
-                    width: recapWidth,
-                    room: room,
-                    topTrack: topTrack,
-                  ),
-                ),
-              ),
-              SizedBox(height: context.spaceM),
-              FilledButton(
-                onPressed: _sharing
-                    ? null
-                    : () => unawaited(_share(recapWidth)),
-                child: Text(context.l10n.shareYourWeek),
-              ),
-            ],
-            SizedBox(height: context.spaceL),
-          ],
+    if (stats.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: context.spaceL),
+        child: Text(
+          context.l10n.nothingHeardThisWeek,
+          textAlign: TextAlign.center,
+          style: label(),
         ),
-      ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(context.l10n.thisWeek, style: label()),
+        Text(
+          listeningTimeLabel(stats.total),
+          style: TextStyle(
+            color: cs.primary,
+            fontSize: context.fontXl,
+            fontFamily: AppFonts.mono,
+          ),
+        ),
+        SizedBox(height: context.spaceM),
+        _WeekBars(perDay: stats.perDay),
+        SizedBox(height: context.spaceM),
+        fact(context.l10n.room, room?.title),
+        fact(context.l10n.artist, stats.topArtist),
+        fact(context.l10n.track, topTrack),
+        fact(
+          context.l10n.streak,
+          stats.streak == 0
+              ? null
+              : (stats.streak == 1
+                    ? '1 day'
+                    : context.l10n.dayCount(stats.streak)),
+        ),
+        if (!stats.isEmpty) ...<Widget>[
+          SizedBox(height: context.spaceM),
+          Center(
+            child: RepaintBoundary(
+              key: _recap,
+              child: RecapCard(
+                stats: stats,
+                width: recapWidth,
+                room: room,
+                topTrack: topTrack,
+              ),
+            ),
+          ),
+          SizedBox(height: context.spaceM),
+          FilledButton(
+            onPressed: _sharing ? null : () => unawaited(_share(recapWidth)),
+            child: Text(context.l10n.shareYourWeek),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -226,11 +230,3 @@ class _WeekBars extends StatelessWidget {
     );
   }
 }
-
-Future<void> showStatsSheet(BuildContext context) => showModalBottomSheet<void>(
-  context: context,
-  isScrollControlled: true,
-  useSafeArea: true,
-  builder: (BuildContext context) =>
-      const FractionallySizedBox(heightFactor: 0.9, child: StatsSheet()),
-);
