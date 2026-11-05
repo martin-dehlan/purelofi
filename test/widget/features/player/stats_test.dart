@@ -51,10 +51,12 @@ void main() {
     await tester.pumpRoutedApp(overrides: overrides(), playHistory: history);
     await tester.pumpAndSettle();
     await openLibrary(tester);
-    await tapPill(tester, 'Stats');
+    // A row of the overview, under Playlists; it opens as History does.
+    await tester.tap(find.text('Stats'));
+    await tester.pumpAndSettle();
   }
 
-  testWidgets('a tab of the library, saying how it fills while empty', (
+  testWidgets('a page of the library, saying how it fills while empty', (
     tester,
   ) async {
     await open(tester, FakePlayHistoryRepository());
@@ -64,7 +66,7 @@ void main() {
     expect(find.byType(RecapCard), findsNothing);
   });
 
-  testWidgets('the week, the details and the recap, in the Stats tab', (
+  testWidgets('the week, the details and the recap, on the Stats page', (
     tester,
   ) async {
     final DateTime start = ListeningStats.weekStartOf(DateTime.now());
