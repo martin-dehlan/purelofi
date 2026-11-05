@@ -15,4 +15,10 @@ abstract class DisplayPreferences {
   Future<bool> loadFocusClockHides();
 
   Future<void> saveFocusClockHides(bool hides);
+
+  /// The accent picked in the settings, by name, or `null` for the
+  /// default.
+  Future<String?> loadPalette();
+
+  Future<void> savePalette(String name);
 }

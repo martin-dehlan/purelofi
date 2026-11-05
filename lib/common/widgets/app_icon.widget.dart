@@ -40,6 +40,9 @@ enum AppGlyph {
   eye,
   storage,
 
+  /// Four swatches: the app's colours.
+  palette,
+
   /// A Pro scene not open yet (#16).
   lock,
 }
@@ -350,6 +353,13 @@ class _GlyphPainter extends CustomPainter {
           ..addRRect(_bar(5, 9, 14, 10.5, radius: 1.2))
           ..moveTo(10, 12.5)
           ..lineTo(14, 12.5);
+      case AppGlyph.palette:
+        // Four swatches, a gap between: the app's colours.
+        p
+          ..addRRect(_bar(4, 4, 7, 7))
+          ..addRRect(_bar(13, 4, 7, 7))
+          ..addRRect(_bar(4, 13, 7, 7))
+          ..addRRect(_bar(13, 13, 7, 7));
       case AppGlyph.lock:
         // The shackle is a ring with the body over its lower half.
         final Path shackle = Path.combine(

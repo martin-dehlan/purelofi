@@ -234,6 +234,13 @@
     "description": "The settings row for the app's language."
   },
   "languageAsOnPhone": "As on the phone",
+  "colours": "Colours",
+  "paletteLamp": "Lamp",
+  "paletteMoss": "Moss",
+  "paletteSea": "Sea",
+  "paletteDusk": "Dusk",
+  "paletteBlossom": "Blossom",
+  "palettePaper": "Paper",
   "@languageAsOnPhone": {
     "description": "The choice that follows the phone's own language."
   },

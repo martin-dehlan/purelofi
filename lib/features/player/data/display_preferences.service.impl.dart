@@ -11,6 +11,7 @@ class DisplayPreferencesImpl implements DisplayPreferences {
   static const String _autoHideKey = 'display.autoHide';
   static const String _languageKey = 'display.language';
   static const String _focusClockHidesKey = 'display.focusClockHides';
+  static const String _paletteKey = 'display.palette';
 
   final SharedPreferencesAsync _preferences;
 
@@ -53,4 +54,17 @@ class DisplayPreferencesImpl implements DisplayPreferences {
   @override
   Future<void> saveFocusClockHides(bool hides) =>
       _preferences.setBool(_focusClockHidesKey, hides);
+
+  @override
+  Future<String?> loadPalette() async {
+    try {
+      return await _preferences.getString(_paletteKey);
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> savePalette(String name) =>
+      _preferences.setString(_paletteKey, name);
 }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purelofi/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:purelofi/app.dart';
+import 'package:purelofi/common/theme/app_theme.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
