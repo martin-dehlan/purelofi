@@ -15,9 +15,10 @@ import '../../domain/scene.entity.dart';
 import '../../domain/track.entity.dart';
 import 'recap_sheet.widget.dart';
 
-/// The week in listening (#151): the time large, the days as bars on a
-/// card, what stood out as four tiles, and a way to share it. The recap
-/// card itself only shows once the listener goes to share it.
+/// The week in listening (#151), lean and lo-fi: the time in the mono
+/// face, the days as columns of pixel blocks, what stood out as a receipt
+/// of dotted lines, and a quiet way to share. The recap card itself only
+/// shows once the listener goes to share it.
 class StatsView extends ConsumerWidget {
   const StatsView({super.key});
 
@@ -38,9 +39,11 @@ class StatsView extends ConsumerWidget {
         .firstOrNull
         ?.title;
 
-    final TextStyle label = TextStyle(
+    final TextStyle mono = TextStyle(
+      fontFamily: AppFonts.mono,
       color: cs.onSurfaceVariant,
-      fontSize: context.fontS,
+      fontSize: context.fontXs,
+      letterSpacing: context.fontXs * 0.12,
     );
 
     if (stats.isEmpty) {
@@ -49,7 +52,7 @@ class StatsView extends ConsumerWidget {
         child: Text(
           context.l10n.nothingHeardThisWeek,
           textAlign: TextAlign.center,
-          style: label,
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
         ),
       );
     }
@@ -63,37 +66,10 @@ class StatsView extends ConsumerWidget {
         (context.l10n.streak, context.l10n.dayCount(stats.streak)),
     ];
 
-    BoxDecoration card() => BoxDecoration(
-      color: cs.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(context.cardBorderRadius * 1.5),
-    );
-
-    Widget tile((String, String) fact) => Container(
-      padding: EdgeInsets.all(context.spaceM),
-      decoration: card(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(fact.$1, style: label),
-          SizedBox(height: context.spaceXs),
-          Text(
-            fact.$2,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: context.fontM,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(context.l10n.thisWeek, style: label),
+        Text(context.l10n.thisWeek.toUpperCase(), style: mono),
         Text(
           listeningTimeLabel(stats.total),
           style: TextStyle(
@@ -102,78 +78,140 @@ class StatsView extends ConsumerWidget {
             fontFamily: AppFonts.mono,
           ),
         ),
-        SizedBox(height: context.spaceM),
-        Container(
-          padding: EdgeInsets.all(context.spaceM),
-          decoration: card(),
-          child: _WeekBars(perDay: stats.perDay),
-        ),
-        SizedBox(height: context.spaceS),
-        // Two to a row, so the four read at a glance.
-        for (int i = 0; i < facts.length; i += 2)
-          Padding(
-            padding: EdgeInsets.only(top: context.spaceS),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(child: tile(facts[i])),
-                  SizedBox(width: context.spaceS),
-                  Expanded(
-                    child: i + 1 < facts.length
-                        ? tile(facts[i + 1])
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+        SizedBox(height: context.spaceL),
+        _PixelWeek(perDay: stats.perDay),
+        SizedBox(height: context.spaceL),
+        for (final (String, String) fact in facts)
+          _ReceiptLine(label: fact.$1, value: fact.$2),
+        SizedBox(height: context.spaceL),
+        Align(
+          child: OutlinedButton.icon(
+            onPressed: () => unawaited(
+              showRecapSheet(
+                context,
+                stats: stats,
+                room: room,
+                topTrack: topTrack,
               ),
             ),
-          ),
-        SizedBox(height: context.spaceL),
-        FilledButton.icon(
-          onPressed: () => unawaited(
-            showRecapSheet(
-              context,
-              stats: stats,
-              room: room,
-              topTrack: topTrack,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: cs.onSurface,
+              side: BorderSide(color: cs.outlineVariant),
+              shape: const StadiumBorder(),
+              padding: EdgeInsets.symmetric(
+                horizontal: context.spaceL,
+                vertical: context.spaceS,
+              ),
+            ),
+            icon: AppIcon(AppGlyph.share, size: context.fontM),
+            label: Text(
+              context.l10n.shareYourWeek,
+              style: TextStyle(fontSize: context.fontS),
             ),
           ),
-          icon: AppIcon(
-            AppGlyph.share,
-            size: context.fontM,
-            color: cs.onPrimary,
-          ),
-          label: Text(context.l10n.shareYourWeek),
         ),
       ],
     );
   }
 }
 
-/// Seven bars, Monday first, as tall as the day was long against the
-/// longest, today in full colour and the days before it quieter. The
-/// day letters come from the phone's language. Flat, in the theme's
-/// colours (`docs/09`).
-class _WeekBars extends StatelessWidget {
-  const _WeekBars({required this.perDay});
+/// One line of the receipt: the name in small capitals, dots, the value.
+class _ReceiptLine extends StatelessWidget {
+  const _ReceiptLine({required this.label, required this.value});
 
-  final List<Duration> perDay;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    // Sunday first there; the week here starts on Monday.
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: context.spaceXs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: <Widget>[
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontFamily: AppFonts.mono,
+              color: cs.onSurfaceVariant,
+              fontSize: context.fontXs,
+              letterSpacing: context.fontXs * 0.12,
+            ),
+          ),
+          // The leader: dots as far as the value, the way a receipt does.
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: context.spaceS),
+              child: Text(
+                '·' * 80,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+                softWrap: false,
+                style: TextStyle(
+                  fontFamily: AppFonts.mono,
+                  color: cs.outlineVariant,
+                  fontSize: context.fontXs,
+                ),
+              ),
+            ),
+          ),
+          // As wide as it needs, up to a little over half the line; the
+          // dots take the rest, so the value always ends at the edge.
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: context.screenWidth * 0.55),
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: cs.onSurface,
+                fontSize: context.fontS,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The week as seven columns of square pixel blocks, Monday first, like a
+/// level meter: a day fills as many blocks as it was long against the
+/// longest. Today in full colour, the days before it quieter, the blocks
+/// not reached barely there. Day letters from the phone's language.
+class _PixelWeek extends StatelessWidget {
+  const _PixelWeek({required this.perDay});
+
+  final List<Duration> perDay;
+
+  /// Blocks in a column.
+  static const int rows = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final List<String> narrow = MaterialLocalizations.of(
       context,
     ).narrowWeekdays;
+    // Sunday first there; the week here starts on Monday.
     final List<String> days = <String>[...narrow.skip(1), narrow.first];
     final int today = DateTime.now().weekday - 1;
     final int longest = perDay.fold<int>(
       0,
       (int m, Duration d) => d.inSeconds > m ? d.inSeconds : m,
     );
-    final double height = context.screenHeight * 0.12;
-    final Radius corner = Radius.circular(context.spaceXs * 1.5);
+    final double block = context.screenWidth * 0.04;
+    final double gap = block * 0.25;
+
+    int filled(Duration d) {
+      if (longest == 0 || d == Duration.zero) return 0;
+      return (rows * d.inSeconds / longest).ceil().clamp(1, rows);
+    }
 
     return Semantics(
       label: <String>[
@@ -182,41 +220,33 @@ class _WeekBars extends StatelessWidget {
       ].join(', '),
       excludeSemantics: true,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           for (int i = 0; i < 7; i++)
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                for (int r = rows - 1; r >= 0; r--)
                   Container(
-                    height: longest == 0
-                        ? context.spaceXs
-                        : (height * perDay[i].inSeconds / longest).clamp(
-                            context.spaceXs,
-                            height,
-                          ),
-                    margin: EdgeInsets.symmetric(horizontal: context.spaceXs),
-                    decoration: BoxDecoration(
-                      color: perDay[i] == Duration.zero
-                          ? cs.surfaceContainerHighest
-                          : i == today
-                          ? cs.primary
-                          : cs.primary.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.vertical(top: corner),
-                    ),
+                    width: block,
+                    height: block,
+                    margin: EdgeInsets.only(bottom: gap),
+                    color: r < filled(perDay[i])
+                        ? (i == today
+                              ? cs.primary
+                              : cs.primary.withValues(alpha: 0.5))
+                        : cs.surfaceContainerHigh,
                   ),
-                  SizedBox(height: context.spaceS),
-                  Text(
-                    days[i],
-                    style: TextStyle(
-                      color: i == today ? cs.onSurface : cs.onSurfaceVariant,
-                      fontSize: context.fontXs,
-                      fontWeight: i == today ? FontWeight.w700 : null,
-                    ),
+                SizedBox(height: gap),
+                Text(
+                  days[i],
+                  style: TextStyle(
+                    fontFamily: AppFonts.mono,
+                    color: i == today ? cs.onSurface : cs.onSurfaceVariant,
+                    fontSize: context.fontXs,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
         ],
       ),

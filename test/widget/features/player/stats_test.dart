@@ -91,7 +91,7 @@ void main() {
     // The recap card waits until the listener goes to share.
     expect(find.byType(RecapCard), findsNothing);
 
-    final Finder share = find.widgetWithText(FilledButton, 'Share your week');
+    final Finder share = find.widgetWithText(OutlinedButton, 'Share your week');
     await tester.ensureVisible(share);
     await tester.pumpAndSettle();
     await tester.tap(share);
