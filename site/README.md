@@ -15,6 +15,9 @@ One page and three legal pages, plain HTML, no build step.
   **drafts**: replace every `[PLACEHOLDER]` and have them reviewed before
   publishing.
 
+- **Not deployed:** `.vercelignore` keeps the web player below off the site
+  until it is picked up again. To bring it back, empty that file, link it from
+  `index.html`, add it to the sitemap and fill in `config.js` at deploy time.
 - `listen.html`, `listen.css`, `listen.js`: the web player (#150). One room
   at a time from `scenes.js`, PureLofi's tracks shuffled from Supabase, the
   system's media keys. No account, no Pro, no downloads: a taste of the app.
@@ -25,8 +28,7 @@ One page and three legal pages, plain HTML, no build step.
   `https://*.supabase.co` for it.
 
 - `sitemap.xml`, `robots.txt`: written by hand. List only pages that are live,
-  under `www.purelofi.app` (the bare domain redirects there). `/listen` is
-  listed, so a deploy must fill in `config.js`.
+  under `www.purelofi.app` (the bare domain redirects there).
 
 `vercel.json` gives clean URLs (`/privacy` instead of `/privacy.html`).
 Deploy the folder with the Vercel CLI (framework: Other) and point
