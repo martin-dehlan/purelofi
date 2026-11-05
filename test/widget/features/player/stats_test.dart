@@ -63,7 +63,11 @@ void main() {
     await open(tester, FakePlayHistoryRepository());
 
     expect(find.byType(StatsView), findsOneWidget);
+    // The page as ever, at nothing.
+    expect(find.text('0 min'), findsOneWidget);
     expect(find.text('Nothing heard in this time.'), findsOneWidget);
+    expect(find.text('ACTIVE DAYS'), findsOneWidget);
+    expect(find.text('Share your week'), findsNothing);
     expect(find.byType(RecapCard), findsNothing);
   });
 
