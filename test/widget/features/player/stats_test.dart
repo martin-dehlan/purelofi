@@ -8,6 +8,7 @@ import 'package:purelofi/features/player/domain/play_event.entity.dart';
 import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 import 'package:purelofi/features/player/presentation/widgets/recap_card.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/recap_sheet.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/room_page.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/stats_view.widget.dart';
 
@@ -84,12 +85,26 @@ void main() {
       ]),
     );
 
-    // Once in the tab, once on the recap card.
-    expect(find.text('1 h 35 min'), findsWidgets);
-    expect(find.text('Rainy Room'), findsWidgets);
-    expect(find.byType(RecapCard), findsOneWidget);
-    expect(find.text('Share your week'), findsOneWidget);
+    expect(find.text('1 h 35 min'), findsOneWidget);
+    expect(find.text('Rainy Room'), findsOneWidget);
     expect(find.text('Dusk Tape'), findsWidgets);
+    // The recap card waits until the listener goes to share.
+    expect(find.byType(RecapCard), findsNothing);
+
+    final Finder share = find.widgetWithText(FilledButton, 'Share your week');
+    await tester.ensureVisible(share);
+    await tester.pumpAndSettle();
+    await tester.tap(share);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RecapCard), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(RecapSheet),
+        matching: find.text('Share your week'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the room page no longer carries the week', (tester) async {
