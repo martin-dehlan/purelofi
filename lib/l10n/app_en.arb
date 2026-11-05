@@ -153,6 +153,10 @@
   "getPro": "Get Pro",
   "goToArtist": "Go to artist",
   "hideControls": "Hide controls",
+  "hideWithTheControls": "Hide with the controls",
+  "@hideWithTheControls": {
+    "description": "Focus card: whether the clock on the scene steps aside with the controls."
+  },
   "hoursMinutesShort": "{hours} h {minutes}",
   "@hoursMinutesShort": {
     "placeholders": {

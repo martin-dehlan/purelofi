@@ -10,4 +10,9 @@ abstract class DisplayPreferences {
   Future<String?> loadLanguage();
 
   Future<void> saveLanguage(String? code);
+
+  /// Whether the focus clock on the scene steps aside with the controls.
+  Future<bool> loadFocusClockHides();
+
+  Future<void> saveFocusClockHides(bool hides);
 }

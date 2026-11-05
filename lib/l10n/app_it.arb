@@ -67,6 +67,7 @@
   "getPro": "Passa a Pro",
   "goToArtist": "Vai all’artista",
   "hideControls": "Nascondi i controlli",
+  "hideWithTheControls": "Nascondi con i controlli",
   "hoursMinutesShort": "{hours} h {minutes}",
   "hoursShort": "{hours} h",
   "iHaveAnAccount": "Ho già un account",

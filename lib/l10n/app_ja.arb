@@ -67,6 +67,7 @@
   "getPro": "Pro にする",
   "goToArtist": "アーティストへ",
   "hideControls": "操作ボタンを隠す",
+  "hideWithTheControls": "操作ボタンと一緒に隠す",
   "hoursMinutesShort": "{hours} 時間 {minutes} 分",
   "hoursShort": "{hours} 時間",
   "iHaveAnAccount": "アカウントを持っています",
