@@ -63,6 +63,9 @@ class TrackActionsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final PlayerController player = ref.read(playerControllerProvider.notifier);
+    // The track already playing has nowhere to be lined up: it is on now.
+    final bool playing =
+        ref.watch(playerControllerProvider).currentTrack?.id == track.id;
     final bool isCatalogue = track.source == TrackSource.catalogue;
     final bool isFavorite = ref.watch(
       favoritesControllerProvider.select(
@@ -154,16 +157,18 @@ class TrackActionsSheet extends ConsumerWidget {
                           .toggle(track.id),
                     ),
                   ),
-                MenuRow(
-                  glyph: AppGlyph.next,
-                  title: context.l10n.playNext,
-                  onTap: then(() => player.queueNext(track)),
-                ),
-                MenuRow(
-                  glyph: AppGlyph.queue,
-                  title: context.l10n.addToQueue,
-                  onTap: then(() => player.addToQueue(track)),
-                ),
+                if (!playing) ...<Widget>[
+                  MenuRow(
+                    glyph: AppGlyph.next,
+                    title: context.l10n.playNext,
+                    onTap: then(() => player.queueNext(track)),
+                  ),
+                  MenuRow(
+                    glyph: AppGlyph.queue,
+                    title: context.l10n.addToQueue,
+                    onTap: then(() => player.addToQueue(track)),
+                  ),
+                ],
                 MenuRow(
                   glyph: AppGlyph.add,
                   title: context.l10n.addToPlaylist,
