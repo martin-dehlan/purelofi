@@ -17,6 +17,7 @@
         android:label="PureLofi"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules">
         <!-- PostHog is set up from Dart with the key in .env. -->

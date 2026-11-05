@@ -28,6 +28,72 @@ void main() {
     }
   });
 
+  test('every placeholder survives in every language', () {
+    final Map<String, dynamic> english = arb('en');
+    final RegExp placeholder = RegExp(r'\{(\w+)[,}]');
+    Set<String> names(String s) =>
+        placeholder.allMatches(s).map((Match m) => m.group(1)!).toSet();
+    for (final Locale locale in AppLocalizations.supportedLocales) {
+      final Map<String, dynamic> other = arb(locale.languageCode);
+      for (final String key in keys(english)) {
+        expect(
+          names(other[key] as String),
+          names(english[key] as String),
+          reason: '${locale.languageCode}: $key',
+        );
+      }
+    }
+  });
+
+  test('the languages for lo-fi listeners are offered, each in its own '
+      'words (#174)', () async {
+    const Map<String, String> play = <String, String>{
+      'es': 'Reproducir',
+      'pt': 'Tocar',
+      'fr': 'Lecture',
+      'it': 'Riproduci',
+      'nl': 'Afspelen',
+      'pl': 'Odtwórz',
+      'tr': 'Çal',
+      'ru': 'Играть',
+      'ja': '再生',
+      'ko': '재생',
+      'zh': '播放',
+      'id': 'Putar',
+    };
+    expect(
+      AppLocalizations.supportedLocales.map((Locale l) => l.languageCode),
+      containsAll(play.keys),
+    );
+    for (final MapEntry<String, String> e in play.entries) {
+      final AppLocalizations l10n = await AppLocalizations.delegate.load(
+        Locale(e.key),
+      );
+      expect(l10n.play, e.value, reason: e.key);
+      // The name and the plan keep their own names everywhere.
+      expect(l10n.purelofiPro, 'PureLofi Pro', reason: e.key);
+    }
+  });
+
+  test('counts read right where a language has more than one plural', () async {
+    final AppLocalizations ru = await AppLocalizations.delegate.load(
+      const Locale('ru'),
+    );
+    expect(ru.trackCount(1), '1 трек');
+    expect(ru.trackCount(3), '3 трека');
+    expect(ru.trackCount(5), '5 треков');
+    expect(ru.trackCount(21), '21 трек');
+    final AppLocalizations pl = await AppLocalizations.delegate.load(
+      const Locale('pl'),
+    );
+    expect(pl.trackCount(2), '2 utwory');
+    expect(pl.trackCount(5), '5 utworów');
+    final AppLocalizations ja = await AppLocalizations.delegate.load(
+      const Locale('ja'),
+    );
+    expect(ja.trackCount(1), '1 曲');
+  });
+
   test('German is offered, and reads German', () async {
     expect(
       AppLocalizations.supportedLocales.map((Locale l) => l.languageCode),
@@ -80,7 +146,8 @@ void main() {
     expect(
       count,
       lessThanOrEqualTo(stillInEnglish),
-      reason: 'Put new interface text in lib/l10n/app_en.arb (and app_de.arb).',
+      reason:
+          'Put new interface text in lib/l10n/app_en.arb and every other app_*.arb.',
     );
   });
 }
