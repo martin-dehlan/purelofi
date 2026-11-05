@@ -83,9 +83,16 @@ a{color:var(--lamp)}a:hover{color:var(--lamp-hi)}
 .foot nav{display:flex;flex-wrap:wrap;gap:4px 24px;margin-left:auto;font-size:15px}
 .foot nav a{color:var(--paper);opacity:.72;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
 .foot nav a:hover{opacity:1}
+.foot-social{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;font-size:15px}
+.foot-social a{color:var(--paper);opacity:.72;text-decoration:none;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.foot-social a:hover{opacity:1}
+.foot-social svg{width:20px;height:20px;fill:currentColor;flex:none}
+.foot-social .foot-mail{margin-left:12px}
 .fine{flex-basis:100%;margin:0;font-size:13px;color:var(--mist)}
 
 @media (max-width:760px){
+  .foot-social{margin-left:-12px}
+  .foot nav{margin-left:0;flex-basis:100%}
   .stop{top:auto;bottom:max(24px,env(safe-area-inset-bottom,0px));left:20px!important;right:20px;width:auto;transform:none}
   .stop h1,.stop h2{font-size:34px;margin-bottom:12px}
   .stop p{font-size:16px}
