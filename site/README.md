@@ -25,8 +25,8 @@ One page and three legal pages, plain HTML, no build step.
   `https://*.supabase.co` for it.
 
 - `sitemap.xml`, `robots.txt`: written by hand. List only pages that are live,
-  under `www.purelofi.app` (the bare domain redirects there). `/listen` joins
-  the sitemap once `config.js` is filled in on the deployed site.
+  under `www.purelofi.app` (the bare domain redirects there). `/listen` is
+  listed, so a deploy must fill in `config.js`.
 
 `vercel.json` gives clean URLs (`/privacy` instead of `/privacy.html`).
 Deploy the folder with the Vercel CLI (framework: Other) and point
