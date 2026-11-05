@@ -52,6 +52,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// The track of the two that is not playing: the start picks at random.
+  String notPlaying() => fakeAudio.playedTracks.last.title == 'Slow Bass'
+      ? 'Dusk Tape'
+      : 'Slow Bass';
+
   Future<void> openFromLibrary(WidgetTester tester, String title) async {
     await openLibrary(tester);
     await tapPill(tester, 'Tracks');
@@ -63,11 +68,12 @@ void main() {
     tester,
   ) async {
     await start(tester);
-    await openFromLibrary(tester, 'Slow Bass');
+    final String other = notPlaying();
+    await openFromLibrary(tester, other);
 
     final Finder sheet = find.byType(TrackActionsSheet);
     expect(
-      find.descendant(of: sheet, matching: find.text('Slow Bass')),
+      find.descendant(of: sheet, matching: find.text(other)),
       findsOneWidget,
     );
     for (final String row in <String>[
@@ -99,7 +105,7 @@ void main() {
 
   testWidgets('add to queue lines it up', (tester) async {
     await start(tester);
-    await openFromLibrary(tester, 'Slow Bass');
+    await openFromLibrary(tester, notPlaying());
 
     await tester.tap(find.text('Add to queue'));
     await tester.pumpAndSettle();
@@ -127,6 +133,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Share'), findsOneWidget);
+    // It is on already: nothing to line up.
+    expect(find.text('Play next'), findsNothing);
+    expect(find.text('Add to queue'), findsNothing);
   });
 
   testWidgets('a file of the listener\'s own can only be taken out', (
