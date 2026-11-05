@@ -13,7 +13,6 @@ import 'features/player/controller/language.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
 import 'features/player/controller/play_history.controller.dart';
-import 'features/player/controller/room_music.controller.dart';
 import 'features/player/controller/wake_alarm.controller.dart';
 
 /// Dark, with quiet type.
@@ -81,8 +80,6 @@ class PureLofiApp extends ConsumerWidget {
     ref.watch(mixControllerProvider);
     // Playlists follow a signed-in listener to every device (#141).
     ref.watch(playlistSyncControllerProvider);
-    // The room's mood, when the music follows the room (#143).
-    ref.watch(roomMusicProvider);
     // Followed artists follow a signed-in listener too (#147).
     ref.watch(followSyncControllerProvider);
     // What Android Auto and other media browsers can open (#145).

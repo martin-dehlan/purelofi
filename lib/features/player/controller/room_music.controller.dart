@@ -13,6 +13,9 @@ import 'scene.controller.dart';
 part 'room_music.controller.g.dart';
 
 /// "Music follows the room" (#143): off unless the listener turns it on.
+///
+/// Parked: not in the release. Nothing builds these providers and no setting
+/// shows them, so a value saved by an earlier build does nothing.
 @Riverpod(keepAlive: true)
 class FollowRoomController extends _$FollowRoomController {
   @override
