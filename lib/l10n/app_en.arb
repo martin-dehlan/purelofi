@@ -40,6 +40,15 @@
   "cancel": "Cancel",
   "changeOrCancelInYourStore": "Change or cancel in your store",
   "changeTime": "Change the time",
+  "changeVsLastWeek": "{change} vs last week",
+  "@changeVsLastWeek": {
+    "description": "Stats: change against last week, e.g. +40%.",
+    "placeholders": {
+      "change": {
+        "type": "String"
+      }
+    }
+  },
   "clear": "Clear",
   "continueWithApple": "Continue with Apple",
   "continueWithEmail": "Continue with email",
@@ -410,6 +419,10 @@
   "restorePurchases": "Restore purchases",
   "retry": "Retry",
   "room": "Room",
+  "rooms": "Rooms",
+  "@rooms": {
+    "description": "Stats: the rooms most listened in."
+  },
   "roomSounds": "Room sounds",
   "savedMusicAndRooms": "Saved music and rooms",
   "search": "Search",
@@ -477,6 +490,10 @@
   "theTracksStayInPurelofiOnly": "The tracks stay in PureLofi; only the list goes.",
   "theirPage": "their page",
   "thisWeek": "This week",
+  "timeOfDay": "Time of day",
+  "@timeOfDay": {
+    "description": "Stats: the hours of the day the music played."
+  },
   "timeThisWeek": "{time} this week",
   "@timeThisWeek": {
     "placeholders": {
