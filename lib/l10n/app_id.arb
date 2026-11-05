@@ -59,6 +59,8 @@
   "everyRoomMore": "Semua ruangan, {count} lagi untuk disinggahi, dan musikmu secara offline.",
   "favorites": "Favorit",
   "focus": "Fokus",
+  "focusBackNotice": "Kembali fokus · {minutes} mnt",
+  "focusBreakNotice": "Istirahat · {minutes} mnt",
   "focusUntil": "Fokus sampai {time}",
   "focusUntilRound": "Fokus sampai {time} · putaran {round}",
   "follow": "Ikuti",

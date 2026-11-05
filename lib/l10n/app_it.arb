@@ -59,6 +59,8 @@
   "everyRoomMore": "Tutte le stanze, altre {count} in cui stare, e la tua musica offline.",
   "favorites": "Preferiti",
   "focus": "Concentrazione",
+  "focusBackNotice": "Di nuovo concentrazione · {minutes} min",
+  "focusBreakNotice": "Pausa · {minutes} min",
   "focusUntil": "Concentrazione fino alle {time}",
   "focusUntilRound": "Concentrazione fino alle {time} · round {round}",
   "follow": "Segui",

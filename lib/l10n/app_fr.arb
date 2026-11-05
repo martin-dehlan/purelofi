@@ -59,6 +59,8 @@
   "everyRoomMore": "Toutes les pièces, {count} de plus où s’installer, et votre musique hors ligne.",
   "favorites": "Favoris",
   "focus": "Concentration",
+  "focusBackNotice": "Retour au focus · {minutes} min",
+  "focusBreakNotice": "Pause · {minutes} min",
   "focusUntil": "Concentration jusqu’à {time}",
   "focusUntilRound": "Concentration jusqu’à {time} · tour {round}",
   "follow": "Suivre",

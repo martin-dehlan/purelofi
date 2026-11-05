@@ -22,6 +22,7 @@ import 'fake_home_widget.dart';
 import 'fake_wake.dart';
 import 'fake_screen_awake.dart';
 import 'fake_display_preferences.dart';
+import 'fake_focus_notifier.dart';
 import 'fake_favorites.repository.dart';
 import 'fake_library.repository.dart';
 import 'fake_library_preferences.dart';
@@ -103,6 +104,7 @@ List<Override> _fakeLibrary(
     libraryPreferencesProvider.overrideWithValue(FakeLibraryPreferences()),
     playbackPreferencesProvider.overrideWithValue(FakePlaybackPreferences()),
     displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
+    focusNoticeProvider.overrideWithValue(FakeFocusNotifier()),
     playHistoryRepositoryProvider.overrideWithValue(history),
     newContentRepositoryProvider.overrideWithValue(seen),
     mixPreferencesProvider.overrideWithValue(FakeMixPreferences()),

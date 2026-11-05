@@ -59,6 +59,8 @@
   "everyRoomMore": "Все комнаты, ещё {count}, где можно посидеть, и ваша музыка офлайн.",
   "favorites": "Избранное",
   "focus": "Фокус",
+  "focusBackNotice": "Снова фокус · {minutes} мин",
+  "focusBreakNotice": "Перерыв · {minutes} мин",
   "focusUntil": "Фокус до {time}",
   "focusUntilRound": "Фокус до {time} · раунд {round}",
   "follow": "Подписаться",
