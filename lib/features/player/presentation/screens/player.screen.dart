@@ -211,6 +211,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       alignment: Alignment.topCenter,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // The focus count under the gear grows it down,
+                        // never the library opposite.
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[MenuButton(), LibraryButton()],
                       ),
                     ),

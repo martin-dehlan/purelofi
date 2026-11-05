@@ -105,59 +105,63 @@ class _SleepTimerSliderState extends ConsumerState<SleepTimerSlider> {
         children: <Widget>[
           // Side by side where they fit; on a narrow card at a large text
           // size the chip moves under the time rather than being cut short.
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: context.spaceS,
-            runSpacing: context.spaceS,
-            children: <Widget>[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    at != null && shown == 0
-                        ? context.l10n.underAMinute
-                        : SleepTimerSlider.lengthLabel(context.l10n, shown),
-                    style: TextStyle(
-                      color: off ? cs.onSurfaceVariant : cs.onSurface,
-                      fontSize: context.fontL,
-                      fontWeight: FontWeight.w600,
-                      fontFeatures: const <FontFeature>[
-                        FontFeature.tabularFigures(),
-                      ],
+          // The full width of the card, so the chip goes to its far end.
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: context.spaceS,
+              runSpacing: context.spaceS,
+              children: <Widget>[
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      at != null && shown == 0
+                          ? context.l10n.underAMinute
+                          : SleepTimerSlider.lengthLabel(context.l10n, shown),
+                      style: TextStyle(
+                        color: off ? cs.onSurfaceVariant : cs.onSurface,
+                        fontSize: context.fontL,
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    at == null
-                        ? context.l10n.playsOn
-                        : context.l10n.stopsAt(
-                            SleepTimerSlider.timeOfDay(context, at),
-                          ),
-                    style: TextStyle(
-                      color: cs.onSurfaceVariant,
-                      fontSize: context.fontS,
+                    Text(
+                      at == null
+                          ? context.l10n.playsOn
+                          : context.l10n.stopsAt(
+                              SleepTimerSlider.timeOfDay(context, at),
+                            ),
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: context.fontS,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              ActionChip(
-                label: Text(context.l10n.endOfTrack),
-                onPressed: ref
-                    .read(sleepTimerControllerProvider.notifier)
-                    .endOfTrack,
-                side: BorderSide.none,
-                shape: const StadiumBorder(),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                // On its card, a step lighter than the card.
-                backgroundColor: cs.surfaceContainerHighest,
-                labelStyle: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: context.fontS,
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
-              ),
-            ],
+                ActionChip(
+                  label: Text(context.l10n.endOfTrack),
+                  onPressed: ref
+                      .read(sleepTimerControllerProvider.notifier)
+                      .endOfTrack,
+                  side: BorderSide.none,
+                  shape: const StadiumBorder(),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  // On its card, a step lighter than the card.
+                  backgroundColor: cs.surfaceContainerHighest,
+                  labelStyle: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: context.fontS,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(

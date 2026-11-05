@@ -102,8 +102,13 @@ void main() {
 
   testWidgets('play next puts it at the head of the queue', (tester) async {
     await start(tester);
+    // The one not playing: the start picks at random, and the one playing
+    // has nothing to line up.
+    final String other = fakeAudio.playedTracks.last.title == 'Slow Bass'
+        ? 'Dusk Tape'
+        : 'Slow Bass';
 
-    await openMore(tester, 'Slow Bass');
+    await openMore(tester, other);
     await tester.tap(find.text('Play next'));
     await tester.pumpAndSettle();
     Navigator.of(tester.element(find.byType(LibrarySheet))).pop();
@@ -116,7 +121,10 @@ void main() {
   testWidgets('the track menu no longer offers footage', (tester) async {
     await start(tester);
 
-    await openMore(tester, 'Slow Bass');
+    final String other = fakeAudio.playedTracks.last.title == 'Slow Bass'
+        ? 'Dusk Tape'
+        : 'Slow Bass';
+    await openMore(tester, other);
     expect(find.text('Play next'), findsOneWidget);
     expect(find.text('Behind the scenes'), findsNothing);
   });
