@@ -12,9 +12,11 @@ class PlayHistoryRepositoryImpl implements PlayHistoryRepository {
 
   final PlayEventDao _dao;
 
-  /// What the log keeps: three months, and never more than this many rows.
-  static const Duration keepFor = Duration(days: 90);
-  static const int keepRows = 5000;
+  /// What the log keeps: a little over a year, so the Stats page can look
+  /// back at last year whole, and never more than this many rows (a few
+  /// megabytes at most).
+  static const Duration keepFor = Duration(days: 400);
+  static const int keepRows = 40000;
 
   @override
   Future<int> record({

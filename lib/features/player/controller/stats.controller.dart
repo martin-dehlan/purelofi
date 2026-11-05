@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/listening_stats.dart';
+import '../domain/period_stats.dart';
 import '../domain/play_event.entity.dart';
 import '../domain/track.entity.dart';
 import '../../library/controller/library.controller.dart';
@@ -20,11 +21,7 @@ Future<ListeningStats> weekStats(Ref ref) async {
   try {
     plays = await ref
         .read(playHistoryRepositoryProvider)
-        // The week before too, to set this one against.
-        .between(
-          start.subtract(const Duration(days: 7)),
-          start.add(const Duration(days: 7)),
-        );
+        .between(start, start.add(const Duration(days: 7)));
   } on Object {
     return ListeningStats.empty;
   }
@@ -43,11 +40,38 @@ Future<ListeningStats> weekStats(Ref ref) async {
     weekStart: start,
     plays: plays,
     artistOf: (String id) => artists[id],
-  ).withLastWeek(
-    ListeningStats.totalBetween(
-      plays,
-      start.subtract(const Duration(days: 7)),
-      start,
-    ),
+  );
+}
+
+/// A week, month or year of listening for the Stats page, [offset] of them
+/// back from the one now; worked out again as the log grows.
+@riverpod
+Future<PeriodStats> periodStats(Ref ref, StatsSpan span, int offset) async {
+  ref.watch(recentPlaysProvider);
+  final StatsPeriod period = StatsPeriod(span, DateTime.now(), offset: offset);
+  List<PlayEventEntity> plays;
+  try {
+    // The stretch before too, to set this one against.
+    plays = await ref
+        .read(playHistoryRepositoryProvider)
+        .between(period.previousStart, period.end);
+  } on Object {
+    plays = const <PlayEventEntity>[];
+  }
+
+  final Map<String, String?> artists = <String, String?>{
+    for (final TrackEntity t
+        in ref.watch(trackListControllerProvider).value ??
+            const <TrackEntity>[])
+      t.id: t.artist,
+    for (final TrackEntity t
+        in ref.watch(libraryControllerProvider).value ?? const <TrackEntity>[])
+      t.id: t.artist,
+  };
+
+  return PeriodStats.of(
+    period: period,
+    plays: plays,
+    artistOf: (String id) => artists[id],
   );
 }
