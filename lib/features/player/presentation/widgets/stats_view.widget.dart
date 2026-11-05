@@ -1,297 +1,464 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../library/controller/library.controller.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/stats.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/listening_stats.dart';
+import '../../domain/period_stats.dart';
 import '../../domain/scene.entity.dart';
 import '../../domain/track.entity.dart';
 import 'recap_sheet.widget.dart';
+import 'stats_line_chart.widget.dart';
 
-/// The week in listening (#151), lean and lo-fi, in small sections each
-/// headed in mono capitals: the time and how it went against last week,
-/// the days as a short strip of pixel blocks, the hours of the day as one
-/// row of cells, the rooms with a meter each, and the rest as a receipt.
-/// The recap card only shows once the listener goes to share it.
-class StatsView extends ConsumerWidget {
+/// The Stats page (#151): a week, a month or a year of listening, and any
+/// of them back as far as the log goes. On top the time and how it went
+/// against the stretch before; then the stretch as a pixel line; then what
+/// was heard most, as a numbered list; then the rest as a receipt. Lo-fi
+/// by the mono face and the pixel grid, not by boxes.
+class StatsView extends ConsumerStatefulWidget {
   const StatsView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatsView> createState() => _StatsViewState();
+}
+
+enum _Top { tracks, artists, rooms }
+
+class _StatsViewState extends ConsumerState<StatsView> {
+  StatsSpan _span = StatsSpan.week;
+  int _offset = 0;
+  _Top _top = _Top.tracks;
+
+  /// How far back each span goes: the log keeps a little over a year.
+  static int _furthest(StatsSpan span) => switch (span) {
+    StatsSpan.week => -52,
+    StatsSpan.month => -12,
+    StatsSpan.year => -1,
+  };
+
+  void _show(StatsSpan span) => setState(() {
+    _span = span;
+    _offset = 0;
+  });
+
+  void _step(int by) {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _offset += by);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final ListeningStats stats =
-        ref.watch(weekStatsProvider).value ?? ListeningStats.empty;
-    final List<SceneEntity> scenes =
-        ref.watch(sceneListControllerProvider).value ?? const <SceneEntity>[];
-    final List<TrackEntity> tracks =
-        ref.watch(trackListControllerProvider).value ?? const <TrackEntity>[];
-    SceneEntity? sceneOf(String? id) =>
-        scenes.where((SceneEntity s) => s.id == id).firstOrNull;
-    final SceneEntity? room = sceneOf(stats.topSceneId);
-    final String? topTrack = tracks
-        .where((TrackEntity t) => t.id == stats.topTrackId)
-        .firstOrNull
-        ?.title;
-
-    if (stats.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: context.spaceL),
-        child: Text(
-          context.l10n.nothingHeardThisWeek,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS),
-        ),
-      );
-    }
-
-    final int? change = stats.changeOnLastWeek;
-    final List<(String, String)> facts = <(String, String)>[
-      if (stats.topArtist case final String artist)
-        (context.l10n.artist, artist),
-      if (topTrack != null) (context.l10n.track, topTrack),
-      if (stats.streak > 0)
-        (context.l10n.streak, context.l10n.dayCount(stats.streak)),
-      (context.l10n.tracks, '${stats.tracksHeard}'),
-      if (stats.artistsHeard > 0)
-        (context.l10n.artists, '${stats.artistsHeard}'),
-    ];
-    final List<(SceneEntity, Duration)> rooms = <(SceneEntity, Duration)>[
-      for (final (String, Duration) r in stats.topScenes)
-        if (sceneOf(r.$1) case final SceneEntity scene) (scene, r.$2),
-    ];
+    final AsyncValue<PeriodStats> async = ref.watch(
+      periodStatsProvider(_span, _offset),
+    );
+    final PeriodStats? stats = async.value;
+    final StatsPeriod period =
+        stats?.period ?? StatsPeriod(_span, DateTime.now(), offset: _offset);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _Heading(context.l10n.thisWeek),
+        _Switch<StatsSpan>(
+          values: StatsSpan.values,
+          selected: _span,
+          label: (StatsSpan s) => switch (s) {
+            StatsSpan.week => context.l10n.week,
+            StatsSpan.month => context.l10n.month,
+            StatsSpan.year => context.l10n.year,
+          },
+          onSelected: _show,
+        ),
+        SizedBox(height: context.spaceS),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
           children: <Widget>[
-            Text(
-              listeningTimeLabel(stats.total),
-              style: TextStyle(
-                color: cs.primary,
-                fontSize: context.fontXl,
-                fontFamily: AppFonts.mono,
+            IconButton(
+              tooltip: context.l10n.earlier,
+              onPressed: _offset > _furthest(_span) ? () => _step(-1) : null,
+              icon: AppIcon(
+                AppGlyph.back,
+                size: context.fontM,
+                color: _offset > _furthest(_span)
+                    ? cs.onSurface
+                    : cs.onSurface.withValues(alpha: 0.25),
               ),
             ),
-            if (change != null) ...<Widget>[
-              SizedBox(width: context.spaceM),
-              Flexible(
-                child: Text(
-                  context.l10n.changeVsLastWeek(
-                    change > 0 ? '+$change%' : '$change%',
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppFonts.mono,
-                    color: change > 0 ? cs.primary : cs.onSurfaceVariant,
-                    fontSize: context.fontXs,
-                  ),
+            Expanded(
+              child: Text(
+                _periodLabel(context, period),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppFonts.mono,
+                  color: cs.onSurface,
+                  fontSize: context.fontS,
                 ),
               ),
-            ],
+            ),
+            IconButton(
+              tooltip: context.l10n.later,
+              onPressed: _offset < 0 ? () => _step(1) : null,
+              icon: AppIcon(
+                AppGlyph.chevron,
+                size: context.fontM,
+                color: _offset < 0
+                    ? cs.onSurface
+                    : cs.onSurface.withValues(alpha: 0.25),
+              ),
+            ),
           ],
         ),
         SizedBox(height: context.spaceM),
-        _PixelWeek(perDay: stats.perDay),
-        if (stats.perHour.length == 24) ...<Widget>[
-          SizedBox(height: context.spaceL),
-          _Heading(context.l10n.timeOfDay),
-          _HourStrip(perHour: stats.perHour),
-        ],
-        if (rooms.isNotEmpty) ...<Widget>[
-          SizedBox(height: context.spaceL),
-          _Heading(context.l10n.rooms),
-          for (final (SceneEntity, Duration) r in rooms)
-            _MeterLine(label: r.$1.title, value: r.$2, of: rooms.first.$2),
-        ],
-        SizedBox(height: context.spaceL),
-        for (final (String, String) fact in facts)
-          _ReceiptLine(label: fact.$1, value: fact.$2),
-        SizedBox(height: context.spaceL),
-        Align(
-          child: OutlinedButton.icon(
-            onPressed: () => unawaited(
-              showRecapSheet(
-                context,
-                stats: stats,
-                room: room,
-                topTrack: topTrack,
+        if (stats == null)
+          SizedBox(height: context.screenWidth * 0.6)
+        else if (stats.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: context.spaceXl),
+            child: Text(
+              context.l10n.nothingHeardHere,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: context.fontS,
               ),
             ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: cs.onSurface,
-              side: BorderSide(color: cs.outlineVariant),
-              shape: const StadiumBorder(),
-              padding: EdgeInsets.symmetric(
-                horizontal: context.spaceL,
-                vertical: context.spaceS,
-              ),
-            ),
-            icon: AppIcon(AppGlyph.share, size: context.fontM),
-            label: Text(
-              context.l10n.shareYourWeek,
-              style: TextStyle(fontSize: context.fontS),
-            ),
+          )
+        else
+          _Body(
+            stats: stats,
+            top: _top,
+            onTop: (_Top t) => setState(() => _top = t),
           ),
-        ),
       ],
     );
   }
-}
 
-/// A section's name in small mono capitals.
-class _Heading extends StatelessWidget {
-  const _Heading(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: context.spaceS),
-      child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          fontFamily: AppFonts.mono,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-          fontSize: context.fontXs,
-          letterSpacing: context.fontXs * 0.12,
-        ),
-      ),
-    );
+  /// "This week" for the one now, else the dates: "3 – 9 Nov", "October
+  /// 2026", "2025", in the app's language.
+  static String _periodLabel(BuildContext context, StatsPeriod period) {
+    final String locale = Localizations.localeOf(context).toString();
+    if (period.offset == 0) {
+      return switch (period.span) {
+        StatsSpan.week => context.l10n.thisWeek,
+        StatsSpan.month => context.l10n.thisMonth,
+        StatsSpan.year => context.l10n.thisYear,
+      };
+    }
+    return switch (period.span) {
+      StatsSpan.week =>
+        '${DateFormat.MMMd(locale).format(period.start)} – '
+            '${DateFormat.MMMd(locale).format(period.end.subtract(const Duration(days: 1)))}',
+      StatsSpan.month => DateFormat.yMMMM(locale).format(period.start),
+      StatsSpan.year => DateFormat.y(locale).format(period.start),
+    };
   }
 }
 
-/// The hours of the day as one row of 24 cells, midnight first: the more
-/// played in an hour, the stronger its cell. Marks at 0, 6, 12 and 18.
-class _HourStrip extends StatelessWidget {
-  const _HourStrip({required this.perHour});
+/// Everything below the period, once there is something to show.
+class _Body extends ConsumerWidget {
+  const _Body({required this.stats, required this.top, required this.onTop});
 
-  final List<Duration> perHour;
+  final PeriodStats stats;
+  final _Top top;
+  final ValueChanged<_Top> onTop;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final int most = perHour.fold<int>(
-      0,
-      (int m, Duration d) => d.inSeconds > m ? d.inSeconds : m,
-    );
-    final double cell = context.screenWidth * 0.045;
-    final double gap = context.screenWidth * 0.006;
-    final TextStyle mark = TextStyle(
+    final DateTime now = DateTime.now();
+    final int? change = stats.change;
+    final TextStyle small = TextStyle(
       fontFamily: AppFonts.mono,
       color: cs.onSurfaceVariant,
       fontSize: context.fontXs,
     );
 
-    return Semantics(
-      label: <String>[
-        for (int h = 0; h < 24; h++)
-          if (perHour[h] > Duration.zero)
-            '$h:00 ${listeningTimeLabel(perHour[h])}',
-      ].join(', '),
-      excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              for (int h = 0; h < 24; h++)
-                Expanded(
-                  child: Container(
-                    height: cell,
-                    margin: EdgeInsets.only(right: h == 23 ? 0 : gap),
-                    color: most == 0 || perHour[h] == Duration.zero
-                        ? cs.surfaceContainerHigh
-                        : cs.primary.withValues(
-                            alpha: 0.25 + 0.75 * perHour[h].inSeconds / most,
-                          ),
-                  ),
-                ),
-            ],
+    final Map<String, TrackEntity> tracks = <String, TrackEntity>{
+      for (final TrackEntity t
+          in ref.watch(trackListControllerProvider).value ??
+              const <TrackEntity>[])
+        t.id: t,
+      for (final TrackEntity t
+          in ref.watch(libraryControllerProvider).value ??
+              const <TrackEntity>[])
+        t.id: t,
+    };
+    final Map<String, SceneEntity> scenes = <String, SceneEntity>{
+      for (final SceneEntity s
+          in ref.watch(sceneListControllerProvider).value ??
+              const <SceneEntity>[])
+        s.id: s,
+    };
+
+    final List<_Ranked> ranked = switch (top) {
+      _Top.tracks => <_Ranked>[
+        for (final (String, Duration) t in stats.topTracks)
+          if (tracks[t.$1] case final TrackEntity track)
+            _Ranked(track.title, track.artistName, t.$2),
+      ],
+      _Top.artists => <_Ranked>[
+        for (final (String, Duration) a in stats.topArtists)
+          _Ranked(a.$1, null, a.$2),
+      ],
+      _Top.rooms => <_Ranked>[
+        for (final (String, Duration) r in stats.topScenes)
+          if (scenes[r.$1] case final SceneEntity scene)
+            _Ranked(scene.title, null, r.$2),
+      ],
+    };
+
+    final List<(String, String)> facts = <(String, String)>[
+      (
+        context.l10n.activeDays,
+        '${stats.activeDays} / ${stats.period.daysSoFar(now)}',
+      ),
+      if (stats.longestStreak > 1)
+        (
+          context.l10n.longestStreak,
+          context.l10n.dayCount(stats.longestStreak),
+        ),
+      if (stats.mostlyIn case final DayPart part)
+        (
+          context.l10n.mostly,
+          switch (part) {
+            DayPart.morning => context.l10n.inTheMorning,
+            DayPart.afternoon => context.l10n.inTheAfternoon,
+            DayPart.evening => context.l10n.inTheEvening,
+            DayPart.night => context.l10n.atNight,
+          },
+        ),
+      (context.l10n.tracks, '${stats.tracksHeard}'),
+      if (stats.artistsHeard > 0)
+        (context.l10n.artists, '${stats.artistsHeard}'),
+    ];
+
+    // Sharing tells of a week: offered on the week now.
+    final ListeningStats? week =
+        stats.period.span == StatsSpan.week && stats.period.offset == 0
+        ? ref.watch(weekStatsProvider).value
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          listeningTimeLabel(stats.total),
+          style: TextStyle(
+            color: cs.primary,
+            fontSize: context.fontXxl,
+            fontFamily: AppFonts.mono,
+            height: 1.1,
           ),
-          SizedBox(height: gap * 2),
-          Row(
-            children: <Widget>[
-              for (final String h in <String>['0', '6', '12', '18'])
-                Expanded(child: Text(h, style: mark)),
-            ],
+        ),
+        Text(
+          <String>[
+            context.l10n.aDay(listeningTimeLabel(stats.averageDay(now))),
+            if (change != null)
+              context.l10n.changeVsBefore(
+                change > 0 ? '+$change%' : '$change%',
+              ),
+          ].join('  ·  '),
+          style: small,
+        ),
+        SizedBox(height: context.spaceL),
+        StatsLineChart(period: stats.period, slots: stats.slots),
+        SizedBox(height: context.spaceXl),
+        _Switch<_Top>(
+          values: _Top.values,
+          selected: top,
+          label: (_Top t) => switch (t) {
+            _Top.tracks => context.l10n.tracks,
+            _Top.artists => context.l10n.artists,
+            _Top.rooms => context.l10n.rooms,
+          },
+          onSelected: onTop,
+        ),
+        SizedBox(height: context.spaceS),
+        for (int i = 0; i < ranked.length; i++)
+          _RankedLine(rank: i + 1, item: ranked[i]),
+        SizedBox(height: context.spaceXl),
+        for (final (String, String) fact in facts)
+          _ReceiptLine(label: fact.$1, value: fact.$2),
+        if (week != null && !week.isEmpty) ...<Widget>[
+          SizedBox(height: context.spaceL),
+          Align(
+            child: OutlinedButton.icon(
+              onPressed: () {
+                final SceneEntity? room = scenes[week.topSceneId];
+                unawaited(
+                  showRecapSheet(
+                    context,
+                    stats: week,
+                    room: room,
+                    topTrack: tracks[week.topTrackId]?.title,
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: cs.onSurface,
+                side: BorderSide(color: cs.outlineVariant),
+                shape: const StadiumBorder(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.spaceL,
+                  vertical: context.spaceS,
+                ),
+              ),
+              icon: AppIcon(AppGlyph.share, size: context.fontM),
+              label: Text(
+                context.l10n.shareYourWeek,
+                style: TextStyle(fontSize: context.fontS),
+              ),
+            ),
           ),
         ],
-      ),
+      ],
     );
   }
 }
 
-/// A room with its time, and a short meter of blocks set against the room
-/// heard most.
-class _MeterLine extends StatelessWidget {
-  const _MeterLine({
+/// A row of words to pick one of, in mono capitals: the picked one bright
+/// with a pixel underneath, the rest quiet. Lighter than chips.
+class _Switch<T> extends StatelessWidget {
+  const _Switch({
+    required this.values,
+    required this.selected,
     required this.label,
-    required this.value,
-    required this.of,
+    required this.onSelected,
   });
 
-  final String label;
-  final Duration value;
-  final Duration of;
-
-  static const int blocks = 6;
+  final List<T> values;
+  final T selected;
+  final String Function(T value) label;
+  final ValueChanged<T> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final int lit = of.inSeconds == 0
-        ? 0
-        : (blocks * value.inSeconds / of.inSeconds).ceil().clamp(1, blocks);
-    final double block = context.screenWidth * 0.022;
+    final double dot = context.screenWidth * 0.012;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: context.spaceXs),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: cs.onSurface,
-                fontSize: context.fontS,
-                fontWeight: FontWeight.w600,
+    return Row(
+      children: <Widget>[
+        for (final T value in values)
+          Semantics(
+            button: true,
+            selected: value == selected,
+            child: InkWell(
+              onTap: value == selected ? null : () => onSelected(value),
+              borderRadius: BorderRadius.circular(context.spaceS),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.spaceS,
+                  vertical: context.spaceXs,
+                ),
+                child: Column(
+                  children: <Widget>[
+                    Text(
+                      label(value).toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: AppFonts.mono,
+                        color: value == selected
+                            ? cs.onSurface
+                            : cs.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontSize: context.fontXs,
+                        letterSpacing: context.fontXs * 0.12,
+                      ),
+                    ),
+                    SizedBox(height: dot),
+                    Visibility.maintain(
+                      visible: value == selected,
+                      child: Container(
+                        width: dot,
+                        height: dot,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          for (int i = 0; i < blocks; i++)
-            Container(
-              width: block,
-              height: block,
-              margin: EdgeInsets.only(left: block * 0.3),
-              color: i < lit ? cs.primary : cs.surfaceContainerHigh,
-            ),
+      ],
+    );
+  }
+}
+
+class _Ranked {
+  const _Ranked(this.title, this.subtitle, this.time);
+
+  final String title;
+  final String? subtitle;
+  final Duration time;
+}
+
+/// One place in the list: "01", the name (and artist), the time.
+class _RankedLine extends StatelessWidget {
+  const _RankedLine({required this.rank, required this.item});
+
+  final int rank;
+  final _Ranked item;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: context.spaceS),
+      child: Row(
+        children: <Widget>[
           SizedBox(
-            width: context.screenWidth * 0.3,
+            width: context.screenWidth * 0.1,
             child: Text(
-              listeningTimeLabel(value),
-              textAlign: TextAlign.end,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
+              rank.toString().padLeft(2, '0'),
               style: TextStyle(
                 fontFamily: AppFonts.mono,
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontXs,
+                color: rank == 1 ? cs.primary : cs.onSurfaceVariant,
+                fontSize: context.fontS,
               ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: context.fontS,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (item.subtitle case final String subtitle)
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: context.fontXs,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(width: context.spaceS),
+          Text(
+            listeningTimeLabel(item.time),
+            style: TextStyle(
+              fontFamily: AppFonts.mono,
+              color: cs.onSurfaceVariant,
+              fontSize: context.fontXs,
             ),
           ),
         ],
@@ -343,8 +510,6 @@ class _ReceiptLine extends StatelessWidget {
               ),
             ),
           ),
-          // As wide as it needs, up to a little over half the line; the
-          // dots take the rest, so the value always ends at the edge.
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: context.screenWidth * 0.55),
             child: Text(
@@ -359,81 +524,6 @@ class _ReceiptLine extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The week as seven columns of square pixel blocks, Monday first, like a
-/// level meter: a day fills as many blocks as it was long against the
-/// longest. Today in full colour, the days before it quieter, the blocks
-/// not reached barely there. Day letters from the phone's language.
-class _PixelWeek extends StatelessWidget {
-  const _PixelWeek({required this.perDay});
-
-  final List<Duration> perDay;
-
-  /// Blocks in a column: enough to read, few enough to stay short.
-  static const int rows = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    final List<String> narrow = MaterialLocalizations.of(
-      context,
-    ).narrowWeekdays;
-    // Sunday first there; the week here starts on Monday.
-    final List<String> days = <String>[...narrow.skip(1), narrow.first];
-    final int today = DateTime.now().weekday - 1;
-    final int longest = perDay.fold<int>(
-      0,
-      (int m, Duration d) => d.inSeconds > m ? d.inSeconds : m,
-    );
-    final double block = context.screenWidth * 0.022;
-    final double width = context.screenWidth * 0.08;
-    final double gap = block * 0.35;
-
-    int filled(Duration d) {
-      if (longest == 0 || d == Duration.zero) return 0;
-      return (rows * d.inSeconds / longest).ceil().clamp(1, rows);
-    }
-
-    return Semantics(
-      label: <String>[
-        for (int i = 0; i < 7; i++)
-          '${days[i]} ${listeningTimeLabel(perDay[i])}',
-      ].join(', '),
-      excludeSemantics: true,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          for (int i = 0; i < 7; i++)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                for (int r = rows - 1; r >= 0; r--)
-                  Container(
-                    width: width,
-                    height: block,
-                    margin: EdgeInsets.only(bottom: gap),
-                    color: r < filled(perDay[i])
-                        ? (i == today
-                              ? cs.primary
-                              : cs.primary.withValues(alpha: 0.5))
-                        : cs.surfaceContainerHigh,
-                  ),
-                SizedBox(height: gap),
-                Text(
-                  days[i],
-                  style: TextStyle(
-                    fontFamily: AppFonts.mono,
-                    color: i == today ? cs.onSurface : cs.onSurfaceVariant,
-                    fontSize: context.fontXs,
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
     );

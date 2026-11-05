@@ -63,7 +63,7 @@ void main() {
     await open(tester, FakePlayHistoryRepository());
 
     expect(find.byType(StatsView), findsOneWidget);
-    expect(find.textContaining('Nothing heard this week'), findsOneWidget);
+    expect(find.text('Nothing heard in this time.'), findsOneWidget);
     expect(find.byType(RecapCard), findsNothing);
   });
 
@@ -85,12 +85,19 @@ void main() {
       ]),
     );
 
-    // The total on top, and again by the one room it was all heard in.
+    // The total on top, the track heard most first in the list.
+    expect(find.text('This week'), findsOneWidget);
     expect(find.text('1 h 35 min'), findsWidgets);
-    expect(find.text('ROOMS'), findsOneWidget);
-    expect(find.text('TIME OF DAY'), findsOneWidget);
-    expect(find.text('Rainy Room'), findsOneWidget);
-    expect(find.text('Dusk Tape'), findsWidgets);
+    expect(find.text('01'), findsOneWidget);
+    Finder onPage(String text) =>
+        find.descendant(of: find.byType(StatsView), matching: find.text(text));
+    expect(onPage('Dusk Tape'), findsOneWidget);
+
+    // The list turns to the rooms.
+    await tester.tap(find.text('ROOMS'));
+    await tester.pumpAndSettle();
+    expect(onPage('Rainy Room'), findsOneWidget);
+    expect(onPage('Dusk Tape'), findsNothing);
     // The recap card waits until the listener goes to share.
     expect(find.byType(RecapCard), findsNothing);
 
@@ -108,6 +115,36 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a month or a year, and back to the ones before', (tester) async {
+    await open(tester, FakePlayHistoryRepository());
+
+    await tester.tap(find.text('MONTH'));
+    await tester.pumpAndSettle();
+    expect(find.text('This month'), findsOneWidget);
+    // Nothing after now.
+    IconButton later() => tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip('Later'),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(later().onPressed, isNull);
+
+    await tester.tap(find.byTooltip('Earlier'));
+    await tester.pumpAndSettle();
+    expect(find.text('This month'), findsNothing);
+    expect(find.text('Nothing heard in this time.'), findsOneWidget);
+
+    expect(later().onPressed, isNotNull);
+    await tester.tap(find.byTooltip('Later'));
+    await tester.pumpAndSettle();
+    expect(find.text('This month'), findsOneWidget);
+
+    await tester.tap(find.text('YEAR'));
+    await tester.pumpAndSettle();
+    expect(find.text('This year'), findsOneWidget);
   });
 
   testWidgets('the room page no longer carries the week', (tester) async {

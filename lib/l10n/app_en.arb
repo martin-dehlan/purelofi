@@ -1,5 +1,15 @@
 {
   "@@locale": "en",
+  "activeDays": "Active days",
+  "aDay": "{time} a day",
+  "@aDay": {
+    "description": "Stats: the average per day, e.g. 32 min a day.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "addMusic": "Add music",
   "addToFavorites": "Add to favorites",
   "addToPlaylist": "Add to playlist",
@@ -21,6 +31,7 @@
       }
     }
   },
+  "atNight": "at night",
   "back": "Back",
   "backToPurelofi": "Back to PureLofi",
   "backToSignIn": "Back to sign in",
@@ -40,9 +51,9 @@
   "cancel": "Cancel",
   "changeOrCancelInYourStore": "Change or cancel in your store",
   "changeTime": "Change the time",
-  "changeVsLastWeek": "{change} vs last week",
-  "@changeVsLastWeek": {
-    "description": "Stats: change against last week, e.g. +40%.",
+  "changeVsBefore": "{change} vs the one before",
+  "@changeVsBefore": {
+    "description": "Stats: change against the week, month or year before, e.g. +40%.",
     "placeholders": {
       "change": {
         "type": "String"
@@ -93,6 +104,10 @@
   "downloading": "Downloading…",
   "downloads": "Downloads",
   "eachRoomPlaysItsOwnMood": "Each room plays its own mood",
+  "earlier": "Earlier",
+  "@earlier": {
+    "description": "Stats: tooltip, go to the week, month or year before."
+  },
   "editPlaylist": "Edit playlist",
   "@editPlaylist": {
     "description": "A playlist's menu: opens its tracks to reorder or remove."
@@ -207,6 +222,9 @@
   "ideasBugsOrAHello": "Ideas, bugs or a hello",
   "imprint": "Imprint",
   "inOrder": "In order",
+  "inTheAfternoon": "in the afternoon",
+  "inTheEvening": "in the evening",
+  "inTheMorning": "in the morning",
   "justTheRoomTheScreenStays": "Just the room, the screen stays on",
   "keep": "Keep",
   "keepIt": "Keep it",
@@ -219,12 +237,17 @@
   "@languageAsOnPhone": {
     "description": "The choice that follows the phone's own language."
   },
+  "later": "Later",
+  "@later": {
+    "description": "Stats: tooltip, go to the week, month or year after."
+  },
   "leaveWindowMode": "Leave window mode",
   "library": "Library",
   "libraryNewTracks": "Library, new tracks",
   "listeningHistory": "Listening history",
   "loading": "Loading",
   "loadingScenes": "Loading scenes",
+  "longestStreak": "Longest streak",
   "manageSubscription": "Manage subscription",
   "menu": "Menu",
   "minutesShort": "{minutes} min",
@@ -235,6 +258,7 @@
       }
     }
   },
+  "month": "Month",
   "monthly": "Monthly",
   "moodLabel": "{title}, mood",
   "@moodLabel": {
@@ -251,6 +275,10 @@
         "type": "String"
       }
     }
+  },
+  "mostly": "Mostly",
+  "@mostly": {
+    "description": "Stats receipt label: the part of the day most listened in."
   },
   "mostWith": "Most with",
   "mostlyIn": "Mostly in {room}",
@@ -280,6 +308,7 @@
   "noFavoritesYet": "Nothing marked yet. Tap ⋯ on a track, or the heart beside the one playing.",
   "noScenesToSwitchToYet": "No scenes to switch to yet.",
   "noScenesYet": "No scenes yet.",
+  "nothingHeardHere": "Nothing heard in this time.",
   "nothingHeardThisWeek": "Nothing heard this week yet. Your week fills in as you listen.",
   "@nothingHeardThisWeek": {
     "description": "Stats, before anything was heard this week."
@@ -489,11 +518,9 @@
   "terms": "Terms",
   "theTracksStayInPurelofiOnly": "The tracks stay in PureLofi; only the list goes.",
   "theirPage": "their page",
+  "thisMonth": "This month",
   "thisWeek": "This week",
-  "timeOfDay": "Time of day",
-  "@timeOfDay": {
-    "description": "Stats: the hours of the day the music played."
-  },
+  "thisYear": "This year",
   "timeThisWeek": "{time} this week",
   "@timeThisWeek": {
     "placeholders": {
@@ -529,6 +556,7 @@
   "waitingForStore": "Waiting for the store to confirm. Pro opens when it does.",
   "wakeMusicFadesIn": "The music comes in slowly",
   "wakeUp": "Wake up",
+  "week": "Week",
   "weSentACodeTo": "We sent a code to {address}.",
   "@weSentACodeTo": {
     "placeholders": {
@@ -540,6 +568,7 @@
   "welcomeToPurelofi": "Welcome to PureLofi",
   "windowMode": "Window mode",
   "withPro": "With Pro",
+  "year": "Year",
   "yearly": "Yearly",
   "yourLibrary": "Your Library",
   "yourMusicPrefix": "Your music  ·  ",
