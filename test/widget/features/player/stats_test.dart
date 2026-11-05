@@ -85,7 +85,10 @@ void main() {
       ]),
     );
 
-    expect(find.text('1 h 35 min'), findsOneWidget);
+    // The total on top, and again by the one room it was all heard in.
+    expect(find.text('1 h 35 min'), findsWidgets);
+    expect(find.text('ROOMS'), findsOneWidget);
+    expect(find.text('TIME OF DAY'), findsOneWidget);
     expect(find.text('Rainy Room'), findsOneWidget);
     expect(find.text('Dusk Tape'), findsWidgets);
     // The recap card waits until the listener goes to share.

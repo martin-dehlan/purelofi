@@ -20,7 +20,11 @@ Future<ListeningStats> weekStats(Ref ref) async {
   try {
     plays = await ref
         .read(playHistoryRepositoryProvider)
-        .between(start, start.add(const Duration(days: 7)));
+        // The week before too, to set this one against.
+        .between(
+          start.subtract(const Duration(days: 7)),
+          start.add(const Duration(days: 7)),
+        );
   } on Object {
     return ListeningStats.empty;
   }
@@ -39,5 +43,11 @@ Future<ListeningStats> weekStats(Ref ref) async {
     weekStart: start,
     plays: plays,
     artistOf: (String id) => artists[id],
+  ).withLastWeek(
+    ListeningStats.totalBetween(
+      plays,
+      start.subtract(const Duration(days: 7)),
+      start,
+    ),
   );
 }
