@@ -32,7 +32,7 @@ class MenuRow extends StatelessWidget {
     final bool enabled = onTap != null;
     final Color tint = danger ? cs.error : cs.onSurfaceVariant;
 
-    return ListTile(
+    final Widget tile = ListTile(
       enabled: enabled,
       contentPadding: EdgeInsets.symmetric(horizontal: context.spaceM),
       leading: AppIcon(
@@ -53,5 +53,9 @@ class MenuRow extends StatelessWidget {
       trailing: trailing,
       onTap: onTap,
     );
+
+    // A switch at the end is the row's own state: read as one, the title
+    // names it. Anything else at the end (a button) stays its own target.
+    return trailing is Switch ? MergeSemantics(child: tile) : tile;
   }
 }

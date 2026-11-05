@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../l10n/l10n.dart';
 
 /// Three dots lighting up one after the other: the app at work, where a

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../../l10n/l10n.dart';
 
 part 'app_error.freezed.dart';
