@@ -1,71 +1,28 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../common/utils/app_fonts.dart';
 import '../../../../common/utils/responsive.dart';
+import '../../../../common/widgets/app_icon.widget.dart';
+import '../../../../l10n/l10n.dart';
 import '../../controller/scene.controller.dart';
 import '../../controller/stats.controller.dart';
 import '../../controller/track.controller.dart';
 import '../../domain/listening_stats.dart';
 import '../../domain/scene.entity.dart';
 import '../../domain/track.entity.dart';
-import 'recap_card.widget.dart';
-import '../../../../l10n/l10n.dart';
+import 'recap_sheet.widget.dart';
 
-/// The week in listening (#151), as the library's Stats tab: the days as
-/// bars, the room, the artist, the track, the streak, and the recap card to
-/// share. Before anything was heard, one line says how it fills.
-class StatsView extends ConsumerStatefulWidget {
+/// The week in listening (#151): the time large, the days as bars on a
+/// card, what stood out as four tiles, and a way to share it. The recap
+/// card itself only shows once the listener goes to share it.
+class StatsView extends ConsumerWidget {
   const StatsView({super.key});
 
-  /// The recap is captured at this width: a phone screen's, sharp anywhere.
-  static const double recapPixels = 1080;
-
   @override
-  ConsumerState<StatsView> createState() => _StatsViewState();
-}
-
-class _StatsViewState extends ConsumerState<StatsView> {
-  final GlobalKey _recap = GlobalKey();
-  bool _sharing = false;
-
-  Future<void> _share(double width) async {
-    // Read before any await: the context may be gone after one.
-    final String subject = context.l10n.myPurelofiWeek;
-    setState(() => _sharing = true);
-    try {
-      final RenderRepaintBoundary boundary =
-          _recap.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-      final ui.Image image = await boundary.toImage(
-        pixelRatio: StatsView.recapPixels / width,
-      );
-      final ByteData? png = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      if (png == null) return;
-      final Directory temp = await getTemporaryDirectory();
-      final File file = File('${temp.path}/purelofi-week.png');
-      await file.writeAsBytes(png.buffer.asUint8List(), flush: true);
-      await SharePlus.instance.share(
-        ShareParams(files: <XFile>[XFile(file.path)], subject: subject),
-      );
-    } on Object {
-      // A share that did not happen is nothing to report.
-    } finally {
-      if (mounted) setState(() => _sharing = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ListeningStats stats =
         ref.watch(weekStatsProvider).value ?? ListeningStats.empty;
@@ -80,34 +37,11 @@ class _StatsViewState extends ConsumerState<StatsView> {
         .where((TrackEntity t) => t.id == stats.topTrackId)
         .firstOrNull
         ?.title;
-    final double recapWidth = context.screenWidth * 0.6;
 
-    TextStyle label() =>
-        TextStyle(color: cs.onSurfaceVariant, fontSize: context.fontS);
-    TextStyle value() => TextStyle(
-      color: cs.onSurface,
-      fontSize: context.fontM,
-      fontWeight: FontWeight.w600,
+    final TextStyle label = TextStyle(
+      color: cs.onSurfaceVariant,
+      fontSize: context.fontS,
     );
-
-    Widget fact(String name, String? text) => text == null
-        ? const SizedBox.shrink()
-        : Padding(
-            padding: EdgeInsets.only(bottom: context.spaceS),
-            child: Row(
-              children: <Widget>[
-                Expanded(child: Text(name, style: label())),
-                Flexible(
-                  child: Text(
-                    text,
-                    textAlign: TextAlign.end,
-                    overflow: TextOverflow.ellipsis,
-                    style: value(),
-                  ),
-                ),
-              ],
-            ),
-          );
 
     if (stats.isEmpty) {
       return Padding(
@@ -115,78 +49,131 @@ class _StatsViewState extends ConsumerState<StatsView> {
         child: Text(
           context.l10n.nothingHeardThisWeek,
           textAlign: TextAlign.center,
-          style: label(),
+          style: label,
         ),
       );
     }
 
+    final List<(String, String)> facts = <(String, String)>[
+      if (room != null) (context.l10n.room, room.title),
+      if (stats.topArtist case final String artist)
+        (context.l10n.artist, artist),
+      if (topTrack != null) (context.l10n.track, topTrack),
+      if (stats.streak > 0)
+        (context.l10n.streak, context.l10n.dayCount(stats.streak)),
+    ];
+
+    BoxDecoration card() => BoxDecoration(
+      color: cs.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(context.cardBorderRadius * 1.5),
+    );
+
+    Widget tile((String, String) fact) => Container(
+      padding: EdgeInsets.all(context.spaceM),
+      decoration: card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(fact.$1, style: label),
+          SizedBox(height: context.spaceXs),
+          Text(
+            fact.$2,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: cs.onSurface,
+              fontSize: context.fontM,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(context.l10n.thisWeek, style: label()),
+        Text(context.l10n.thisWeek, style: label),
         Text(
           listeningTimeLabel(stats.total),
           style: TextStyle(
             color: cs.primary,
-            fontSize: context.fontXl,
+            fontSize: context.fontXxl,
             fontFamily: AppFonts.mono,
           ),
         ),
         SizedBox(height: context.spaceM),
-        _WeekBars(perDay: stats.perDay),
-        SizedBox(height: context.spaceM),
-        fact(context.l10n.room, room?.title),
-        fact(context.l10n.artist, stats.topArtist),
-        fact(context.l10n.track, topTrack),
-        fact(
-          context.l10n.streak,
-          stats.streak == 0
-              ? null
-              : (stats.streak == 1
-                    ? '1 day'
-                    : context.l10n.dayCount(stats.streak)),
+        Container(
+          padding: EdgeInsets.all(context.spaceM),
+          decoration: card(),
+          child: _WeekBars(perDay: stats.perDay),
         ),
-        if (!stats.isEmpty) ...<Widget>[
-          SizedBox(height: context.spaceM),
-          Center(
-            child: RepaintBoundary(
-              key: _recap,
-              child: RecapCard(
-                stats: stats,
-                width: recapWidth,
-                room: room,
-                topTrack: topTrack,
+        SizedBox(height: context.spaceS),
+        // Two to a row, so the four read at a glance.
+        for (int i = 0; i < facts.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(top: context.spaceS),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(child: tile(facts[i])),
+                  SizedBox(width: context.spaceS),
+                  Expanded(
+                    child: i + 1 < facts.length
+                        ? tile(facts[i + 1])
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
           ),
-          SizedBox(height: context.spaceM),
-          FilledButton(
-            onPressed: _sharing ? null : () => unawaited(_share(recapWidth)),
-            child: Text(context.l10n.shareYourWeek),
+        SizedBox(height: context.spaceL),
+        FilledButton.icon(
+          onPressed: () => unawaited(
+            showRecapSheet(
+              context,
+              stats: stats,
+              room: room,
+              topTrack: topTrack,
+            ),
           ),
-        ],
+          icon: AppIcon(
+            AppGlyph.share,
+            size: context.fontM,
+            color: cs.onPrimary,
+          ),
+          label: Text(context.l10n.shareYourWeek),
+        ),
       ],
     );
   }
 }
 
 /// Seven bars, Monday first, as tall as the day was long against the
-/// longest. Flat, in the theme's colours (`docs/09`).
+/// longest, today in full colour and the days before it quieter. The
+/// day letters come from the phone's language. Flat, in the theme's
+/// colours (`docs/09`).
 class _WeekBars extends StatelessWidget {
   const _WeekBars({required this.perDay});
 
   final List<Duration> perDay;
 
-  static const List<String> days = <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    // Sunday first there; the week here starts on Monday.
+    final List<String> narrow = MaterialLocalizations.of(
+      context,
+    ).narrowWeekdays;
+    final List<String> days = <String>[...narrow.skip(1), narrow.first];
+    final int today = DateTime.now().weekday - 1;
     final int longest = perDay.fold<int>(
       0,
       (int m, Duration d) => d.inSeconds > m ? d.inSeconds : m,
     );
-    final double height = context.screenHeight * 0.1;
+    final double height = context.screenHeight * 0.12;
+    final Radius corner = Radius.circular(context.spaceXs * 1.5);
 
     return Semantics(
       label: <String>[
@@ -204,22 +191,28 @@ class _WeekBars extends StatelessWidget {
                 children: <Widget>[
                   Container(
                     height: longest == 0
-                        ? 1
+                        ? context.spaceXs
                         : (height * perDay[i].inSeconds / longest).clamp(
-                            1,
+                            context.spaceXs,
                             height,
                           ),
                     margin: EdgeInsets.symmetric(horizontal: context.spaceXs),
-                    color: perDay[i] == Duration.zero
-                        ? cs.surfaceContainerHighest
-                        : cs.primary,
+                    decoration: BoxDecoration(
+                      color: perDay[i] == Duration.zero
+                          ? cs.surfaceContainerHighest
+                          : i == today
+                          ? cs.primary
+                          : cs.primary.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.vertical(top: corner),
+                    ),
                   ),
-                  SizedBox(height: context.spaceXs),
+                  SizedBox(height: context.spaceS),
                   Text(
                     days[i],
                     style: TextStyle(
-                      color: cs.onSurfaceVariant,
+                      color: i == today ? cs.onSurface : cs.onSurfaceVariant,
                       fontSize: context.fontXs,
+                      fontWeight: i == today ? FontWeight.w700 : null,
                     ),
                   ),
                 ],
