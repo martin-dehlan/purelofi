@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
 import '../../../../l10n/l10n.dart';
 
 /// The bars of a track's waveform, and the scrubber.

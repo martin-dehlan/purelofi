@@ -20,10 +20,9 @@ import '../../../pro/domain/pro_status.entity.dart';
 import '../../../pro/presentation/widgets/paywall_sheet.widget.dart';
 import '../../../pro/presentation/widgets/pro_pill.widget.dart';
 import '../../controller/player.provider.dart';
-import '../../controller/window_mode.controller.dart';
 import 'scene_strip.widget.dart';
 import 'settings_section.widget.dart';
-import 'focus_timer_chips.widget.dart';
+import 'focus_timer_card.widget.dart';
 import 'sleep_timer_slider.widget.dart';
 import 'sound_mix.widget.dart';
 import 'wake_alarm_card.widget.dart';
@@ -147,7 +146,7 @@ class RoomPage extends ConsumerWidget {
           heading(context.l10n.sound),
           const MenuGroup(children: <Widget>[SoundMix()]),
           heading(context.l10n.focus),
-          const MenuGroup(children: <Widget>[FocusTimerChips()]),
+          const MenuGroup(children: <Widget>[FocusTimerCard()]),
           heading(context.l10n.sleepTimer),
           const MenuGroup(children: <Widget>[SleepTimerSlider()]),
           // The wake-up alarm, where the platform can ring one (#146).
@@ -155,20 +154,6 @@ class RoomPage extends ConsumerWidget {
             heading(context.l10n.wakeUp),
             const MenuGroup(children: <Widget>[WakeAlarmCard()]),
           ],
-          // The room alone on a stand, the screen kept on (#149).
-          MenuGroup(
-            children: <Widget>[
-              MenuRow(
-                glyph: AppGlyph.scene,
-                title: context.l10n.windowMode,
-                subtitle: context.l10n.justTheRoomTheScreenStays,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ref.read(windowModeControllerProvider.notifier).enter();
-                },
-              ),
-            ],
-          ),
           heading(context.l10n.settings),
           const SettingsSection(),
           SizedBox(height: context.spaceL),

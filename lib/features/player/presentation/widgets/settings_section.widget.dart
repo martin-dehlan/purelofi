@@ -20,6 +20,7 @@ import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/room_music.controller.dart';
 import '../../controller/soft_transitions.controller.dart';
+import '../../controller/window_mode.controller.dart';
 import '../../../../l10n/l10n.dart';
 
 /// The few things about the app a listener may want differently: whether
@@ -156,6 +157,17 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
       children: <Widget>[
         MenuGroup(
           children: <Widget>[
+            // The room alone on a stand, the screen kept on (#149): how
+            // the screen looks, so beside whether the controls step aside.
+            MenuRow(
+              glyph: AppGlyph.scene,
+              title: context.l10n.windowMode,
+              subtitle: context.l10n.justTheRoomTheScreenStays,
+              onTap: () {
+                Navigator.of(context).pop();
+                ref.read(windowModeControllerProvider.notifier).enter();
+              },
+            ),
             MenuRow(
               glyph: AppGlyph.eye,
               title: context.l10n.hideControls,

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../controller/focus_timer.controller.dart';
 import '../../domain/focus_session.dart';
-import 'focus_timer_chips.widget.dart';
+import 'focus_timer_card.widget.dart';
 
 /// One quiet line on the player while the focus timer runs (#137): which
 /// half it is in and until when. Nothing at all while it is off.
@@ -19,7 +19,7 @@ class FocusStatus extends ConsumerWidget {
     return Padding(
       padding: EdgeInsets.only(top: context.spaceS),
       child: Text(
-        FocusTimerChips.status(context, session),
+        FocusTimerCard.status(context, session),
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
