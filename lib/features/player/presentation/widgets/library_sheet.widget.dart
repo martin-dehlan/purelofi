@@ -13,6 +13,8 @@ import '../../controller/play_history.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
+import '../../controller/stats.controller.dart';
+import '../../domain/listening_stats.dart';
 import '../../domain/mood.entity.dart';
 import '../../domain/playback_scope.dart';
 import '../../domain/playlist.entity.dart';
@@ -23,6 +25,7 @@ import 'cached_picture.widget.dart';
 import 'collection_page.widget.dart';
 import 'library_scope.widget.dart';
 import 'mini_player.widget.dart';
+import 'playlist_actions_sheet.widget.dart';
 import 'playlist_name_dialog.dart';
 import 'search_results.widget.dart';
 import 'stats_view.widget.dart';
@@ -30,27 +33,42 @@ import 'track_tile.widget.dart';
 import '../../../../l10n/l10n.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
-enum LibraryFilter { tracks, playlists, artists, downloaded, local, stats }
+enum LibraryFilter { tracks, playlists, artists, downloaded, local }
 
 /// A page that slides in over the library: an artist's, the favourites, or
 /// what was played lately (#142).
 class _LibraryPage {
   const _LibraryPage.artist(String this.artistId)
     : recent = false,
+      stats = false,
       scope = null;
   const _LibraryPage.favorites()
     : artistId = null,
       recent = false,
+      stats = false,
       scope = null;
-  const _LibraryPage.recent() : artistId = null, recent = true, scope = null;
+  const _LibraryPage.recent()
+    : artistId = null,
+      recent = true,
+      stats = false,
+      scope = null;
+
+  /// The week in listening (#151).
+  const _LibraryPage.stats()
+    : artistId = null,
+      recent = false,
+      stats = true,
+      scope = null;
 
   /// A mood or one of the listener's playlists (#141).
   const _LibraryPage.collection(PlaybackScope this.scope)
     : artistId = null,
-      recent = false;
+      recent = false,
+      stats = false;
 
   final String? artistId;
   final bool recent;
+  final bool stats;
   final PlaybackScope? scope;
 }
 
@@ -92,7 +110,6 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
         LibraryFilter.artists => context.l10n.artists,
         LibraryFilter.downloaded => context.l10n.downloaded,
         LibraryFilter.local => context.l10n.myMusic,
-        LibraryFilter.stats => context.l10n.stats,
       };
 
   @override
@@ -265,6 +282,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                     onRecent: () => _open(const _LibraryPage.recent()),
                     onPlaylists: () =>
                         setState(() => _filter = LibraryFilter.playlists),
+                    onStats: () => _open(const _LibraryPage.stats()),
                     onCollection: (PlaybackScope scope) =>
                         _open(_LibraryPage.collection(scope)),
                   ),
@@ -282,10 +300,6 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                     empty: context.l10n.nothingDownloadedYet,
                   ),
                   LibraryFilter.local => const MyMusic(),
-                  // The week in listening (#151), a tab of its own.
-                  LibraryFilter.stats => const SliverToBoxAdapter(
-                    child: StatsView(),
-                  ),
                 },
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.spaceXl)),
@@ -349,7 +363,9 @@ class _PageFrame extends StatelessWidget {
                       child: Text(
                         page.scope?.title ??
                             (page.recent
-                                ? context.l10n.recent
+                                ? context.l10n.recentlyPlayed
+                                : page.stats
+                                ? context.l10n.stats
                                 : context.l10n.favorites),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -369,6 +385,14 @@ class _PageFrame extends StatelessWidget {
                   ? CollectionPage(scope: page.scope!, onGone: onBack)
                   : page.recent
                   ? const _RecentPage()
+                  : page.stats
+                  ? SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.horizontalPadding,
+                        vertical: context.spaceM,
+                      ),
+                      child: const StatsView(),
+                    )
                   : const _FavoritesPage(),
             ),
           ],
@@ -483,6 +507,7 @@ class _Overview extends ConsumerWidget {
     required this.onFavorites,
     required this.onRecent,
     required this.onPlaylists,
+    required this.onStats,
     required this.onCollection,
   });
 
@@ -493,6 +518,9 @@ class _Overview extends ConsumerWidget {
   /// it stays this short however many there are.
   final VoidCallback onPlaylists;
 
+  /// Opens the week in listening (#151), as History opens what was heard.
+  final VoidCallback onStats;
+
   /// Opens a mood or a playlist (#141).
   final ValueChanged<PlaybackScope> onCollection;
 
@@ -501,6 +529,8 @@ class _Overview extends ConsumerWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final int favorites = ref.watch(favoriteTracksProvider).length;
     final List<TrackEntity> recent = ref.watch(recentlyPlayedTracksProvider);
+    final ListeningStats week =
+        ref.watch(weekStatsProvider).value ?? ListeningStats.empty;
     final List<MoodEntity> moods =
         ref.watch(moodsProvider).value ?? const <MoodEntity>[];
     final List<PlaylistEntity> playlists =
@@ -580,6 +610,21 @@ class _Overview extends ConsumerWidget {
               : playlists.map((PlaylistEntity p) => p.name).take(3).join(' · '),
           onTap: onPlaylists,
         ),
+        _Row(
+          tile: _Tile(
+            background: cs.surfaceContainerHighest,
+            child: AppIcon(
+              AppGlyph.sort,
+              size: context.fontXl,
+              color: cs.onSurface,
+            ),
+          ),
+          title: context.l10n.stats,
+          subtitle: week.isEmpty
+              ? context.l10n.thisWeek
+              : context.l10n.timeThisWeek(listeningTimeLabel(week.total)),
+          onTap: onStats,
+        ),
         // Artists have a tab of their own; listed here they would bury the
         // rest as soon as there are more than a few.
       ],
@@ -593,6 +638,12 @@ class _Playlists extends ConsumerWidget {
   const _Playlists({required this.onCollection});
 
   final ValueChanged<PlaybackScope> onCollection;
+
+  static PlaybackScope scopeOf(PlaylistEntity playlist) => PlaybackScope(
+    kind: ScopeKind.playlist,
+    id: playlist.id,
+    title: playlist.name,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -616,11 +667,25 @@ class _Playlists extends ConsumerWidget {
             subtitle: playlist.items.length == 1
                 ? context.l10n.playlistOneTrack
                 : context.l10n.playlistTrackCount(playlist.items.length),
-            onTap: () => onCollection(
-              PlaybackScope(
-                kind: ScopeKind.playlist,
-                id: playlist.id,
-                title: playlist.name,
+            // A tap plays it; the ⋯ holds the rest.
+            onTap: () => unawaited(
+              ref
+                  .read(playerControllerProvider.notifier)
+                  .playScope(scopeOf(playlist)),
+            ),
+            trailing: IconButton(
+              tooltip: context.l10n.moreFor(playlist.name),
+              onPressed: () => unawaited(
+                showPlaylistActionsSheet(
+                  context,
+                  playlist,
+                  onEdit: () => onCollection(scopeOf(playlist)),
+                ),
+              ),
+              icon: AppIcon(
+                AppGlyph.more,
+                size: context.fontL,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -719,12 +784,16 @@ class _Row extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.trailing,
   });
 
   final Widget tile;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+
+  /// At the end of the row, such as a playlist's ⋯.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -764,6 +833,7 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
+            ?trailing,
           ],
         ),
       ),

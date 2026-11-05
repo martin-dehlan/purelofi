@@ -11,7 +11,6 @@ import '../../controller/player.provider.dart';
 import '../../domain/playback_scope.dart';
 import '../../domain/playlist.entity.dart';
 import '../../domain/track.entity.dart';
-import 'playlist_name_dialog.dart';
 import 'track_tile.widget.dart';
 import '../../../../l10n/l10n.dart';
 
@@ -54,31 +53,6 @@ class CollectionPage extends ConsumerWidget {
             ),
             label: Text(context.l10n.play),
           ),
-          const Spacer(),
-          if (_isPlaylist) ...<Widget>[
-            IconButton(
-              tooltip: context.l10n.renamePlaylist,
-              onPressed: () async {
-                final String? name = await askPlaylistName(
-                  context,
-                  initial: scope.title,
-                  title: context.l10n.renamePlaylist,
-                  action: context.l10n.rename,
-                );
-                if (name != null) await playlists.rename(scope.id, name);
-              },
-              icon: AppIcon(AppGlyph.more, size: context.fontL),
-            ),
-            IconButton(
-              tooltip: context.l10n.deletePlaylist,
-              onPressed: () async {
-                if (!await confirmDeletePlaylist(context, scope.title)) return;
-                await playlists.delete(scope.id);
-                onGone();
-              },
-              icon: AppIcon(AppGlyph.remove, size: context.fontL),
-            ),
-          ],
         ],
       ),
     );

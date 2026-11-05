@@ -84,6 +84,10 @@
   "downloading": "Downloading…",
   "downloads": "Downloads",
   "eachRoomPlaysItsOwnMood": "Each room plays its own mood",
+  "editPlaylist": "Edit playlist",
+  "@editPlaylist": {
+    "description": "A playlist's menu: opens its tracks to reorder or remove."
+  },
   "emptyMood": "Nothing in this mood yet.",
   "emptyPlaylist": "Nothing here yet. Tap ⋯ on a track to add it.",
   "endOfTrack": "End of track",
