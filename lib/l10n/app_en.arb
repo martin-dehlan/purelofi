@@ -302,6 +302,10 @@
   "plansDidNotLoad": "The plans could not be loaded.",
   "play": "Play",
   "playEverything": "Play everything",
+  "playlists": "Playlists",
+  "@playlists": {
+    "description": "The library filter for the listener's own playlists."
+  },
   "playNext": "Play next",
   "playOrder": "Play order",
   "playingScope": "Playing {title}. Play everything",
@@ -337,7 +341,7 @@
   "rainyEvenings": "Rainy evenings",
   "recent": "Recent",
   "recentlyAdded": "Recently added",
-  "recentlyPlayed": "Recently played",
+  "recentlyPlayed": "History",
   "remove": "Remove",
   "removeAll": "Remove all",
   "removeDownload": "Remove download",

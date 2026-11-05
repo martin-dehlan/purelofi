@@ -103,7 +103,7 @@ void main() {
       const Locale('de'),
     );
     expect(de.play, 'Abspielen');
-    expect(de.recentlyPlayed, 'Zuletzt gehört');
+    expect(de.recentlyPlayed, 'Verlauf');
   });
 
   testWidgets('the room page holds together in German', (tester) async {

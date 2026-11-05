@@ -96,6 +96,9 @@ void main() {
       'track\'s menu', (tester) async {
     final FakePlaylistRepository playlists = await open(tester);
 
+    // One row for all playlists in the overview; the list is its own tab.
+    await tester.tap(inLibrary(find.text('Playlists')).first);
+    await tester.pumpAndSettle();
     await tester.tap(inLibrary(find.text('New playlist')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Study');

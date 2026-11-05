@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../common/utils/responsive.dart';
 import '../../../../common/widgets/app_icon.widget.dart';
 import '../../../library/presentation/widgets/my_music.widget.dart';
-import '../../controller/artist.controller.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/favorites.controller.dart';
 import '../../controller/collections.controller.dart';
@@ -14,12 +13,10 @@ import '../../controller/play_history.controller.dart';
 import '../../controller/player.controller.dart';
 import '../../controller/player.provider.dart';
 import '../../controller/track.controller.dart';
-import '../../domain/artist.entity.dart';
 import '../../domain/mood.entity.dart';
 import '../../domain/playback_scope.dart';
 import '../../domain/playlist.entity.dart';
 import '../../domain/track.entity.dart';
-import 'artist_avatar.widget.dart';
 import 'artist_list.widget.dart';
 import 'artist_sheet.widget.dart';
 import 'cached_picture.widget.dart';
@@ -33,7 +30,7 @@ import 'track_tile.widget.dart';
 import '../../../../l10n/l10n.dart';
 
 /// One kind of thing in the library. None chosen is the overview.
-enum LibraryFilter { tracks, artists, downloaded, local, stats }
+enum LibraryFilter { tracks, playlists, artists, downloaded, local, stats }
 
 /// A page that slides in over the library: an artist's, the favourites, or
 /// what was played lately (#142).
@@ -91,6 +88,7 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
   static String nameOf(BuildContext context, LibraryFilter filter) =>
       switch (filter) {
         LibraryFilter.tracks => context.l10n.tracks,
+        LibraryFilter.playlists => context.l10n.playlists,
         LibraryFilter.artists => context.l10n.artists,
         LibraryFilter.downloaded => context.l10n.downloaded,
         LibraryFilter.local => context.l10n.myMusic,
@@ -155,9 +153,9 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                         slide: _slide,
                         onBack: () => unawaited(_back()),
                         background:
-                            Theme.of(context)
-                                .bottomSheetTheme
-                                .backgroundColor ??
+                            Theme.of(
+                              context,
+                            ).bottomSheetTheme.backgroundColor ??
                             cs.surfaceContainerLow,
                       ),
                     ),
@@ -265,6 +263,12 @@ class _LibrarySheetState extends ConsumerState<LibrarySheet>
                   null => _Overview(
                     onFavorites: () => _open(const _LibraryPage.favorites()),
                     onRecent: () => _open(const _LibraryPage.recent()),
+                    onPlaylists: () =>
+                        setState(() => _filter = LibraryFilter.playlists),
+                    onCollection: (PlaybackScope scope) =>
+                        _open(_LibraryPage.collection(scope)),
+                  ),
+                  LibraryFilter.playlists => _Playlists(
                     onCollection: (PlaybackScope scope) =>
                         _open(_LibraryPage.collection(scope)),
                   ),
@@ -478,11 +482,16 @@ class _Overview extends ConsumerWidget {
   const _Overview({
     required this.onFavorites,
     required this.onRecent,
+    required this.onPlaylists,
     required this.onCollection,
   });
 
   final VoidCallback onFavorites;
   final VoidCallback onRecent;
+
+  /// Opens the Playlists tab: the overview holds one row for them all, so
+  /// it stays this short however many there are.
+  final VoidCallback onPlaylists;
 
   /// Opens a mood or a playlist (#141).
   final ValueChanged<PlaybackScope> onCollection;
@@ -491,7 +500,6 @@ class _Overview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final int favorites = ref.watch(favoriteTracksProvider).length;
-    final List<ArtistEntity> artists = ref.watch(playableArtistsProvider);
     final List<TrackEntity> recent = ref.watch(recentlyPlayedTracksProvider);
     final List<MoodEntity> moods =
         ref.watch(moodsProvider).value ?? const <MoodEntity>[];
@@ -555,7 +563,45 @@ class _Overview extends ConsumerWidget {
             subtitle: recent.first.title,
             onTap: onRecent,
           ),
-        // The listener's own playlists, newest change first (#141).
+        // One row for the listener's own playlists (#141), the newest
+        // named under it; the list itself is the Playlists tab.
+        _Row(
+          tile: _Tile(
+            background: cs.secondaryContainer,
+            child: AppIcon(
+              AppGlyph.queue,
+              size: context.fontXl,
+              color: cs.onSecondaryContainer,
+            ),
+          ),
+          title: context.l10n.playlists,
+          subtitle: playlists.isEmpty
+              ? context.l10n.yourOwnList
+              : playlists.map((PlaylistEntity p) => p.name).take(3).join(' · '),
+          onTap: onPlaylists,
+        ),
+        // Artists have a tab of their own; listed here they would bury the
+        // rest as soon as there are more than a few.
+      ],
+    );
+  }
+}
+
+/// The Playlists tab (#141): the listener's own lists, newest change first,
+/// and a row to start a new one.
+class _Playlists extends ConsumerWidget {
+  const _Playlists({required this.onCollection});
+
+  final ValueChanged<PlaybackScope> onCollection;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final List<PlaylistEntity> playlists =
+        ref.watch(playlistsProvider).value ?? const <PlaylistEntity>[];
+
+    return SliverList.list(
+      children: <Widget>[
         for (final PlaylistEntity playlist in playlists)
           _Row(
             tile: _Tile(
@@ -595,13 +641,6 @@ class _Overview extends ConsumerWidget {
             await ref.read(playlistRepositoryProvider).create(name);
           },
         ),
-        for (final ArtistEntity artist in artists)
-          _Row(
-            tile: ArtistAvatar(artist: artist, size: _Tile.sizeFor(context)),
-            title: artist.name,
-            subtitle: context.l10n.artist,
-            onTap: () => unawaited(openArtistPage(context, artist.id)),
-          ),
       ],
     );
   }

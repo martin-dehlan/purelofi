@@ -147,8 +147,9 @@ class AppDatabase extends _$AppDatabase {
   );
 
   Future<bool> _hasColumn(String table, String column) async {
-    final List<QueryRow> rows = await customSelect('PRAGMA table_info($table)')
-        .get();
+    final List<QueryRow> rows = await customSelect(
+      'PRAGMA table_info($table)',
+    ).get();
 
     return rows.any((QueryRow row) => row.read<String>('name') == column);
   }
