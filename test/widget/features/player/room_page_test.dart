@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
 import 'package:purelofi/common/widgets/menu_row.widget.dart';
+import 'package:purelofi/features/player/presentation/widgets/focus_clock.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/focus_timer_card.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
@@ -214,11 +215,18 @@ void main() {
       final Finder count = find.textContaining(RegExp(r'^2[45]:\d\d$'));
       expect(inFocus(count), findsOneWidget);
       expect(inFocus(find.byType(LinearProgressIndicator)), findsOneWidget);
-      // On the page, and on the player behind it.
-      expect(find.textContaining('Focus until'), findsWidgets);
-      // Under the gear too.
+      // Only on the card now; the scene shows the clock instead.
+      expect(find.textContaining('Focus until'), findsOneWidget);
+      // On the scene, top and centre, under its name.
       expect(
-        find.descendant(of: find.byType(MenuButton), matching: count),
+        find.descendant(of: find.byType(FocusClock), matching: count),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FocusClock),
+          matching: find.text('FOCUS'),
+        ),
         findsOneWidget,
       );
 
@@ -227,7 +235,7 @@ void main() {
       expect(find.textContaining('Focus until'), findsNothing);
       expect(
         find.descendant(
-          of: find.byType(MenuButton),
+          of: find.byType(FocusClock),
           matching: find.textContaining(':'),
         ),
         findsNothing,

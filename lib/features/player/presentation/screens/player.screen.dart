@@ -18,6 +18,7 @@ import '../../controller/track.controller.dart';
 import '../../domain/track.entity.dart';
 import '../widgets/bts_modal.widget.dart';
 import '../widgets/player_controls.widget.dart';
+import '../widgets/focus_clock.widget.dart';
 import '../widgets/library_button.widget.dart';
 import '../widgets/menu_button.widget.dart';
 import '../widgets/scene_background.widget.dart';
@@ -199,6 +200,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   ),
                 ),
               ),
+              // The focus timer, top and centre, between the menu and the
+              // library; it stays when the controls step aside.
+              if (!windowMode)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: context.spaceM),
+                      child: const FocusClock(),
+                    ),
+                  ),
+                ),
               AnimatedOpacity(
                 opacity: controlsVisible ? 1 : 0,
                 duration: const Duration(milliseconds: 250),
@@ -211,9 +224,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       alignment: Alignment.topCenter,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        // The focus count under the gear grows it down,
-                        // never the library opposite.
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[MenuButton(), LibraryButton()],
                       ),
                     ),

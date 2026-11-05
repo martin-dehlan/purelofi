@@ -24,6 +24,10 @@
   "back": "Back",
   "backToPurelofi": "Back to PureLofi",
   "backToSignIn": "Back to sign in",
+  "breakLabel": "Break",
+  "@breakLabel": {
+    "description": "The focus timer's break, above its count on the scene."
+  },
   "breakUntil": "Break until {time}",
   "@breakUntil": {
     "placeholders": {
