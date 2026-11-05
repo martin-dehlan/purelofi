@@ -9,6 +9,7 @@ import 'features/player/controller/favorites_sync.controller.dart';
 import 'features/player/controller/follows.controller.dart';
 import 'features/player/controller/home_widget.controller.dart';
 import 'features/player/controller/media_library.controller.dart';
+import 'features/player/controller/language.controller.dart';
 import 'features/player/controller/mix.controller.dart';
 import 'features/player/controller/new_content.controller.dart';
 import 'features/player/controller/play_history.controller.dart';
@@ -100,6 +101,11 @@ class PureLofiApp extends ConsumerWidget {
       // Every string the listener reads comes from lib/l10n (#140).
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      // The phone's language unless one was picked in the settings.
+      locale: switch (ref.watch(languageControllerProvider).value) {
+        final String code => Locale(code),
+        null => null,
+      },
     );
   }
 }

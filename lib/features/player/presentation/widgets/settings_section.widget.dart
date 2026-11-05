@@ -15,6 +15,9 @@ import '../../../auth/presentation/widgets/account_sheet.widget.dart';
 import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
+import '../../controller/language.controller.dart';
+import '../../domain/app_language.dart';
+import 'language_sheet.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
@@ -135,6 +138,7 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
     final int downloadCount =
         ref.watch(downloadsControllerProvider).value?.done.length ?? 0;
     final int? downloadedBytes = _downloadedBytes;
+    final String? language = ref.watch(languageControllerProvider).value;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool hasHistory =
@@ -177,6 +181,16 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                     .read(autoHideControlsControllerProvider.notifier)
                     .set(!autoHide),
               ),
+            ),
+            // The phone's language by default; another one here.
+            MenuRow(
+              glyph: AppGlyph.globe,
+              title: context.l10n.language,
+              subtitle: switch (language) {
+                final String code => AppLanguage.names[code] ?? code,
+                null => context.l10n.languageAsOnPhone,
+              },
+              onTap: () => unawaited(showLanguageSheet(context)),
             ),
             // The log behind "Recently played" (#142): only ever on the
             // phone, and the listener's to throw away.

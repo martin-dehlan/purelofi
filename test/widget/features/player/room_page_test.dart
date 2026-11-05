@@ -254,6 +254,43 @@ void main() {
   });
 
   group('settings', () {
+    testWidgets('the language can be picked, and given back to the phone', (
+      tester,
+    ) async {
+      await start(tester);
+      await tapMenuEntry(tester, 'Settings');
+
+      final Finder row = find.widgetWithText(MenuRow, 'Language');
+      await tester.ensureVisible(row);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: row, matching: find.text('As on the phone')),
+        findsOneWidget,
+      );
+
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deutsch'));
+      await tester.pumpAndSettle();
+
+      // The whole app reads German at once, the row names it.
+      final Finder german = find.widgetWithText(MenuRow, 'Sprache');
+      expect(german, findsOneWidget);
+      expect(
+        find.descendant(of: german, matching: find.text('Deutsch')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(german);
+      await tester.pumpAndSettle();
+      await tester.tap(german);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Wie auf dem Telefon'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(MenuRow, 'Language'), findsOneWidget);
+    });
+
     testWidgets('hiding the controls can be turned off', (tester) async {
       await start(tester);
       await tapMenuEntry(tester, 'Settings');

@@ -4,4 +4,10 @@ abstract class DisplayPreferences {
   Future<bool> loadAutoHide();
 
   Future<void> saveAutoHide(bool autoHide);
+
+  /// The language picked in the app, as a language code, or `null` to
+  /// follow the phone.
+  Future<String?> loadLanguage();
+
+  Future<void> saveLanguage(String? code);
 }

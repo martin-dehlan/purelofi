@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` is exported from misc.dart, not the main entry point, in Riverpod 3.
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/features/player/controller/language.controller.dart';
 import 'package:purelofi/features/player/presentation/widgets/library_button.widget.dart';
 import 'package:purelofi/features/player/presentation/widgets/menu_button.widget.dart';
 import 'package:go_router/go_router.dart';
@@ -204,6 +205,10 @@ extension PumpRouted on WidgetTester {
     FakeWelcomePreferences? welcome,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
+    final GoRouter router = GoRouter(
+      initialLocation: initialRoute,
+      routes: playerRoutes,
+    );
     return pumpWidget(
       ProviderScope(
         overrides: <Override>[
@@ -222,16 +227,23 @@ extension PumpRouted on WidgetTester {
           ...overrides,
         ],
         retry: retry ?? (_, _) => null,
-        child: MaterialApp.router(
-          locale: locale,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: theme ?? ThemeData.dark(useMaterial3: true),
-          builder: _stillMotion,
-          routerConfig: GoRouter(
-            initialLocation: initialRoute,
-            routes: playerRoutes,
-          ),
+        // The language picked in the settings applies, as in the app;
+        // the router is made once, so a change of language keeps the page.
+        child: Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? _) =>
+              MaterialApp.router(
+                locale:
+                    locale ??
+                    switch (ref.watch(languageControllerProvider).value) {
+                      final String code => Locale(code),
+                      null => null,
+                    },
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                theme: theme ?? ThemeData.dark(useMaterial3: true),
+                builder: _stillMotion,
+                routerConfig: router,
+              ),
         ),
       ),
     );

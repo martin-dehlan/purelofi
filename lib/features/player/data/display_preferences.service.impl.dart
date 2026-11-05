@@ -9,6 +9,7 @@ class DisplayPreferencesImpl implements DisplayPreferences {
     : _preferences = preferences ?? SharedPreferencesAsync();
 
   static const String _autoHideKey = 'display.autoHide';
+  static const String _languageKey = 'display.language';
 
   final SharedPreferencesAsync _preferences;
 
@@ -24,4 +25,18 @@ class DisplayPreferencesImpl implements DisplayPreferences {
   @override
   Future<void> saveAutoHide(bool autoHide) =>
       _preferences.setBool(_autoHideKey, autoHide);
+
+  @override
+  Future<String?> loadLanguage() async {
+    try {
+      return await _preferences.getString(_languageKey);
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveLanguage(String? code) => code == null
+      ? _preferences.remove(_languageKey)
+      : _preferences.setString(_languageKey, code);
 }

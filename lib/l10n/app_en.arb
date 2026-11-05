@@ -172,6 +172,14 @@
   "keep": "Keep",
   "keepIt": "Keep it",
   "keptOnThisPhoneOnly": "Kept on this phone only",
+  "language": "Language",
+  "@language": {
+    "description": "The settings row for the app's language."
+  },
+  "languageAsOnPhone": "As on the phone",
+  "@languageAsOnPhone": {
+    "description": "The choice that follows the phone's own language."
+  },
   "leaveWindowMode": "Leave window mode",
   "library": "Library",
   "libraryNewTracks": "Library, new tracks",
