@@ -10,8 +10,11 @@ because searching for it mostly returns AI generators. Store copy spells it
 "lofi", which is what people search for.
 
 Default language in both stores is English (US), with German added. The app
-itself is English only, so the German description says so. The copy names no
-prices: they differ by country and the app shows them before purchase.
+itself speaks English, German, Spanish, Portuguese, French, Italian, Dutch,
+Polish, Turkish, Russian, Japanese, Korean, Chinese and Indonesian (#174), and
+follows the phone's language; store copy in those languages can follow. The
+copy names no prices: they differ by country and the app shows them before
+purchase.
 
 ## English
 
@@ -119,8 +122,6 @@ Das steckt drin
 
 PureLofi Pro
 Zwei Räume sind gratis. Pro öffnet die anderen fünf, und du kannst Tracks zum Offline-Hören herunterladen. Wähle monatlich oder jährlich; das Jahresabo beginnt mit 7 Tagen gratis. Die Preise siehst du vor dem Kauf in der App. Du kannst jederzeit in deinen App-Store-Einstellungen kündigen.
-
-Hinweis: Die App ist auf Englisch.
 
 Datenschutz: https://purelofi.app/privacy
 Nutzungsbedingungen: https://purelofi.app/terms

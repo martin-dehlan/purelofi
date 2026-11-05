@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purelofi/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/app.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
@@ -78,21 +79,27 @@ void main() {
     });
   }
 
-  for (final String where in <String>['player', 'room page', 'library']) {
-    testWidgets('the $where holds together in German (#140)', (tester) async {
-      tester.view.physicalSize = const Size(1179, 2556);
-      tester.view.devicePixelRatio = 3;
-      addTearDown(tester.view.reset);
-      await tester.pumpRoutedApp(
-        overrides: overrides(),
-        theme: appTheme,
-        locale: const Locale('de'),
-      );
-      await tester.pumpAndSettle();
-      if (where == 'room page') await openMenu(tester);
-      if (where == 'library') await openLibrary(tester);
+  // Every language the app speaks (#140, #174): the long ones (German,
+  // Russian, Polish) and the ones set in other scripts.
+  for (final Locale locale in AppLocalizations.supportedLocales) {
+    if (locale.languageCode == 'en') continue;
+    for (final String where in <String>['player', 'room page', 'library']) {
+      testWidgets('the $where holds together in '
+          '${locale.languageCode} (#174)', (tester) async {
+        tester.view.physicalSize = const Size(1179, 2556);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+        await tester.pumpRoutedApp(
+          overrides: overrides(),
+          theme: appTheme,
+          locale: locale,
+        );
+        await tester.pumpAndSettle();
+        if (where == 'room page') await openMenu(tester);
+        if (where == 'library') await openLibrary(tester);
 
-      expect(tester.takeException(), isNull);
-    });
+        expect(tester.takeException(), isNull);
+      });
+    }
   }
 }
