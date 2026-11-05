@@ -120,18 +120,8 @@ class _StatsViewState extends ConsumerState<StatsView> {
         SizedBox(height: context.spaceM),
         if (stats == null)
           SizedBox(height: context.screenWidth * 0.6)
-        else if (stats.isEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: context.spaceXl),
-            child: Text(
-              context.l10n.nothingHeardHere,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: context.fontS,
-              ),
-            ),
-          )
+        // An empty stretch shows the same page, at nothing: the shape
+        // stays where the eye expects it as the listener steps through.
         else
           _Body(
             stats: stats,
@@ -170,6 +160,10 @@ class _Body extends ConsumerWidget {
   final PeriodStats stats;
   final _Top top;
   final ValueChanged<_Top> onTop;
+
+  /// The time as read elsewhere, but nothing reads as nothing: "0 min".
+  static String _time(Duration d) =>
+      d == Duration.zero ? '0 min' : listeningTimeLabel(d);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -237,8 +231,7 @@ class _Body extends ConsumerWidget {
           },
         ),
       (context.l10n.tracks, '${stats.tracksHeard}'),
-      if (stats.artistsHeard > 0)
-        (context.l10n.artists, '${stats.artistsHeard}'),
+      (context.l10n.artists, '${stats.artistsHeard}'),
     ];
 
     // Sharing tells of a week: offered on the week now.
@@ -251,7 +244,7 @@ class _Body extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          listeningTimeLabel(stats.total),
+          _time(stats.total),
           style: TextStyle(
             color: cs.primary,
             fontSize: context.fontXxl,
@@ -261,7 +254,7 @@ class _Body extends ConsumerWidget {
         ),
         Text(
           <String>[
-            context.l10n.aDay(listeningTimeLabel(stats.averageDay(now))),
+            context.l10n.aDay(_time(stats.averageDay(now))),
             if (change != null)
               context.l10n.changeVsBefore(
                 change > 0 ? '+$change%' : '$change%',
@@ -283,6 +276,11 @@ class _Body extends ConsumerWidget {
           onSelected: onTop,
         ),
         SizedBox(height: context.spaceS),
+        if (ranked.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: context.spaceM),
+            child: Text(context.l10n.nothingHeardHere, style: small),
+          ),
         for (int i = 0; i < ranked.length; i++)
           _RankedLine(rank: i + 1, item: ranked[i]),
         SizedBox(height: context.spaceXl),
