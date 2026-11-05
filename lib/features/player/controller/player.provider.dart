@@ -33,9 +33,11 @@ import '../data/content.repository.impl.dart';
 import '../data/device_favorites.impl.dart';
 import '../data/favorites.api.dart';
 import '../data/display_preferences.service.impl.dart';
+import '../data/focus_notifier.service.impl.dart';
 import '../data/favorites.repository.impl.dart';
 import '../data/playback_preferences.service.impl.dart';
 import '../data/sprite_loader.service.dart';
+import '../domain/focus_notifier.service.dart';
 import '../domain/home_widget.service.dart';
 import '../domain/wake_alarm.dart';
 import '../domain/mix_preferences.service.dart';
@@ -228,6 +230,11 @@ PlaybackPreferences playbackPreferences(Ref ref) => PlaybackPreferencesImpl();
 /// Where the player's look is kept: for now, whether the controls hide.
 @Riverpod(keepAlive: true)
 DisplayPreferences displayPreferences(Ref ref) => DisplayPreferencesImpl();
+
+/// How the focus timer reaches a listener who is not looking (#137).
+/// Overridden in tests with one in memory.
+@Riverpod(keepAlive: true)
+FocusNotifier focusNotice(Ref ref) => FocusNotifierImpl();
 
 /// Builds the widget that renders a scene's video.
 typedef SceneVideoBuilder = Widget Function(SceneEntity scene);

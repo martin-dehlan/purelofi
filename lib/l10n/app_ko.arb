@@ -59,6 +59,8 @@
   "everyRoomMore": "모든 방, 머물 수 있는 방 {count}개 더, 그리고 오프라인 음악.",
   "favorites": "즐겨찾기",
   "focus": "집중",
+  "focusBackNotice": "다시 집중 · {minutes}분",
+  "focusBreakNotice": "휴식 · {minutes}분",
   "focusUntil": "{time}까지 집중",
   "focusUntilRound": "{time}까지 집중 · {round}라운드",
   "follow": "팔로우",

@@ -59,6 +59,8 @@
   "everyRoomMore": "Wszystkie pokoje, {count} więcej do posiedzenia i Twoja muzyka offline.",
   "favorites": "Ulubione",
   "focus": "Skupienie",
+  "focusBackNotice": "Wracamy do skupienia · {minutes} min",
+  "focusBreakNotice": "Przerwa · {minutes} min",
   "focusUntil": "Skupienie do {time}",
   "focusUntilRound": "Skupienie do {time} · runda {round}",
   "follow": "Obserwuj",

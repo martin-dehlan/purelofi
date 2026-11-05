@@ -59,6 +59,8 @@
   "everyRoomMore": "所有房间，再多 {count} 个可待的地方，以及离线音乐。",
   "favorites": "收藏",
   "focus": "专注",
+  "focusBackNotice": "回到专注 · {minutes} 分钟",
+  "focusBreakNotice": "休息 · {minutes} 分钟",
   "focusUntil": "专注到 {time}",
   "focusUntilRound": "专注到 {time} · 第 {round} 轮",
   "follow": "关注",

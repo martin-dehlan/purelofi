@@ -59,6 +59,8 @@
   "everyRoomMore": "Tüm odalar, oturacak {count} oda daha ve müziğin çevrimdışı.",
   "favorites": "Favoriler",
   "focus": "Odak",
+  "focusBackNotice": "Odaklanmaya dönüş · {minutes} dk",
+  "focusBreakNotice": "Mola · {minutes} dk",
   "focusUntil": "{time} saatine kadar odak",
   "focusUntilRound": "{time} saatine kadar odak · {round}. tur",
   "follow": "Takip et",

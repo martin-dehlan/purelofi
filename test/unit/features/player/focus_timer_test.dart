@@ -9,19 +9,25 @@ import 'package:purelofi/features/player/domain/focus_session.dart';
 import 'package:purelofi/features/player/domain/volume_layer.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
+import '../../../helpers/fake_display_preferences.dart';
+import '../../../helpers/fake_focus_notifier.dart';
 import '../../../helpers/recording_analytics.service.dart';
 
 void main() {
   late FakeAudioPlayerService fakeAudio;
   late RecordingAnalyticsService analytics;
+  late FakeFocusNotifier notifier;
 
   ProviderContainer container() {
     fakeAudio = FakeAudioPlayerService();
     analytics = RecordingAnalyticsService();
+    notifier = FakeFocusNotifier();
     final ProviderContainer container = ProviderContainer(
       overrides: [
         audioPlayerServiceProvider.overrideWithValue(fakeAudio),
         analyticsServiceProvider.overrideWithValue(analytics),
+        focusNoticeProvider.overrideWithValue(notifier),
+        displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
       ],
     );
     addTearDown(() {
@@ -115,6 +121,25 @@ void main() {
       expect(session?.plan, FocusPlan.deep);
       expect(session?.phase, FocusPhase.focus);
       expect(fakeAudio.layer(VolumeLayer.focusBreak), 1);
+    });
+  });
+
+  test('each switch buzzes and says what comes now; off clears it', () {
+    fakeAsync((FakeAsync async) {
+      final ProviderContainer c = container();
+      c.read(focusTimerControllerProvider.notifier).start(FocusPlan.classic);
+      async.flushMicrotasks();
+      expect(notifier.prepared, 1);
+
+      async.elapse(FocusPlan.classic.focus);
+      expect(notifier.announced, <String>['Break · 5 min']);
+
+      async.elapse(FocusPlan.classic.rest);
+      expect(notifier.announced.last, 'Back to focus · 25 min');
+
+      c.read(focusTimerControllerProvider.notifier).stop();
+      async.flushMicrotasks();
+      expect(notifier.cleared, 1);
     });
   });
 }

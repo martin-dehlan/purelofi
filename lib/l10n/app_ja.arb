@@ -59,6 +59,8 @@
   "everyRoomMore": "すべての部屋、さらに {count} 部屋、そしてオフラインの音楽。",
   "favorites": "お気に入り",
   "focus": "集中",
+  "focusBackNotice": "集中に戻る · {minutes}分",
+  "focusBreakNotice": "休憩 · {minutes}分",
   "focusUntil": "{time} まで集中",
   "focusUntilRound": "{time} まで集中 · {round} ラウンド目",
   "follow": "フォロー",

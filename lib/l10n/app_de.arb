@@ -59,6 +59,8 @@
   "everyRoomMore": "Jeder Raum, {count} weitere zum Verweilen, und deine Musik offline.",
   "favorites": "Favoriten",
   "focus": "Fokus",
+  "focusBackNotice": "Weiter mit Fokus · {minutes} Min.",
+  "focusBreakNotice": "Pause · {minutes} Min.",
   "focusUntil": "Fokus bis {time}",
   "focusUntilRound": "Fokus bis {time} · Runde {round}",
   "follow": "Folgen",

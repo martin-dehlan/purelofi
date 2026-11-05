@@ -59,6 +59,8 @@
   "everyRoomMore": "Elke kamer, nog {count} om in te zitten, en je muziek offline.",
   "favorites": "Favorieten",
   "focus": "Focus",
+  "focusBackNotice": "Terug naar focus · {minutes} min",
+  "focusBreakNotice": "Pauze · {minutes} min",
   "focusUntil": "Focus tot {time}",
   "focusUntilRound": "Focus tot {time} · ronde {round}",
   "follow": "Volgen",
