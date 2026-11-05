@@ -6,11 +6,13 @@ class FakeDisplayPreferences implements DisplayPreferences {
     this.autoHide = true,
     this.language,
     this.focusClockHides = true,
+    this.palette,
   });
 
   bool autoHide;
   String? language;
   bool focusClockHides;
+  String? palette;
 
   @override
   Future<bool> loadAutoHide() async => autoHide;
@@ -29,4 +31,10 @@ class FakeDisplayPreferences implements DisplayPreferences {
 
   @override
   Future<void> saveFocusClockHides(bool hides) async => focusClockHides = hides;
+
+  @override
+  Future<String?> loadPalette() async => palette;
+
+  @override
+  Future<void> savePalette(String name) async => palette = name;
 }

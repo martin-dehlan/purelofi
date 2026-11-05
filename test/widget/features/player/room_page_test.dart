@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:purelofi/common/theme/app_palette.dart';
+import 'package:purelofi/features/player/controller/palette.controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:purelofi/common/widgets/app_icon.widget.dart';
@@ -312,6 +315,37 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(MenuRow, 'Language'), findsOneWidget);
+    });
+
+    testWidgets('the colours can be picked, and the row names them', (
+      tester,
+    ) async {
+      await start(tester);
+      await tapMenuEntry(tester, 'Settings');
+
+      final Finder row = find.widgetWithText(MenuRow, 'Colours');
+      await tester.ensureVisible(row);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: row, matching: find.text('Lamp')),
+        findsOneWidget,
+      );
+      // The palette the app is themed with (app.dart reads it).
+      AppPalette? picked() => ProviderScope.containerOf(
+        tester.element(find.byType(SettingsSection)),
+      ).read(paletteControllerProvider).value;
+      expect(picked(), AppPalette.lamp);
+
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sea'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: row, matching: find.text('Sea')),
+        findsOneWidget,
+      );
+      expect(picked(), AppPalette.sea);
     });
 
     testWidgets('hiding the controls can be turned off', (tester) async {

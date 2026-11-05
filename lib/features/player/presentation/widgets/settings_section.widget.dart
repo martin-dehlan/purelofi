@@ -16,8 +16,11 @@ import '../../../pro/controller/pro.controller.dart';
 import '../../../pro/domain/pro_status.entity.dart';
 import '../../controller/auto_hide_controls.controller.dart';
 import '../../controller/language.controller.dart';
+import '../../controller/palette.controller.dart';
+import '../../../../common/theme/app_palette.dart';
 import '../../domain/app_language.dart';
 import 'language_sheet.widget.dart';
+import 'palette_sheet.widget.dart';
 import '../../controller/downloads.controller.dart';
 import '../../controller/play_history.controller.dart';
 import '../../controller/player.provider.dart';
@@ -139,6 +142,8 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
         ref.watch(downloadsControllerProvider).value?.done.length ?? 0;
     final int? downloadedBytes = _downloadedBytes;
     final String? language = ref.watch(languageControllerProvider).value;
+    final AppPalette palette =
+        ref.watch(paletteControllerProvider).value ?? AppPalette.lamp;
     final bool autoHide =
         ref.watch(autoHideControlsControllerProvider).value ?? true;
     final bool hasHistory =
@@ -191,6 +196,13 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                 null => context.l10n.languageAsOnPhone,
               },
               onTap: () => unawaited(showLanguageSheet(context)),
+            ),
+            // The accent the app is coloured with, lamp until another.
+            MenuRow(
+              glyph: AppGlyph.palette,
+              title: context.l10n.colours,
+              subtitle: paletteName(context, palette),
+              onTap: () => unawaited(showPaletteSheet(context)),
             ),
             // The log behind "Recently played" (#142): only ever on the
             // phone, and the listener's to throw away.
