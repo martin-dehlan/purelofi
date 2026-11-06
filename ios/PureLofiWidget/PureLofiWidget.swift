@@ -6,6 +6,22 @@ import WidgetKit
 
 private let group = "group.app.purelofi"
 
+/// The app's default accent, until a palette is picked.
+private let lamp = Color(red: 0.94, green: 0.63, blue: 0.36)
+
+extension Color {
+  /// `#RRGGBB`, as the app writes the accent picked in its settings.
+  init?(hex: String) {
+    let digits = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+    guard digits.count == 6, let value = UInt32(digits, radix: 16) else { return nil }
+    self.init(
+      red: Double((value >> 16) & 0xFF) / 255,
+      green: Double((value >> 8) & 0xFF) / 255,
+      blue: Double(value & 0xFF) / 255
+    )
+  }
+}
+
 struct RoomEntry: TimelineEntry {
   let date: Date
   let room: String
@@ -13,11 +29,12 @@ struct RoomEntry: TimelineEntry {
   let artist: String?
   let cover: UIImage?
   let playing: Bool
+  let accent: Color
 }
 
 struct RoomProvider: TimelineProvider {
   func placeholder(in context: Context) -> RoomEntry {
-    RoomEntry(date: .now, room: "Rainy Room", track: "Dusk Tape", artist: nil, cover: nil, playing: false)
+    RoomEntry(date: .now, room: "Rainy Room", track: "Dusk Tape", artist: nil, cover: nil, playing: false, accent: lamp)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (RoomEntry) -> Void) {
@@ -38,7 +55,8 @@ struct RoomProvider: TimelineProvider {
       track: data?.string(forKey: "track"),
       artist: data?.string(forKey: "artist"),
       cover: path.flatMap { UIImage(contentsOfFile: $0) },
-      playing: data?.bool(forKey: "playing") ?? false
+      playing: data?.bool(forKey: "playing") ?? false,
+      accent: data?.string(forKey: "accent").flatMap(Color.init(hex:)) ?? lamp
     )
   }
 }
@@ -66,7 +84,7 @@ struct RoomWidgetView: View {
           Spacer()
           Button(intent: OpenToPlayIntent()) {
             Image(systemName: entry.playing ? "pause.fill" : "play.fill")
-              .foregroundStyle(Color(red: 0.94, green: 0.63, blue: 0.36))
+              .foregroundStyle(entry.accent)
           }
           .buttonStyle(.plain)
         }

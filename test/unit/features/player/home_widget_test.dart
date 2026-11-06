@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:purelofi/common/theme/app_palette.dart';
 import 'package:purelofi/features/player/controller/home_widget.controller.dart';
+import 'package:purelofi/features/player/controller/palette.controller.dart';
 import 'package:purelofi/features/player/controller/player.controller.dart';
 import 'package:purelofi/features/player/controller/player.provider.dart';
 import 'package:purelofi/features/player/controller/scene.controller.dart';
@@ -10,6 +12,7 @@ import 'package:purelofi/features/player/domain/scene.entity.dart';
 import 'package:purelofi/features/player/domain/track.entity.dart';
 
 import '../../../helpers/fake_audio_player.service.dart';
+import '../../../helpers/fake_display_preferences.dart';
 import '../../../helpers/fake_favorites.repository.dart';
 import '../../../helpers/fake_home_widget.dart';
 import '../../../helpers/mock_repositories.dart';
@@ -40,6 +43,7 @@ void main() {
         audioPlayerServiceProvider.overrideWithValue(audio),
         favoritesRepositoryProvider.overrideWithValue(favorites),
         homeWidgetServiceProvider.overrideWithValue(widgets),
+        displayPreferencesProvider.overrideWithValue(FakeDisplayPreferences()),
       ],
       retry: (_, _) => null,
     );
@@ -79,6 +83,17 @@ void main() {
         .switchTo(makeScene('roof', title: 'Rooftop').copyWith(sortOrder: 1));
     await pumpEventQueue();
     expect(widgets.shown.last.room, 'Rooftop');
+  });
+
+  test('the accent picked in the settings reaches the widget', () async {
+    final ProviderContainer c = await start();
+    expect(widgets.shown.last.accent, '#F0A05D');
+
+    await c.read(paletteControllerProvider.notifier).set(AppPalette.sea);
+    await pumpEventQueue();
+
+    expect(widgets.shown.last.accent, AppPalette.sea.hex);
+    expect(AppPalette.sea.hex, '#74B9D6');
   });
 
   test('the position ticking along is not the widget\'s business', () async {
