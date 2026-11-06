@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import com.ryanheise.audioservice.MediaButtonReceiver
@@ -45,12 +46,19 @@ class PureLofiWidgetProvider : HomeWidgetProvider() {
                 if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
             )
             views.setContentDescription(R.id.widget_play, if (playing) "Pause" else "Play")
+            views.setInt(R.id.widget_play, "setColorFilter", accent(widgetData))
             views.setOnClickPendingIntent(R.id.widget_play, playPause(context))
             views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
 
             appWidgetManager.updateAppWidget(id, views)
         }
     }
+
+    /** The accent picked in the app, the lamp until one is or if it cannot be read. */
+    private fun accent(widgetData: SharedPreferences): Int =
+        widgetData.getString("accent", null)
+            ?.let { runCatching { Color.parseColor(it) }.getOrNull() }
+            ?: LAMP
 
     /** The cover, scaled by a whole number with no filtering: pixels stay pixels. */
     private fun pixelCover(path: String): Bitmap? {
@@ -77,5 +85,9 @@ class PureLofiWidgetProvider : HomeWidgetProvider() {
         return PendingIntent.getActivity(
             context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
+
+    private companion object {
+        val LAMP = Color.parseColor("#F0A05D")
     }
 }

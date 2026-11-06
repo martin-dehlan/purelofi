@@ -19,6 +19,11 @@ enum AppPalette {
   /// The colour that marks what is active, and the seed of the scheme.
   final Color accent;
 
+  /// [accent] as `#RRGGBB`, for the home screen widgets, which are drawn
+  /// natively and read it as text.
+  String get hex =>
+      '#${(accent.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
   /// The palette saved under [name], or [lamp] for none or one that is
   /// gone.
   static AppPalette fromName(String? name) {

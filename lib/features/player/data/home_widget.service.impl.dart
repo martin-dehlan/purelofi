@@ -22,6 +22,7 @@ class HomeWidgetServiceImpl implements HomeWidgetService {
       await HomeWidget.saveWidgetData<String>(WidgetKeys.artist, s.artist);
       await HomeWidget.saveWidgetData<String>(WidgetKeys.cover, s.coverPath);
       await HomeWidget.saveWidgetData<bool>(WidgetKeys.playing, s.isPlaying);
+      await HomeWidget.saveWidgetData<String>(WidgetKeys.accent, s.accent);
       await HomeWidget.updateWidget(
         qualifiedAndroidName: WidgetKeys.androidProvider,
         iOSName: WidgetKeys.iosKind,

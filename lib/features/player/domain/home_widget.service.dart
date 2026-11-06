@@ -4,6 +4,7 @@ class WidgetSnapshot {
   const WidgetSnapshot({
     required this.room,
     required this.isPlaying,
+    required this.accent,
     this.track,
     this.artist,
     this.coverPath,
@@ -17,6 +18,9 @@ class WidgetSnapshot {
   final String? coverPath;
   final bool isPlaying;
 
+  /// The accent picked in the app as `#RRGGBB`: the play button wears it.
+  final String accent;
+
   @override
   bool operator ==(Object other) =>
       other is WidgetSnapshot &&
@@ -24,10 +28,12 @@ class WidgetSnapshot {
       other.track == track &&
       other.artist == artist &&
       other.coverPath == coverPath &&
-      other.isPlaying == isPlaying;
+      other.isPlaying == isPlaying &&
+      other.accent == accent;
 
   @override
-  int get hashCode => Object.hash(room, track, artist, coverPath, isPlaying);
+  int get hashCode =>
+      Object.hash(room, track, artist, coverPath, isPlaying, accent);
 }
 
 /// Hands [WidgetSnapshot]s to the platform's widgets.
@@ -43,6 +49,7 @@ abstract final class WidgetKeys {
   static const String artist = 'artist';
   static const String cover = 'cover';
   static const String playing = 'playing';
+  static const String accent = 'accent';
 
   /// The iOS App Group shared with the widget extension.
   static const String appGroup = 'group.app.purelofi';
